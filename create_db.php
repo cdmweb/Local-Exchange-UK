@@ -1,6 +1,6 @@
 <?php
 
-// Testing eclipse git int
+// Testing eclipse git intbbbbbb
 /* 30/03/13: Chris M: Have made corrections to this file in response to syntax errors when attempting to run this script on a MySQL 5+ database.*/
 //
 // 1. As of MySQL 5 'TYPE' has been deprecated in favour of 'ENGINE' for specifying the database engine to use. I am reluctant to 'hard code' this change into the following statements through fear of causing compatibility problems on servers running older versions of MySQL, so for the purposes of backward compatibility I have included an easy way to default back to the old syntax in the config file
