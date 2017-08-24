@@ -34,7 +34,9 @@ if ($_REQUEST["backup"]==true) {
 	$strat = "at";
 	$strby = "by";
 	$date_jour = date ("m-d-Y");
-	
+	//CT: missing linebreak for default
+	$crlf="\r\n";
+
 	$client = getenv("HTTP_USER_AGENT");
 	
 	if(ereg('[^(]*\((.*)\)[^)]*',$client,$regs)) {
@@ -137,6 +139,8 @@ if ($_REQUEST["backup"]==true) {
 		    }
 		
 		    $schema_create .= "$crlf)";
+		    //CT: correct issue with timestamps in recent mysql versions
+		    $schema_create = str_replace("'CURRENT_TIMESTAMP'", "CURRENT_TIMESTAMP", $schema_create, $count);
 		    return (stripslashes($schema_create));
 		}
 		
@@ -157,8 +161,9 @@ if ($_REQUEST["backup"]==true) {
 		
 		
 		@mysql_select_db("$dbname") or die ("Unable to select database");
-		
-		$tables = mysql_list_tables($dbname);
+		//CT: todo - include tables not views with this replacement - TABLE_TYPE='base table' should work but can't get it to..;
+		$tables = mysql_query("SHOW TABLES FROM $dbname");		
+		//$tables = mysql_list_tables($dbname);
 		
 		$num_tables = @mysql_numrows($tables);
 		if($num_tables == 0)
