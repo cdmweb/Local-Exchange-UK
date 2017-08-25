@@ -6,7 +6,7 @@ if (!isset($global))
 }
 
 include_once("class.person.php");
-include_once("class.form.php");
+//include_once("class.form.php");
 include_once("Text/Password.php");
 
 class cMember
