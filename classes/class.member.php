@@ -6,6 +6,7 @@ if (!isset($global))
 }
 
 include_once("class.person.php");
+include_once("class.form.php");
 include_once("Text/Password.php");
 
 class cMember
@@ -190,7 +191,7 @@ class cMember
 
 	function UserLoginPage() // A free-standing login page
 	{
-		$output = "<DIV STYLE='width=60%; padding: 5px;'><FORM ACTION=".SERVER_PATH_URL."/login.php METHOD=POST>
+		/*$output = "<DIV STYLE='width=60%; padding: 5px;'><FORM ACTION=".SERVER_PATH_URL."/login.php METHOD=POST>
 					<INPUT TYPE=HIDDEN NAME=action VALUE=login>
 					<INPUT TYPE=HIDDEN NAME=location VALUE='".$_SERVER["REQUEST_URI"]."'>
 					<TABLE class=NoBorder><TR><TD ALIGN=LEFT>Member ID:</TD><TD ALIGN=LEFT><INPUT TYPE=TEXT SIZE=12 NAME=user></TD></TR>
@@ -199,7 +200,18 @@ class cMember
 					</FORM></DIV>
 					<BR>
 					If you don't have an account, please contact us to join.
-					<BR>";	
+					<BR>";
+		*/
+		
+		$output = "<form action='".SERVER_PATH_URL."/login.php' method='post' class='login'>
+			<input name='action' type='hidden' value='login'> 
+			<input name='location' type='hidden' value='". $_SERVER['REQUEST_URI'] . "'>
+			<p><label><span>Member ID: </span><input name='user' size='12' maxlength='30' type='text'></label></p>
+			<p><label><span>Password: </span><input name='pass' size='12' maxlength='200' type='password'></label></p>
+			<p><input type='submit' value='Login' /></p>
+
+			</form>
+			<p><a href='".SERVER_PATH_URL."/password_reset.php'>Forgot your password?</a></p>";	
 		return $output;
 	}
 

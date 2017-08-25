@@ -1,22 +1,23 @@
 <?php
 include_once("includes/inc.global.php");
 $p->site_section = SITE_SECTION_OFFER_LIST;
+$p->page_title = "Reset Password";
+
 
 include("includes/inc.forms.php");
 
-$form->addElement("header", null, "Reset Password");
-$form->addElement("html", "<TR></TR>");
-
-$form->addElement("text", "member_id", "Enter your Member ID");
-$form->addElement("text", "email", "Enter the Email Address for your Account");
+$form->addElement("text", "member_id", "Member ID", array("size" => 20, "maxlength" => 30));
+$form->addElement("text", "email", "The email address for your account.", array("size" => 20, "maxlength" => 30));
 
 $form->addElement("static", null, null, null);
 $form->addElement("submit", "btnSubmit", "Reset Password");
 
 $form->registerRule('verify_email','function','verify_email');
+$form->addRule('member_id', 'Enter a member id', 'required');
+$form->addRule('email', 'Enter an email', 'required');
 $form->addRule('email','Address or member id is incorrect','verify_email');
 $form->addElement("static", null, null, null);
-$form->addElement("static", 'contact', "If you cannot remember your member id or email address, please <A HREF=contact.php>contact</A> us.", null);
+$form->addElement("static", 'contact', "For any other issues, please <a href='contact.php'>contact us</a>", null);
 
 if ($form->validate()) { // Form is validated so processes the data
    $form->freeze();
@@ -35,12 +36,12 @@ function process_data ($values) {
 	$member->ChangePassword($password); // This will bomb out if the password change fails
 	$member->UnlockAccount();
 	
-	$list = "Your password has been reset.  You can change the new password after you login by going into the Member Profile section of the web site.<P>";
+	$list = "<p>Your password has been reset";
 	$mailed = mail($values['email'], PASSWORD_RESET_SUBJECT, PASSWORD_RESET_MESSAGE . "\n\nNew Password: ". $password, EMAIL_FROM);
 	if($mailed)
-		$list .= "The new password has been sent to your email address.";
+		$list .= ". Please check your email inbox.";
 	else
-		$list .= "<I>However, the attempt to email the new password failed.  This is most likely due to a technical problem.  Contact your administrator at ". PHONE_ADMIN ."</I>.";	
+		$list .= ", but there was a technical problem and the email could not sent.  Contact the administator at ". EMAIL_ADMIN ."</i>.";	
 	$p->DisplayPage($list);
 }
 

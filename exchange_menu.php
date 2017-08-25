@@ -2,20 +2,28 @@
 include_once("includes/inc.global.php");
 include_once("classes/class.trade.php");
 $p->site_section = EXCHANGES;
-$p->page_title = "Exchanges";
+$p->page_title = "My Trades";
 
 $cUser->MustBeLoggedOn();
 
 $pending = new cTradesPending($_SESSION["user_login"]);
 
-$list = "<A HREF=trades_pending.php><FONT SIZE=2>Invoices and Transactions Pending</a> (".$pending->numIn." require action)</FONT><P>";
-$list .= "<A HREF=trade.php?mode=self><FONT SIZE=2>Record an Exchange</FONT></A><BR>";
-$list .= "<A HREF=trade_history.php?mode=self><FONT SIZE=2>View My Balance and Exchange History</FONT></A><BR>";
-$list .= "<A HREF=trades_to_view.php><FONT SIZE=2>View Another Member's Exchange History</FONT></A><BR>";
-$list .= "<A HREF=feedback_all.php?mode=self><FONT SIZE=2>View My Feedback</FONT></A><BR>";
-$list .= "<A HREF=feedback_to_view.php><FONT SIZE=2>View Another Member's Feedback</FONT></A><BR>";
-$list .= "<A HREF=feedback_choose.php?mode=self><FONT SIZE=2>Leave Feedback for a Recent Exchange</FONT></A><BR>";
-$list .= "<A HREF=timeframe_choose.php?action=trade_history_all><FONT SIZE=2>View All Trades in a Specified Time Period</FONT></A>";
+$list .= "<div class='balance'>Current balance: " . $cUser->balance . " " . UNITS . "</div> 
+<div class='small'><a href='trade_history.php?mode=self'>Your trade history</a></div><br />";
+
+$list .= "<div class='section-menu'>
+	<h2>My Feedback</h2>
+	<ul>
+		<li><a href='feedback_all.php?mode=self'>View my feedback</a></li>
+		<!-- <li><a href='feedback_to_view.php'>View someone else's feedback</a></li> -->
+		<li><a href='trade_history.php?mode=self'>Leave Feedback for a Recent Trade</a></li>
+	</ul>
+	<h2>My Trades</h2>
+	<ul>
+		<li><a href='trades_pending.php'>My pending trades</a> (".$pending->numIn." require action)</li>
+		<li><a href='trade.php?mode=self'>Record a new trade</a></li>
+	</ul>
+	</div>";
 
 $p->DisplayPage($list);
 

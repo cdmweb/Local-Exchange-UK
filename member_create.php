@@ -13,8 +13,8 @@ include("includes/inc.forms.php");
 $form->addElement("header", null, "Create New Member");
 $form->addElement("html", "<TR></TR>");
 
-$form->addElement("text", "member_id", "Member ID", array("size" => 10, "maxlength" => 15));
-$form->addElement("text", "password", "Password", array("size" => 10, "maxlength" => 15));
+$form->addElement("text", "member_id", "Member ID", array("size" => 10, "maxlength" => 30));
+$form->addElement("text", "password", "Password", array("size" => 10, "maxlength" => 30));
 $form->addElement("select", "member_role", "Member Role", array("0"=>"Member", "1"=>"Committee", "2"=>"Admin"));
 $acct_types = array("S"=>"Single", "J"=>"Joint", "H"=>"Household", "O"=>"Organization", "B"=>"Business", "F"=>"Fund");
 $form->addElement("select", "account_type", "Account Type", $acct_types);
@@ -26,8 +26,8 @@ $options = array("language"=> "en", "format" => "dFY", "minYear"=>JOIN_YEAR_MINI
 $form->addElement("date", "join_date",	"Join Date", $options);	
 $form->addElement("static", null, null, null);	
 
-$form->addElement("text", "first_name", "First Name", array("size" => 15, "maxlength" => 20));
-$form->addElement("text", "mid_name", "Middle Name", array("size" => 10, "maxlength" => 20));
+$form->addElement("text", "first_name", "First Name", array("size" => 15, "maxlength" => 30));
+$form->addElement("text", "mid_name", "Middle Name", array("size" => 10, "maxlength" => 30));
 $form->addElement("text", "last_name", "Last Name", array("size" => 20, "maxlength" => 30));
 $form->addElement("static", null, null, null); 
 
