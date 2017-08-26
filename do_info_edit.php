@@ -18,7 +18,7 @@ $p->page_title = "Edit '". $pg["title"] ."'";
 
 $form->addElement("hidden","id",$_REQUEST["id"]);
 $form->addElement("text", "title", "Title", array("size" => 35, "maxlength" => 100));
-$form->addElement("textarea", "description", "Content", array("cols"=>65, "rows"=>5, "wrap"=>"soft"));
+$form->addElement("textarea", "description", "Content", array("cols"=>65, "rows"=>20, "wrap"=>"soft"));
 
 $form->addElement("submit", "btnSubmit", "Submit");
 
@@ -50,10 +50,8 @@ function process_data ($values) {
 	$q = 'UPDATE cdm_pages set date='.time().', title='.$cDB->EscTxt($values["title"]).', body='.$cDB->EscTxt($values["description"]).' where id='.$cDB->EscTxt($values["id"]).'';
 	$success = $cDB->Query($q);
 	
-	if ($success)
-		$output = "Changes saved.";
-	else
-		$output = "There was a problem saving the page.";
+	$tmp = ($success) ? "Changes saved." : "There was a problem saving the page.";
+	$output = "<p>" . $tmp . "</p><p><a href='pages.php?id=" . $_REQUEST["id"] . "'>View page</a> | <a href='do_info_edit.php?id=" . $_REQUEST["id"] . "'>Edit page</a></p>";
 		
 	$p->DisplayPage($output);
 	
