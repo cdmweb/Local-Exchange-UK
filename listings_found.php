@@ -1,8 +1,15 @@
 <?php
+// var $tmp;
 
 include_once("includes/inc.global.php");
+$tmp = (strtolower($_REQUEST["type"])) ? "Offered" : "Wanted";
+
 $p->site_section = LISTINGS;
-$p->page_title = $_REQUEST["type"] ."ed Listings";
+
+//CT: tidy this up for readabiity and change
+//if(strtolower($_REQUEST["type"]) = "offer"){
+$tmp = (strtolower($_REQUEST["type"])) ? "Offered" : "Wanted";
+$p->page_title = $tmp . " Listings";
 
 include_once("classes/class.listing.php");
 
@@ -10,11 +17,17 @@ if($_REQUEST["category"] == "0")
 	$category = "%";
 else
 	$category = $_REQUEST["category"];
-	
-if($_REQUEST["timeframe"] == "0")
-	$since = new cDateTime(LONG_LONG_AGO);
-else
+//CT: better handling of errors - prevent the from happening :)
+if(is_numeric($_REQUEST["timeframe"]) && intval($_REQUEST["timeframe"])) {
+//if($_REQUEST["timeframe"] !="0") {
 	$since = new cDateTime("-". $_REQUEST["timeframe"] ." days");
+	$tmp = " in the last " . $_REQUEST["timeframe"] . " days";
+}else {	
+	$since = new cDateTime(LONG_LONG_AGO);
+	$tmp = ", all time";
+}
+$p->page_title .= $tmp;
+
 
 if ($cUser->IsLoggedOn())
 	$show_ids = true;
@@ -78,8 +91,9 @@ if ($listings->listing && KEYWORD_SEARCH_DIR==true && strlen($_GET["keyword"])>0
 			$lID += 1;
 	}
 }
+$output = "<p><a href='listings.php?type=Offer'>Change search criteria</a></p>";
 
-$output = $listings->DisplayListingGroup($show_ids);
+$output .= $listings->DisplayListingGroup($show_ids);
 
 $p->DisplayPage($output); 
 
