@@ -8,6 +8,9 @@ class cDatabase
 {
 	var $isConnected;
 	var $db_link;
+	var $dbconnectcount;			// CT: count how many times it connects. int
+	//$page_dbcall =0;
+
 
 	function Database()
 	{
@@ -16,23 +19,40 @@ class cDatabase
 
 	function Connect()
 	{
-		if ($this->isConnected)
-			return;
 
-		$this->db_link = mysql_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD)
-		       or die("Could not connect");	// TODO: fix error messages
-		mysql_selectdb(DATABASE_NAME)
-		       or die("Could not select database");	// TODO: fix error messages
+		if ($this->isConnected){
+			return;
+		}
+		$link = mysql_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD);
+		if (!$link) {
+		    die('Could not connect: ' . mysql_error());
+		}
 		$this->isConnected=true;
+		//echo "connected";
+	}
+	function Disconnect()
+	{
+		if ($this->isConnected){
+			mysql_close($link);
+			$this->isConnected=false;
+			//echo "disconnected";
+		}
 	}
 
 	function Query($thequery)
 	{
+		//CT: 
+		global $cErr;
 		if (!$this->isConnected)
 			$this->Connect();
 
 		$ret = mysql_query($thequery);
+		//CT: uncomment when finishing demo
+		$cErr->Error("Q: " . $thequery . ". R: " . mysql_num_rows($ret));
+
 //		       or die ("Query failed: ".mysql_errno() . ": " . mysql_error()); // TODO: fix error messages
+		//$this->Disconnect();
+		//showMessage($this->NumRows($ret));
 		return $ret;
 	}
 

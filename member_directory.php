@@ -31,19 +31,22 @@ if (SEARCHABLE_MEMBERS_LIST==true) {
 }
 
 $output .=
-"<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3 WIDTH=\"100%\">
-  <TR BGCOLOR=\"#d8dbea\">
-    <TD><FONT SIZE=2><B>Member</B></FONT></TD>
-    <TD><FONT SIZE=2><B>Phone</B></FONT></TD>
-    <TD><FONT SIZE=2><B>" . ADDRESS_LINE_2 . "</B></FONT></TD>
-    <TD><FONT SIZE=2><B>" . ADDRESS_LINE_3 . "</B></FONT></TD>
-    <TD><FONT SIZE=2><B>" . ZIP_TEXT . "</B></FONT></TD>";
+"<table class=\"tabulated\">
+	<tr>
+		<th class='id' colspan='2'>Member</th>
+		<th>Phone</th>";
+	if (MEM_LIST_DISPLAY_EMAIL==true OR $cUser->member_role >= 1)  {   
+		$output .= "<th>Email</th>";
+	}
+	$output .="
+		<th>" . ADDRESS_LINE_2 . ",<br /> " . ADDRESS_LINE_3 . "</th>
+		<th>" . ZIP_TEXT . "</th>";
 
 if (MEM_LIST_DISPLAY_BALANCE==true || $cUser->member_role >= 1)  {   
-	$output .= "<TD><FONT SIZE=2><B>Balance</B></FONT></TD>";
+	$output .= "<th>Balance</th>";
 
 }
-$output .= "</TR>";
+$output .= "</tr>";
 
 //Phones (comma separated with first name in parentheses for non-primary phones)
 //Emails (comma separated with first name in parentheses for non-primary emails)
@@ -139,15 +142,28 @@ if ($_REQUEST["uLoc"]) // We're searching for a specific Location in the SQL
 //ECHO "SELECT ".DATABASE_MEMBERS.".member_id FROM ". DATABASE_MEMBERS .",". DATABASE_PERSONS." WHERE ". DATABASE_MEMBERS .".member_id=". DATABASE_PERSONS.".member_id AND primary_member='Y' ".$condition." $orderBy";
 
 // Do search in SQL
-$query = $cDB->Query("SELECT ".DATABASE_MEMBERS.".member_id FROM ". DATABASE_MEMBERS .",". DATABASE_PERSONS." WHERE ". DATABASE_MEMBERS .".member_id=". DATABASE_PERSONS.".member_id AND primary_member='Y' ".$condition." $orderBy;");
-		
+//$query = $cDB->Query("SELECT ".DATABASE_MEMBERS.".member_id FROM ". DATABASE_MEMBERS .",". DATABASE_PERSONS." WHERE ". DATABASE_MEMBERS .".member_id=". DATABASE_PERSONS.".member_id AND primary_member='Y' ".$condition." $orderBy;");
+
+$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, m.member_id as member_id, m.account_type as account_type, m.account_type as account_type FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' order by m.member_id");
 $i=0;
 
 while($row = mysql_fetch_array($query)) // Each of our SQL results
 {
-	$member_list->members[$i] = new cMember;			
-	$member_list->members[$i]->LoadMember($row[0]);
-	$i += 1;
+	//echo $row['balance'];
+	$member_list->members[$i] = new cMember;	
+	$member_list->members[$i]->SetMember($row); 	
+	if ($row['account_type']=='J'){
+		$person2Array = array(
+			'first_name'=>$row['p2_first_name'],
+			'last_name'=>$row['p2_last_name'],
+			'phone1_number'=>$row['p2_phone1_number'],
+			'email'=>$row['p2_email'],
+			'primary_member'=>$row['p2_primary_member']
+		);
+		$member_list->members[$i]->setPerson($person2Array, 1);
+	}
+
+	$i++;
 }
 		
 $i=0;
@@ -160,25 +176,34 @@ if($member_list->members) {
 		
 			if($member->account_type != "F") {  // Don't display fund accounts
 				
-				if($i % 2)
-					$bgcolor = "#e4e9ea";
-				else
-					$bgcolor = "#FFFFFF";
+		//CT all members on the page, use javascript to filter
+
+				//CT: use css styles not html colors - cleaner
+				$rowclass = ($i % 2) ? "even" : "odd";
+				//$rowclass .= ($member->primary_member != 'Y') ? " joint" : "";
+				//$name = $member->AllNames();
+				//$showIfJoint = ($member->primary_member != 'Y') ? "<br />(Joint Member)" : "";
+				$postcode = SafePostcode($member->person[0]->address_post_code);
+				$output .="<tr class='{$rowclass}'>
+				   <td>{$member->MemberLink($name)}</td>
+				   <td>{$member->AllNames()}</td>
+				   <td>{$member->AllPhones()}</td>";
+				if (MEM_LIST_DISPLAY_EMAIL==true || $cUser->member_role > 1)  {   
+					$output .= "<td>{$member->AllEmails()}</td>";
+				}
+				$output .="<td>{$member->person[0]->address_street2}";
+				if (!empty(trim($member->person[0]->address_street2)) AND !empty(trim($member->person[0]->address_city))){
+					$output .= ", ";
+				}
+				$output .= "{$member->person[0]->address_city}</td>
+					<td>{$postcode}</td>
+			   ";
 		
-				$output .=
-					"<TR VALIGN=TOP BGCOLOR=". $bgcolor .">
-					   <TD><FONT SIZE=2>". $member->AllNames()." (". $member->MemberLink() .")
-					       </FONT></TD>
-					   <TD><FONT SIZE=2>". $member->AllPhones() ."</FONT></TD>
-					   <TD><FONT SIZE=2>". $member->person[0]->address_street2 ."&nbsp;</FONT></TD>
-					   <TD><FONT SIZE=2>". $member->person[0]->address_city . "&nbsp;</FONT></TD>
-					   <TD><FONT SIZE=2>". $member->person[0]->address_post_code ."</FONT></TD>";
-					   
 				
-				if (MEM_LIST_DISPLAY_BALANCE==true || $cUser->member_role >= 1)
-					$output .= "<TD><FONT SIZE=2>". $member->balance ."</FONT></TD>";
-					
-				$output .= "</TR>";
+				//if (MEM_LIST_DISPLAY_BALANCE==true || $cUser->member_role >= 1){
+					$output .= "<td>{$member->balance}</td>";
+				//}
+				$output .= "</tr>";
 				$i+=1;
 		 }
 	 } // end loop to force display of inactive members off
@@ -187,7 +212,7 @@ if($member_list->members) {
 
 // $output .= "</TABLE>";
 // RF display active accounts 
-$output .= '<TR><TD colspan=5><br><br>Total of '.$i.' active accounts.</TD></TR></TABLE>';
+$output .= "</table><div class='summary'>Total of {$i} active accounts.</div>";
 
 $p->DisplayPage($output); 
 

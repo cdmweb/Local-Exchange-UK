@@ -10,41 +10,355 @@ include_once("Text/Password.php");
 
 class cMember
 {
-	var $person;  // this will be an array of cPerson class objects
-	var $member_id;
-	var $password;
-	var $member_role;
-	var $security_q;
-	var $security_a;
-	var $status;
-	var $member_note;
-	var $admin_note;
-	var $join_date;
-	var $expire_date;
-	var $away_date;
-	var $account_type;
-	var $email_updates;
-	var $balance;
-	var $restriction;
+	//CT: format as public
+	public $person;  // this will be an array of cPerson class objects
+	public $member_id;
+	public $password;
+	public $member_role;
+	public $security_q;
+	public $security_a;
+	public $status;
+	public $member_note;
+	public $admin_note;
+	public $join_date;
+	public $expire_date;
+	public $away_date;
+	public $account_type;
+	public $email_updates;
+	public $balance;
+	public $confirm_payments;
+	public $restriction;
 
 	function cMember($values=null) {
 		if ($values) {
-			$this->member_id = $values['member_id'];
-			$this->password = $values['password'];
-			$this->member_role = $values['member_role'];
-			$this->security_q = $values['security_q'];
-			$this->security_a = $values['security_a'];
-			$this->status = $values['status'];
-			$this->member_note = $values['member_note'];
-			$this->admin_note = $values['admin_note'];
-			$this->join_date = $values['join_date'];
-			$this->expire_date = $values['expire_date'];
-			$this->away_date = $values['away_date'];
-			$this->account_type = $values['account_type'];
-			$this->email_updates = $values['email_updates'];
-			$this->balance = $values['balance'];	
+			$this->SetMember($values);
 		}
 	}
+	/* CT getters and setters
+
+    /**
+     * @return mixed
+     */
+    public function getPerson()
+    {
+        return $this->person;
+    }
+
+    /**
+     * @param mixed $person
+     *
+     * @return self
+     */
+    public function setPerson($array, $n=0)
+    {
+    	//CT grabs values directly out of full result array passed to it. you can pass a partial set, as long as you respey name of members of array
+    	//$this->person = array();
+		$this->person[$n] = new cPerson;			// instantiate new cPerson objects and set them
+		$this->person[$n]->SetPerson($array);
+    }
+
+
+    /**
+     * @return mixed
+     */
+    public function getMemberId()
+    {
+        return $this->member_id;
+    }
+
+    /**
+     * @param mixed $member_id
+     *
+     * @return self
+     */
+    public function setMemberId($member_id)
+    {
+        $this->member_id = $member_id;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * @param mixed $password
+     *
+     * @return self
+     */
+    public function setPassword($password)
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMemberRole()
+    {
+        return $this->member_role;
+    }
+
+    /**
+     * @param mixed $member_role
+     *
+     * @return self
+     */
+    public function setMemberRole($member_role)
+    {
+        $this->member_role = $member_role;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSecurityQ()
+    {
+        return $this->security_q;
+    }
+
+    /**
+     * @param mixed $security_q
+     *
+     * @return self
+     */
+    public function setSecurityQ($security_q)
+    {
+        $this->security_q = $security_q;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSecurityA()
+    {
+        return $this->security_a;
+    }
+
+    /**
+     * @param mixed $security_a
+     *
+     * @return self
+     */
+    public function setSecurityA($security_a)
+    {
+        $this->security_a = $security_a;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param mixed $status
+     *
+     * @return self
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMemberNote()
+    {
+        return $this->member_note;
+    }
+
+    /**
+     * @param mixed $member_note
+     *
+     * @return self
+     */
+    public function setMemberNote($member_note)
+    {
+        $this->member_note = $member_note;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAdminNote()
+    {
+        return $this->admin_note;
+    }
+
+    /**
+     * @param mixed $admin_note
+     *
+     * @return self
+     */
+    public function setAdminNote($admin_note)
+    {
+        $this->admin_note = $admin_note;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getJoinDate()
+    {
+        return $this->join_date;
+    }
+
+    /**
+     * @param mixed $join_date
+     *
+     * @return self
+     */
+    public function setJoinDate($join_date)
+    {
+        $this->join_date = $join_date;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getExpireDate()
+    {
+        return $this->expire_date;
+    }
+
+    /**
+     * @param mixed $expire_date
+     *
+     * @return self
+     */
+    public function setExpireDate($expire_date)
+    {
+        $this->expire_date = $expire_date;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAwayDate()
+    {
+        return $this->away_date;
+    }
+
+    /**
+     * @param mixed $away_date
+     *
+     * @return self
+     */
+    public function setAwayDate($away_date)
+    {
+        $this->away_date = $away_date;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAccountType()
+    {
+        return $this->account_type;
+    }
+
+    /**
+     * @param mixed $account_type
+     *
+     * @return self
+     */
+    public function setAccountType($account_type)
+    {
+        $this->account_type = $account_type;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEmailUpdates()
+    {
+        return $this->email_updates;
+    }
+
+    /**
+     * @param mixed $email_updates
+     *
+     * @return self
+     */
+    public function setEmailUpdates($email_updates)
+    {
+        $this->email_updates = $email_updates;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBalance()
+    {
+        return $this->balance;
+    }
+
+    /**
+     * @param mixed $balance
+     *
+     * @return self
+     */
+    public function setBalance($balance)
+    {
+        $this->balance = $balance;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRestriction()
+    {
+        return $this->restriction;
+    }
+
+    /**
+     * @param mixed $restriction
+     *
+     * @return self
+     */
+    public function setRestriction($restriction)
+    {
+        $this->restriction = $restriction;
+
+        return $this;
+    }
+
+
+
 
 	function SaveNewMember() {
 		global $cDB, $cErr;	
@@ -259,7 +573,7 @@ class cMember
 		
 		return false;
 	}
-	
+
 	function LoadMember($member, $redirect=true) {
 		global $cDB, $cErr;
 
@@ -271,25 +585,7 @@ class cMember
 		
 		if($row = mysql_fetch_array($query))
 		{		
-			$this->member_id=$row[0];
-			$this->password=$row[1];
-			$this->member_role=$row[2];
-			$this->security_q=$cDB->UnEscTxt($row[3]);
-			$this->security_a=$cDB->UnEscTxt($row[4]);
-			$this->status=$row[5];
-			$this->member_note=$cDB->UnEscTxt($row[6]);
-			$this->admin_note=$cDB->UnEscTxt($row[7]);
-			$this->join_date=$row[8];
-			$this->expire_date=$row[9];
-			$this->away_date=$row[10];
-			$this->account_type=$row[11];
-			$this->email_updates=$row[12];
-			$this->balance=$row[13];
-			
-			// [chris]		
-			$this->confirm_payments=$row[14];
-			$this->restriction=$row[15];
-		
+			$this->SetMember($row);
 		}
 		else
 		{
@@ -324,7 +620,26 @@ class cMember
 		}
 		return true;
 	}
-	
+	function SetMember($array){
+		$this->setPerson($array);  // this will be an array of cPerson class objects
+		$this->setMemberId($member_id);  
+		$this->setPassword($password);  
+		$this->setMemberRole($member_role);  
+		$this->setSecurityQ($security_q);  
+		$this->setSecurityA($security_a);  
+		$this->setStatus($status);  
+		$this->setMemberId($member_id);  
+		$this->setMemberNote($member_note);  
+		$this->setAdminNote($admin_note);  
+		$this->setJoinDate($join_date);  
+		$this->setExpireDate($expire_date);  
+		$this->setAwayDate($away_date);  
+		$this->setAccountType($account_type);  
+		$this->setEmailUpdates($email_updates);  
+		$this->setBalance($balance);  
+		$this->setRestriction($restriction);  
+	}
+
 	function ShowMember()
 	{
 		$output = "Member Data:<BR>";
@@ -398,7 +713,7 @@ class cMember
 		}
 		return $names;
 	}
-	
+
 	function AllPhones () {
 		$phones = "";
 		$reg_phones[]="";
@@ -418,15 +733,15 @@ class cMember
 					$fax_phones[] = $person->DisplayPhone("fax");
 				}
 			} else {
-				if($person->phone1_number != "" and array_search($person->DisplayPhone(1), $reg_phones) === false){ 
+				if($person->phone1_number != ""){ 
 					$phones .= ", ". $person->DisplayPhone(1). " (". $person->first_name .")";
 					$reg_phones[] = $person->DisplayPhone(1);
 				}
-				if($person->phone2_number != "" and array_search($person->DisplayPhone(2), $reg_phones) === false) {
+				if($person->phone2_number != "") {
 					$phones .= ", ". $person->DisplayPhone(2). " (". $person->first_name .")";
 					$reg_phones[] = $person->DisplayPhone(2);
 				}
-				if($person->fax_number != "" and array_search($person->DisplayPhone("fax"), $fax_phones) === false) {
+				if($person->fax_number != "") {
 					$phones .= ", ". $person->DisplayPhone("fax"). " (". $person->first_name ."'s Fax)";
 					$fax_phones[] = $person->DisplayPhone("fax");
 				}
@@ -436,13 +751,16 @@ class cMember
 	}
 	
 	function AllEmails () {
+		$emails='';
 		foreach($this->person as $person) {
-			if($person->primary_member == "Y") {
-				$emails = '<A HREF=email.php?email_to='. $person->email .'&member_to='. $this->member_id .'>'. $person->email .'</A>';
-			} else {
-				if($person->email != "" and strpos($emails, $person->email) === false)
-					$emails .= ', <A HREF=email.php?email_to='. $person->email .'&member_to='. $this->member_id .'>'. $person->email .'</A> ('. $person->first_name .')';
-			}	
+			if(!empty($person->email)){
+				$email = "<a href='email.php?email_to={$person->email}&member_to={$this->member_id}'>11{$person->email}</a>";
+				if ($person->primary_member == "Y") {
+					$emails .="{$email}";
+				} else{
+					$emails .=", {$email} ({$person->first_name})";
+				}
+			}
 		}
 		return $emails;	
 	}

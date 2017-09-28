@@ -8,13 +8,13 @@ if (!isset($global) && $running_upgrade_script!=true)
 
 if (file_exists("upgrade.php") && $running_upgrade_script!=true) {
 	
-	die("<font color=red>The file 'upgrade.php' was located on this server.</font>
+	die("<font color='red'>The file 'upgrade.php' was located on this server.</font>
 	<p>If you are in the process of upgrading, that's fine, please <a href=upgrade.php>Click here</a> to run the upgrade script.<p>If you are NOT in the process of upgrading then leaving this file on the server poses a serious security hazard. Please remove this file immediately.");
 }
 
 /**********************************************************/
 /******************* SITE LOCATIONS ***********************/
-
+ 
 // What is the domain name of the site?  
 define ("SERVER_DOMAIN","");	// no http://
 
@@ -29,24 +29,30 @@ define ("PEAR_PATH", ""); // no ending slash
 define ("HTTP_BASE",SERVER_DOMAIN.SERVER_PATH_URL);
 define ("CLASSES_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/classes/");
 define ("IMAGES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/images/");
+define ("STYLES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/styles/");
 define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
+
 
 /**********************************************************/
 /***************** DATABASE LOGIN  ************************/
 
 define ("DATABASE_USERNAME","");
 define ("DATABASE_PASSWORD","");
+// local localexchange-1.02;
 define ("DATABASE_NAME","");
-define ("DATABASE_SERVER","localhost"); // often "localhost"
+define ("DATABASE_SERVER",""); // often "localhost"
 
 /**********************************************************/
 /********************* SITE NAMES *************************/
 
 // What is the name of the site?
-define ("SITE_LONG_TITLE", "Local Exchange");
+define ("SITE_LONG_TITLE", "Local Exchange and Trading Scheme");
 
 // What is the short, friendly, name of the site?
-define ("SITE_SHORT_TITLE", "Local Exchange");
+define ("SITE_SHORT_TITLE", "LocalExchange");
+
+//CT: Motto for header
+define ("SITE_MOTTO", "Trade without money");
 
 /**********************************************************/
 /***************** FOR MAINTENANCE ************************/
@@ -107,18 +113,19 @@ define("SEARCHABLE_MEMBERS_LIST",true);
 /******************** SITE CUSTOMIZATION **********************/
 
 // email addresses & phone number to be listed in the site
-define ("EMAIL_FEATURE_REQUEST","info@your-domain.org"); // (is this actually used anywhere???)
-define ("EMAIL_ADMIN","info@your-domain.org");
+define ("EMAIL_FEATURE_REQUEST","admin@example.org"); // (is this actually used anywhere???)
+//define ("EMAIL_NOREPLY","admin@camlets.org.uk");
+define ("EMAIL_ADMIN","admin@example.org");
 
 define ("PHONE_ADMIN","360-321-1234"); // an email address may be substituted...
 
 // What should appear at the front of all pages?
 // Titles will look like "PAGE_TITLE_HEADER - PAGE_TITLE", or something 
 // like "Local Exchange - Member Directory";
-define ("PAGE_TITLE_HEADER", SITE_LONG_TITLE);
+define ("PAGE_TITLE_HEADER", SITE_SHORT_TITLE);
 
 // What keywords should be included in all pages?
-define ("SITE_KEYWORDS", "local currency,lets,exchange,". SITE_LONG_TITLE .",php");
+define ("SITE_KEYWORDS", "local currency,mutual credit,lets,exchange,". SITE_LONG_TITLE ."");
 
 // Logo Graphic for Header
 define ("HEADER_LOGO", "localx_logo.png");
@@ -133,26 +140,35 @@ define ("HOME_LOGO", "localx_black.png");
 define ("HOME_PIC", "localx_home.png");
 
 // What content should be in the site header and footer?
-define ("PAGE_HEADER_CONTENT", "<table align=center cellpadding=15 cellspacing=0 id=\"mainTable\"><tr><td id=\"header\" align=center><a href=\"index.php\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " logo\" border=0></a></td><td id=\"header\"><h1 align=right><img src=\"http://".HTTP_BASE."/images/". HEADER_TITLE ."\"></h1></td></tr>");
+//CT: todo - make nice
 
-define ("PAGE_FOOTER_CONTENT", "<tr><td id=\"footer\" colspan=2><p align=center><strong>". SITE_LONG_TITLE ." </strong>&#8226; <a href=\"http://". SERVER_DOMAIN . SERVER_PATH_URL ."\">". SERVER_DOMAIN ."</a><br><a href=\"mailto:". EMAIL_ADMIN ."\">" . EMAIL_ADMIN ."</a> &#8226; ". PHONE_ADMIN ."<br><font size=\"-2\">Licensed under the <a href=\"http://www.gnu.org/copyleft/gpl.html\">GPL</a> &#8226; Local Exchange UK Ver. ".LOCALX_VERSION." <a href=\"http://". SERVER_DOMAIN . SERVER_PATH_URL ."/info/credits.php\">Credits</a></td></tr></table><br>");
+define ("PAGE_HEADER_CONTENT", "<div class=\"masthead\"><a href=\"index.php\" class=\"logo\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " \"></a><div class=\"title\"><h1><a href=\"index.php\">" .  SITE_SHORT_TITLE ."</a></h1><div class=\"motto\">" .  SITE_MOTTO ."</div></div></div>");
+
+define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"". SERVER_PATH_URL ."\">". SITE_LONG_TITLE ." </strong><br />Licensed under the <a href=\"http://www.gnu.org/copyleft/gpl.html\">GPL</a> &#8226; Local Exchange UK Ver. ".LOCALX_VERSION." <a href=\"http://". SERVER_DOMAIN . SERVER_PATH_URL ."/info/credits.php\">Credits</a></p>");
+
+//CT: if you want recaptcha protection for public forms, download securimage (simple php recaptcha) 
+// from https://www.phpcaptcha.org/ to the /thirdparty directory, configure the inc.configure.
+// Set RECAPTCHA_VALIDATION to true to start using it.
+define ("RECAPTCHA_VALIDATION",true);
+define ("RECAPTCHA_SRC","vendor/securimage/");
+
+//CT: set to TRUE if you want error messages to show to administrators
 
 /**********************************************************/
 /**************** DEFINE SIDEBAR MENU *********************/
 
 $SIDEBAR = array (
 	array("Home","index.php"),
-	array("Learn More","info/more.php"), // old style info pages
+	array("Information", "pages.php?id=7"), // 
 // [CDM] uncomment line below to activate new style info pages 	
 //  array("Information","pages.php?id=1"),
-	array("News & Events","news.php"),
-	array("Offered","listings.php?type=Offer"),
-	array("Wanted","listings.php?type=Want"),
-	array("Update Listings","listings_menu.php"),
-	array("Exchanges","exchange_menu.php"),
-	array("Members List","member_directory.php"),
-	array("Member Profile","member_profile.php"),
-	array("Contact Us","contact.php"));
+	array("News &amp; events","pages.php?id=84"),
+	array("Offered listings","listings_found.php?type=Offer&keyword=&category=0&timeframe=14"),
+	array("Wanted listings","listings_found.php?type=Want&keyword=&category=0&timeframe=14"),
+	array("Member directory","member_directory.php"),
+	array("My profile","member_profile_all_in_one.php"),
+	array("My trades","exchange_menu.php"),
+	array("Contact us","contact.php"));
 	
 /**********************************************************/
 /**************** DEFINE SITE SECTIONS ********************/
@@ -181,7 +197,7 @@ $SECTIONS = array (
 /**********************************************************/
 /******************* GENERAL SETTINGS *********************/
 
-define ("UNITS", "LETS Units");  // This setting affects functionality, not just text displayed, so if you want to use hours/minutes this needs to read "Hours" exactly.  All other unit descriptions are ok, but receive no special treatment (i.e. there is no handling of "minutes").
+define ("UNITS", "Cams");  // This setting affects functionality, not just text displayed, so if you want to use hours/minutes this needs to read "Hours" exactly.  All other unit descriptions are ok, but receive no special treatment (i.e. there is no handling of "minutes").
 
 
 /**************** Monthly fee related settings ********************/
@@ -194,7 +210,7 @@ $monthly_fee_exempt_list = array("ADMIN", SYSTEM_ACCOUNT_ID);
 define ("MAX_FILE_UPLOAD","5000000"); // Maximum file size, in bytes, allowed for uploads to the server
 									 
 // The following text will appear at the beggining of the email update messages
-define ("LISTING_UPDATES_MESSAGE", "<h1>".SITE_LONG_TITLE."</h1>The following listings are new or updated.<p>If you would prefer not to receive automatic email updates, or if you would like to change their frequency, you can do so at the <a href=http://".HTTP_BASE."/member_edit.php?mode=self>Member Profile</a> area of our website.");
+define ("LISTING_UPDATES_MESSAGE", "<h1>".SITE_LONG_TITLE."</h1>The following listings are new or updated.<p>Change how often you get these emails on your <a href=http://".HTTP_BASE."/member_edit.php?mode=self>Profile page</a>.");
 
 // Should inactive accounts have their listings automatically expired?
 // This can be a useful feature.  It is an attempt to deal with the 
@@ -246,7 +262,7 @@ define ("NEW_MEMBER_MESSAGE", "Hello, and welcome to the ". SITE_LONG_TITLE ." c
 // to be changed.
 
 // What's the name and location of the stylesheet?
-define ("SITE_STYLESHEET", "style.css");
+define ("SITE_STYLESHEET", "styles/style.css");
 
 // How long should trades be listed on the "leave feedback for 
 // a recent exchange" page?  After this # of days they will be
@@ -297,14 +313,8 @@ if (PEAR_PATH != "")
 	ini_set("include_path", PEAR_PATH .'/' . PATH_SEPARATOR . ini_get("include_path"));
 
 
-if (DEFAULT_COUNTRY == "United Kingdom" && DEFAULT_COUNTRY=='London') {
-    define ("ADDRESS_LINE_1", "Street address");
-    define ("ADDRESS_LINE_2", "Neighbourhood");
-    define ("ADDRESS_LINE_3", "Borough");
-	define ("STATE_TEXT", "City");
-	define ("ZIP_TEXT", "Postcode");
-}
-else if (DEFAULT_COUNTRY == "United States") {
+
+if (DEFAULT_COUNTRY == "United States") {
     define ("ADDRESS_LINE_1", "Address Line 1");
     define ("ADDRESS_LINE_2", "Address Line 2");
     define ("ADDRESS_LINE_3", "City");
@@ -315,16 +325,19 @@ else if (DEFAULT_COUNTRY == "United States") {
 else if (DEFAULT_COUNTRY == "United Kingdom") {
     define ("ADDRESS_LINE_1", "Street address");
     define ("ADDRESS_LINE_2", "Neighbourhood");
-    define ("ADDRESS_LINE_3", "Town");
+    define ("ADDRESS_LINE_3", "Town or City");
 	define ("ZIP_TEXT", "Postcode");
 	define ("STATE_TEXT", "County");
 }
 
-
+//CT: don't log deprecated errors - far too many of them! todd:fix
 if (DEBUG) error_reporting(E_ALL);
-	else error_reporting(E_ALL ^ E_NOTICE);
+else error_reporting(E_ALL  & ~E_DEPRECATED);
 
 define("LOAD_FROM_SESSION",-1);  // Not currently in use
 
 // URL to PHP page which handles redirects and such.
 define ("REDIRECT_URL",SERVER_PATH_URL."/redirect.php");
+
+//CT: put in form
+define ("MEM_LIST_DISPLAY_EMAIL", true);

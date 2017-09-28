@@ -26,32 +26,19 @@ else if ($pg["permission"]==1) // Members
 	$cUser->MustBeLoggedOn();
 
 $p->site_section = SECTION_INFO;
-
-if ($_REQUEST["printer_view"]!=1 || !$cUser->IsLoggedOn()) { 
-	print $p->MakePageHeader();
-	print $p->MakePageMenu();
-}
-else {
-	
-	print '<head><link rel="stylesheet" href="http://'. HTTP_BASE .'/print.css" type="text/css"></link></head>';
-}
-	
-if (!$pg) {
-	$p->page_title = "Oops, you have requested a non-existant page.";
-	print $p->MakePageTitle();
-
-}
-else {
+//CT show page
+if($pg){
 	$p->page_title = stripslashes($pg["title"]);
-	
-	if ($cUser->member_role>0)
-		$p->page_title .= ' <br><font size=1><a href=do_info_edit.php?id='.$_REQUEST["id"].'>[Edit]</a></font>';
-	
-	print $p->MakePageTitle();
-	print stripslashes($pg["body"]);
-}
+	if ($cUser->member_role>0){
+		$p->page_content .= '<div class=\"edit\"><a href=do_info_edit.php?id='.$_REQUEST["id"].'>[Edit]</a></div>';
+	}
+	$p->page_content .= stripslashes($pg["body"]);
+}else{
+	$p->page_title = "The page you requested does not exist.";
+	$p->AddError("Page with ID " . $_REQUEST["id"] . " does not exist");
 
-if ($_REQUEST["printer_view"]!=1 || $cUser->member_role<1) { 
-	print $p->MakePageFooter();
+
 }
+$p->DisplayPage();
+
 ?>

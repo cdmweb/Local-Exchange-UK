@@ -2,64 +2,39 @@
 
 class cPerson
 {
-	var $person_id;			
-	var $member_id;
-	var $primary_member;
-	var $directory_list;
-	var $first_name;
-	var $last_name;
-	var $mid_name;
-	var $dob;
-	var $mother_mn;
-	var $email;
-	var $phone1_area;
-	var $phone1_number;
-	var $phone1_ext;
-	var $phone2_area;
-	var $phone2_number;
-	var $phone2_ext;
-	var $fax_area;
-	var $fax_number;
-	var $fax_ext;
-	var $address_street1;
-	var $address_street2;
-	var $address_city;
-	var $address_state_code;
-	var $address_post_code;
-	var $address_country;
+	public $person_id;			
+	public $member_id;
+	public $primary_member;
+	public $directory_list;
+	public $first_name;
+	public $last_name;
+	public $mid_name;
+	public $dob;
+	public $mother_mn;
+	public $email;
+	public $phone1_area;
+	public $phone1_number;
+	public $phone1_ext;
+	public $phone2_area;
+	public $phone2_number;
+	public $phone2_ext;
+	public $fax_area;
+	public $fax_number;
+	public $fax_ext;
+	public $address_street1;
+	public $address_street2;
+	public $address_city;
+	public $address_state_code;
+	public $address_post_code;
+	public $address_country;
+	public $age;
+	public $sex;
+	public $about_me;
 
 	function cPerson($values=null) {
 		if($values) {
-			$this->member_id = $values['member_id'];
-			$this->primary_member = $values['primary_member'];
-			$this->directory_list = $values['directory_list'];
-			$this->first_name = $values['first_name'];
-			$this->last_name = $values['last_name'];
-			$this->mid_name = $values['mid_name'];
-			$this->dob = $values['dob'];
-			$this->mother_mn = $values['mother_mn'];
-			$this->email = $values['email'];
-			$this->phone1_area = $values['phone1_area'];
-			$this->phone1_number = $values['phone1_number'];
-			$this->phone1_ext = $values['phone1_ext'];
-			$this->phone2_area = $values['phone2_area'];
-			$this->phone2_number = $values['phone2_number'];
-			$this->phone2_ext = $values['phone2_ext'];
-			$this->fax_area = $values['fax_area'];
-			$this->fax_number = $values['fax_number'];
-			$this->fax_ext = $values['fax_ext'];
-			$this->address_street1 = $values['address_street1'];
-			$this->address_street2 = $values['address_street2'];
-			$this->address_city = $values['address_city'];
-			$this->address_state_code = $values['address_state_code'];
-			$this->address_post_code = $values['address_post_code'];
-			$this->address_country = $values['address_country'];			
-			
-			/*[chris] store the social networking vars */
-				$this->age = $values['age'];
-				$this->sex = $values['sex'];
-				$this->about_me = $values['about_me'];
-		
+			//CT: using proper constructor to avoid duplication
+			$this->SetPerson($values);	
 		}
 	}
 
@@ -99,44 +74,586 @@ class cPerson
 		
 		if($row = mysql_fetch_array($query))
 		{
-			$this->person_id=$who;	
-			$this->member_id=$row[0];
-			$this->primary_member=$row[1];
-			$this->directory_list=$row[2];
-			$this->first_name=$cDB->UnEscTxt($row[3]);
-			$this->last_name=$cDB->UnEscTxt($row[4]);
-			$this->mid_name=$cDB->UnEscTxt($row[5]);
-			$this->dob=$row[6];
-			$this->mother_mn=$cDB->UnEscTxt($row[7]);
-			$this->email=$row[8];
-			$this->phone1_area=$row[9];
-			$this->phone1_number=$row[10];
-			$this->phone1_ext=$row[11];
-			$this->phone2_area=$row[12];
-			$this->phone2_number=$row[13];
-			$this->phone2_ext=$row[14];
-			$this->fax_area=$row[15];
-			$this->fax_number=$row[16];
-			$this->fax_ext=$row[17];
-			$this->address_street1=$cDB->UnEscTxt($row[18]);
-			$this->address_street2=$cDB->UnEscTxt($row[19]);
-			$this->address_city=$row[20];
-			$this->address_state_code=$row[21];
-			$this->address_post_code=$row[22];
-			$this->address_country=$row[23];		
-			
-			/*[chris]*/
-			
-			$this->about_me=$row[24];
-			$this->age=$row[25];
-			$this->sex=$row[26];		
+			//pass it on
+			$this->SetPerson($row);		
 		}
 		else 
 		{
 			$cErr->Error("There was an error accessing this person (".$who.").  Please try again later.");
 			include("redirect.php");
 		}		
-	}		
+	}
+	//CT: should there be a getter too for full object?
+	public function SetPerson($array)
+    {
+    	//CT grabs values directly out of full result array passed to it. you can pass a partial set, as long as you respect name of members of array
+    	//$this->person = array();
+
+		$this->setMemberId($array['member_id']);
+		$this->setPrimaryMember($array['primary_member']);
+		$this->setDirectoryList($array['directory_list']);
+		$this->setFirstName($array['first_name']);
+		$this->setLastName($array['last_name']);
+		$this->setMidName($array['mid_name']);
+		$this->setDob($array['dob']);
+		$this->setMotherMn($array['mother_mn']);
+		$this->setPhone1Area($array['phone1_area']);
+		$this->setPhone1Number($array['phone1_number']);
+		$this->setPhone1Ext($array['phone1_ext']);
+		$this->setPhone2Area($array['phone2_area']);
+		$this->setPhone2Number($array['phone2_number']);
+		$this->setPhone2Ext($array['phone2_ext']);
+		$this->setFaxArea($array['fax_area']);
+		$this->setFaxNumber($array['fax_number']);
+		$this->setPhone2Ext($array['fax_ext']);
+		$this->setAddressStreet1($array['address_street1']);
+		$this->setAddressStreet2($array['address_street2']);
+		$this->setAddressCity($array['address_city']);
+		$this->setAddressStateCode($array['address_state_code']);
+		$this->setAddressPostCode($array['address_post_code']);
+		$this->setAddressCountry($array['address_country']);
+		// CT Chris's social vars
+		$this->setAge($array['age']);
+		$this->setSex($array['sex']);
+		$this->setAboutMe($array['about_me']);
+
+    }
+
+	/**
+     * @return mixed
+     */
+    public function getPersonId()
+    {
+        return $this->person_id;
+    }
+
+    /**
+     * @param mixed $person_id
+     *
+     * @return self
+     */
+    public function setPersonId($person_id)
+    {
+        $this->person_id = $person_id;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMemberId()
+    {
+        return $this->member_id;
+    }
+
+    /**
+     * @param mixed $member_id
+     *
+     * @return self
+     */
+    public function setMemberId($member_id)
+    {
+        $this->member_id = $member_id;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPrimaryMember()
+    {
+        return $this->primary_member;
+    }
+
+    /**
+     * @param mixed $primary_member
+     *
+     * @return self
+     */
+    public function setPrimaryMember($primary_member)
+    {
+        $this->primary_member = $primary_member;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDirectoryList()
+    {
+        return $this->directory_list;
+    }
+
+    /**
+     * @param mixed $directory_list
+     *
+     * @return self
+     */
+    public function setDirectoryList($directory_list)
+    {
+        $this->directory_list = $directory_list;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFirstName()
+    {
+        return $this->first_name;
+    }
+
+    /**
+     * @param mixed $first_name
+     *
+     * @return self
+     */
+    public function setFirstName($first_name)
+    {
+        $this->first_name = $first_name;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLastName()
+    {
+        return $this->last_name;
+    }
+
+    /**
+     * @param mixed $last_name
+     *
+     * @return self
+     */
+    public function setLastName($last_name)
+    {
+        $this->last_name = $last_name;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMidName()
+    {
+        return $this->mid_name;
+    }
+
+    /**
+     * @param mixed $mid_name
+     *
+     * @return self
+     */
+    public function setMidName($mid_name)
+    {
+        $this->mid_name = $mid_name;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDob()
+    {
+        return $this->dob;
+    }
+
+    /**
+     * @param mixed $dob
+     *
+     * @return self
+     */
+    public function setDob($dob)
+    {
+        $this->dob = $dob;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMotherMn()
+    {
+        return $this->mother_mn;
+    }
+
+    /**
+     * @param mixed $mother_mn
+     *
+     * @return self
+     */
+    public function setMotherMn($mother_mn)
+    {
+        $this->mother_mn = $mother_mn;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    /**
+     * @param mixed $email
+     *
+     * @return self
+     */
+    public function setEmail($email)
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhone1Area()
+    {
+        return $this->phone1_area;
+    }
+
+    /**
+     * @param mixed $phone1_area
+     *
+     * @return self
+     */
+    public function setPhone1Area($phone1_area)
+    {
+        $this->phone1_area = $phone1_area;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhone1Number()
+    {
+        return $this->phone1_number;
+    }
+
+    /**
+     * @param mixed $phone1_number
+     *
+     * @return self
+     */
+    public function setPhone1Number($phone1_number)
+    {
+        $this->phone1_number = $phone1_number;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhone1Ext()
+    {
+        return $this->phone1_ext;
+    }
+
+    /**
+     * @param mixed $phone1_ext
+     *
+     * @return self
+     */
+    public function setPhone1Ext($phone1_ext)
+    {
+        $this->phone1_ext = $phone1_ext;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhone2Area()
+    {
+        return $this->phone2_area;
+    }
+
+    /**
+     * @param mixed $phone2_area
+     *
+     * @return self
+     */
+    public function setPhone2Area($phone2_area)
+    {
+        $this->phone2_area = $phone2_area;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhone2Number()
+    {
+        return $this->phone2_number;
+    }
+
+    /**
+     * @param mixed $phone2_number
+     *
+     * @return self
+     */
+    public function setPhone2Number($phone2_number)
+    {
+        $this->phone2_number = $phone2_number;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhone2Ext()
+    {
+        return $this->phone2_ext;
+    }
+
+    /**
+     * @param mixed $phone2_ext
+     *
+     * @return self
+     */
+    public function setPhone2Ext($phone2_ext)
+    {
+        $this->phone2_ext = $phone2_ext;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFaxArea()
+    {
+        return $this->fax_area;
+    }
+
+    /**
+     * @param mixed $fax_area
+     *
+     * @return self
+     */
+    public function setFaxArea($fax_area)
+    {
+        $this->fax_area = $fax_area;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFaxNumber()
+    {
+        return $this->fax_number;
+    }
+
+    /**
+     * @param mixed $fax_number
+     *
+     * @return self
+     */
+    public function setFaxNumber($fax_number)
+    {
+        $this->fax_number = $fax_number;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFaxExt()
+    {
+        return $this->fax_ext;
+    }
+
+    /**
+     * @param mixed $fax_ext
+     *
+     * @return self
+     */
+    public function setFaxExt($fax_ext)
+    {
+        $this->fax_ext = $fax_ext;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAddressStreet1()
+    {
+        return $this->address_street1;
+    }
+
+    /**
+     * @param mixed $address_street1
+     *
+     * @return self
+     */
+    public function setAddressStreet1($address_street1)
+    {
+        $this->address_street1 = $address_street1;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAddressStreet2()
+    {
+        return $this->address_street2;
+    }
+
+    /**
+     * @param mixed $address_street2
+     *
+     * @return self
+     */
+    public function setAddressStreet2($address_street2)
+    {
+        $this->address_street2 = $address_street2;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAddressCity()
+    {
+        return $this->address_city;
+    }
+
+    /**
+     * @param mixed $address_city
+     *
+     * @return self
+     */
+    public function setAddressCity($address_city)
+    {
+        $this->address_city = $address_city;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAddressStateCode()
+    {
+        return $this->address_state_code;
+    }
+
+    /**
+     * @param mixed $address_state_code
+     *
+     * @return self
+     */
+    public function setAddressStateCode($address_state_code)
+    {
+        $this->address_state_code = $address_state_code;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAddressPostCode()
+    {
+        return $this->address_post_code;
+    }
+
+    /**
+     * @param mixed $address_post_code
+     *
+     * @return self
+     */
+    public function setAddressPostCode($address_post_code)
+    {
+        $this->address_post_code = $address_post_code;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAddressCountry()
+    {
+        return $this->address_country;
+    }
+
+    /**
+     * @param mixed $address_country
+     *
+     * @return self
+     */
+    public function setAddressCountry($address_country)
+    {
+        $this->address_country = $address_country;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $address_country
+     *
+     * @return self
+     */
+    public function setAge($age)
+    {
+        $this->age = $age;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $address_country
+     *
+     * @return self
+     */
+    public function setSex($sex)
+    {
+        $this->sex = $sex;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $address_country
+     *
+     * @return self
+     */
+    public function setAboutMe($about_me)
+    {
+        $this->about_me = $about_me;
+
+        return $this;
+    }		
 	
 	function DeletePerson() {
 		global $cDB, $cErr;
@@ -310,6 +827,10 @@ class cPhone_uk {
 	function SevenDigits() {
 		return $this->number;
 	}
+
+    
+
+    
 }
 
 ?>

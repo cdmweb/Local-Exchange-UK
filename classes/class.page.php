@@ -8,12 +8,15 @@ if (!isset($global))
 class cPage {
 	var $page_title;
 	var $page_title_image; // Filename, no path
+	var $page_content; // Filename, no path
 	var $page_header;	// HTML
 	var $page_footer;	// HTML
 	var $keywords;		
 	var $site_section;
 	var $sidebar_buttons; 	// An array of cMenuItem objects
-	var $top_buttons;			// An array of cMenuItem objects    TODO: Implement top buttons...
+	var $top_buttons;		// An array of cMenuItem objects    TODO: Implement top buttons...
+	var $errors;			// array. CT: added for debugging. todo - show for admin only? array.
+	var $page_msg;			// CT: todo - show actions completed and other messages?
 
 	function cPage() {
 		global $cUser, $SIDEBAR;
@@ -42,32 +45,38 @@ class cPage {
 		global $cUser;
 		
 		if(isset($this->page_title)) 
-			$title = " - ". $this->page_title;
+			$title = $this->page_title . ": ";
 		else
 			$title = "";
 		
-		$output = '<HTML><HEAD><link rel="stylesheet" href="http://'. HTTP_BASE .'/'. SITE_STYLESHEET .'" type="text/css"></link><META HTTP-EQUIV="Content-Type" CONTENT="text/html;CHARSET=iso-8859-1"><meta name="description" content="'.$this->page_title.'"><meta NAME="keywords" content="'. $this->keywords .'"><TITLE>'. PAGE_TITLE_HEADER . $title .'</TITLE></HEAD><BODY>';
-		
-		//$output .= "<HTML><BODY>";
-		//$output .= $this->page_header.$cUser->UserLoginLogout()."</h1></td></tr>";
+		$output = "<!DOCTYPE HTML>
+		<html>
+		<head>
+		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
+		<meta name='viewport' content='user-scalable=yes'/>
+		<title>". $title . PAGE_TITLE_HEADER ."</title>
+		<link rel='stylesheet' href='http://". HTTP_BASE ."/". SITE_STYLESHEET ."'' type='text/css'></link>";
+		$output .= "<body><div class=\"page\">";
 		$output .= $this->page_header ;
+
 	
 		return $output;
 	}
-
+	//CT: simple adding of errors
+	function AddError($error){
+		$this->errors[] = $error;
+	}
 	function MakePageMenu() {
 		global $cUser, $cSite, $cErr;
 	
-		$output = "<tr><td valign=top id=\"sidebar\"><ul>";
+		$output = "<div class=\"sidebar\"><ul class=\"menu\">";
 	
 		foreach ($this->sidebar_buttons as $menu_item) {
 			$output .= $menu_item->DisplayButton();
 		}
 	
         $output .= "<li>" . $cUser->UserLoginLogout() . "</li>";
-		$output .= "</ul><p>&nbsp;</p></td>";
-		$output .= "<TD id=\"maincontent\" valign=top>".$cErr->ErrorBox();
-	
+		$output .= "</ul></div>";
 		return $output;
 	}
 
@@ -79,48 +88,63 @@ class cPage {
 		} else {
 			if (!isset($this->page_title_image))
 				$this->page_title_image = $SECTIONS[$this->site_section][2];
-				
-			return '<H2><IMG SRC="http://'. IMAGES_PATH . $this->page_title_image .'" align=middle>'. $this->page_title .'</H2><P>';
+			return "<h2>$this->page_title</h2>";
+			//CT: style choice - removing the image mucks with alignment of text/titles	
+			//return '<H2><IMG SRC="http://'. IMAGES_PATH . $this->page_title_image .'" align=middle>'. $this->page_title .'</H2><P>';
 		}		
 	}
 									
 	function MakePageFooter() {
-		
 		global $cUser;
-		
-		if ($cUser->IsLoggedOn()) {
-		$tmp .= "</td></tr><tr><td id=\"footer\" colspan=2><p align=center>
-			<a href=".$_SERVER["PHP_SELF"]."?printer_view=1&".$_SERVER["QUERY_STRING"]." target=_blank><img src=http://".IMAGES_PATH ."print.gif border=0><br><font size=1>Printer Friendly View</font></a>";
-		}
-		
-		$tmp .= "</TD></TR>". $this->page_footer ."";
-	
-		$tmp .= "</BODY></HTML>";
-		
-		return $tmp;
+		$output .= "<div class=\"footer\">";
+		$output .= $this->page_footer ."</div></div>";
+		$output .= "</body></html>";
+		return $output;
 	}	
-			
-	function DisplayPage($content = "") {
+	function MakePageContent() {
+		//global $cUser;
+		if(strlen($this->page_content)<1) { 
+			// set error message - something is wrong!
+			$this->AddError('No page content set');
+			$this->page_content = "Nothing to show.";
+		}
+		$output .= "<div class=\"content\">";
+		$output .= $this->MakePageTitle();
+		//$output .= $cError;
+		$output .= $this->MakeErrorContent();
+		//$output .= $content;
+		$output .= $this->page_content ."</div>";
+		return $output;
+	}
+	function MakeErrorContent() {
+		//global $cUser;
+		global $cErr;
+		//CT: fix this. append errors sent by old system to show both
+		//$this->errors=array_merge($this->errors,$cErr->arrErrors);
+		//$this->errors=array_merge($this->errors,$cErr->arrErrors);
+		//$this->AddError("test");
+		if(count($cErr->arrErrors)<1) return "";
+		$output = "<div class=\"errors\"><p>Messages:</p><ul>";
+		//var_dump
+		foreach ($cErr->arrErrors as $error) {
+			$output .= '<li>'. $error[1] . "</li>";
+		}
+		$output .= "</ul></div>";
+		return $output;
+	}	
+	//CT: transitional functin - should be backwards compativle.		
+	function DisplayPage($content="") {
 		global $cErr, $cUser;
-		if ($content=="")
-			$cErr->Error("DisplayPage() was called with no content included!  Was a blank page intended?",ERROR_SEVERITY_HIGH,__FILE__,__LINE__);
-		
-		if ($_REQUEST["printer_view"]!=1 || !$cUser->IsLoggedOn()) { 
-			print $this->MakePageHeader();
-			print $this->MakePageMenu();	
-		}
-		else {
-	
-			print '<head><link rel="stylesheet" href="http://'. HTTP_BASE .'/print.css" 				type="text/css"></link></head>';
-		}
-		
-		print $this->MakePageTitle();
-		
-		print $content;
-		
-		if ($_REQUEST["printer_view"]!=1 || !$cUser->IsLoggedOn()) { 
-			print $this->MakePageFooter();
-		}
+
+		if(strlen($content)>0) $this->page_content = $content;
+		//print "cnte" . $p->page_content;
+		$output = $this->MakePageHeader();
+		$output .= "<div class=\"main\">";
+		$output .= $this->MakePageMenu();
+		$output .= $this->MakePageContent();
+		$output .= "</div>";
+		$output .= $this->MakePageFooter();
+		print $output;
 	}	
 	
 	
@@ -136,7 +160,7 @@ class cMenuItem {
 	}
 	
 	function DisplayButton() {
-		return "<li><div align=left><a href=\"http://". HTTP_BASE ."/". $this->url ."\">". $this->button_text ."</a></div></li>";
+		return "<li><a href=\"http://". HTTP_BASE ."/". $this->url ."\">". $this->button_text ."</a></li>";
 
         // The following is for url-based sessions.
 //		return "<li><div align=left><a href=\"" . $this->url ."\">". $this->button_text ."</a></div></li>";
