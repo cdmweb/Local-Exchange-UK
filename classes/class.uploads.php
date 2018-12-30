@@ -73,6 +73,22 @@ class cUpload {
 		}
 		
 	}
+	function ConstructUpload ($row) {
+		global $cDB, $cErr;
+			
+		
+		$this->upload_id = $row['upload_id'];
+		$this->upload_date = new cDateTime($row['upload_date']);
+		//$this->upload_date = $row['upload_date'];
+		$this->type = $row['type'];		
+		$this->type_text = $row['type_text'];		
+		$this->title = $row['title'];
+		$this->filename = $row['filename'];
+		$this->note = $cDB->UnEscTxt($row['name']);
+		return true;
+
+		
+	}
 
 	function DeleteUpload () {
 		global $cDB, $cErr;
@@ -95,7 +111,7 @@ class cUpload {
 		if($text == null)
 			$text = $this->title;
 		// RF: changed to open file in uploads in new window	
-		return '<A HREF="uploads/'. $this->filename .'" target="_blank">'. $text .'</A>';
+		return "<a href='uploads/{$this->filename}' target='_blank'>{$text}</a>";
 	}
 }
 
@@ -116,6 +132,51 @@ class cUploadGroup {
 		while($row = mysql_fetch_array($query)) {
 			$this->uploads[$i] = new cUpload;			
 			$this->uploads[$i]->LoadUpload($row[0]);
+			$i += 1;
+		}
+
+		if($i == 0)
+			return false;
+		else
+			return true;
+	}
+	
+
+}
+class cUploadGroupCT extends cUploadGroup {
+	
+	function cUploadGroup($type="") {
+		$this->type = $type;
+		//$this->LoadUploadGroup();
+	}
+	
+	function LoadUploadGroup () {
+		global $cDB, $cErr;
+		if (!empty($this->type))
+		{ 
+			$typeText = "WHERE type={$cDB->EscTxt($this->type)} ";
+		} 
+		else
+		{
+			$typeText = "";
+		}
+		//CT TODO: put somewhere. database, like categories?
+		/*
+			N=newsletters
+			P=member photos
+			I=images
+			L=legal documents
+			F=forms
+			C=Calendar
+
+		*/
+		$query = $cDB->Query("SELECT upload_id, upload_date, title, type, (case WHEN type='N' THEN 'Newsletters' WHEN type='P' THEN 'Member Photos' WHEN type='I' THEN 'Images' WHEN type='L' THEN 'Legal documents' WHEN type='F' THEN 'Forms' WHEN type='C' THEN 'Calendars' WHEN type='A' THEN 'Account reports' ELSE 'Unknown' END) as type_text, filename, note FROM ".DATABASE_UPLOADS." {$typeText} ORDER BY type, upload_date DESC;");
+		
+		
+		$i = 0;				
+		while($row = mysql_fetch_array($query)) {
+			$this->uploads[$i] = new cUpload;			
+			$this->uploads[$i]->ConstructUpload ($row);
 			$i += 1;
 		}
 

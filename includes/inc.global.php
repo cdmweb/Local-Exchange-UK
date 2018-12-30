@@ -120,20 +120,10 @@ if(DOWN_FOR_MAINTENANCE and !$running_upgrade_script) {
 
 // [chris] Uncomment this line to surpress non-fatal Warning and Notice errors
 //error_reporting(E_ALL &~ (E_NOTICE | E_WARNING));	
-//CT: todo - put somewhere better 
+//CT: todo - put somewhere better. create site class
 function showMessage($msg){
 	echo "<p>" . $msg . "</p>";
 }
-//CT: listing member stuff outside of member object
-function safePostcode($zip){
-	if (DEFAULT_COUNTRY == "United Kingdom"){
-		$postParts = preg_split("([ -/_])", $zip);
-		$zip = $postParts[0];
-		// CT: hack. just in case postcode has been put in without spaces or other dividers
-		if (strlen($zip) > 4) {
-			$zip = substr($zip, 0, 3);
-		}
-	} 
-	return $zip;
-}
+
+
 ?>

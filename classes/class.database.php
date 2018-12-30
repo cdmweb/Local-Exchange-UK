@@ -47,13 +47,24 @@ class cDatabase
 			$this->Connect();
 
 		$ret = mysql_query($thequery);
+
+		//CT: why is this not a resource?
+		//echo(gettype($ret));
+		if(gettype($ret) == "resource") {
+			//ct debug
+			$cErr->Error("Q: " . $thequery . ". R: " . mysql_num_rows($ret));
+		} else{
+			$cErr->Error("Q: " . $thequery . ". R: not a resource");
+			//return false;
+		}
+
+		return $ret;
 		//CT: uncomment when finishing demo
-		$cErr->Error("Q: " . $thequery . ". R: " . mysql_num_rows($ret));
 
 //		       or die ("Query failed: ".mysql_errno() . ": " . mysql_error()); // TODO: fix error messages
 		//$this->Disconnect();
 		//showMessage($this->NumRows($ret));
-		return $ret;
+		
 	}
 
 	function NumRows($thequery)
@@ -119,7 +130,7 @@ class cDatabase
 			$var = str_replace(array('javascript:','<script>','< script','</script'),' ',$var);
 		}
 		
-		if ($cUser->member_role>=HTML_PERMISSION_LEVEL) // User has free reign to submit any and all HTML
+		if ($cUser->getMemberRole()>=HTML_PERMISSION_LEVEL) // User has free reign to submit any and all HTML
 			return $var;
 
 		// This next bit is messy but ProcessHTMLTag works on the assumption of a 2-dimensional array so we have to convert our existing 1-dimensional array
@@ -135,7 +146,9 @@ class cDatabase
 		}
 	
 		// Screen all the tags in this $var
+		//CT: need to replace - not sure how yet
 		$var = preg_replace("/<(.*?)>/e","cDatabase::ProcessHTMLTag(StripSlashes('\\1'), \$allow)",$var);
+		//$var = preg_replace_callback("/<(.*?)>/e","cDatabase::ProcessHTMLTag(StripSlashes('\\1'), \$allow)",$var);
 			
 		return $var;
 	}
@@ -209,7 +222,7 @@ class cDatabase
                 $text = stripslashes($text);
             }
 
-            return "'" . mysql_escape_string($text) . "'";
+            return "'" . mysql_real_escape_string($text) . "'";
         } else if(is_numeric($text)) {
             return "'$text'";
         } else {
@@ -224,7 +237,7 @@ class cDatabase
                 $text = stripslashes($text);
             }
 
-            return "='" . mysql_escape_string($text) . "'";
+            return "='" . mysql_real_escape_string($text) . "'";
         } else if(is_numeric($text)) {
             return "='$text'";
         } else {

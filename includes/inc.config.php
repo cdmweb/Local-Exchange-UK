@@ -16,14 +16,14 @@ if (file_exists("upgrade.php") && $running_upgrade_script!=true) {
 /******************* SITE LOCATIONS ***********************/
  
 // What is the domain name of the site?  
-define ("SERVER_DOMAIN","");	// no http://
+define ("SERVER_DOMAIN","localhost:8888");	// no http://
 
 // What is the path to the site? This is null for many sites.
-define ("SERVER_PATH_URL","");	// no ending slash
+define ("SERVER_PATH_URL","/members");	// no ending slash
 
 // The following only needs to be set if Pear has been
 // installed manually by downloading the files
-define ("PEAR_PATH", ""); // no ending slash
+define ("PEAR_PATH", "/Applications/MAMP/PEAR"); // no ending slash
 
 // Ok, then lets define some paths (no need to edit these)
 define ("HTTP_BASE",SERVER_DOMAIN.SERVER_PATH_URL);
@@ -36,23 +36,21 @@ define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
 /**********************************************************/
 /***************** DATABASE LOGIN  ************************/
 
-define ("DATABASE_USERNAME","");
-define ("DATABASE_PASSWORD","");
+define ("DATABASE_USERNAME","clarat2_leuser");
+define ("DATABASE_PASSWORD","05dbI?uWkWBy");
+//define ("DATABASE_NAME","clarat2_localexchange");
 // local localexchange-1.02;
-define ("DATABASE_NAME","");
-define ("DATABASE_SERVER",""); // often "localhost"
+define ("DATABASE_NAME","localexchange-1.02");
+define ("DATABASE_SERVER","localhost:8889/"); // often "localhost"
 
 /**********************************************************/
 /********************* SITE NAMES *************************/
 
 // What is the name of the site?
-define ("SITE_LONG_TITLE", "Local Exchange and Trading Scheme");
+define ("SITE_LONG_TITLE", "CamLETS Local Exchange and Trading Scheme");
 
 // What is the short, friendly, name of the site?
-define ("SITE_SHORT_TITLE", "LocalExchange");
-
-//CT: Motto for header
-define ("SITE_MOTTO", "Trade without money");
+define ("SITE_SHORT_TITLE", "CamLETS");
 
 /**********************************************************/
 /***************** FOR MAINTENANCE ************************/
@@ -113,9 +111,9 @@ define("SEARCHABLE_MEMBERS_LIST",true);
 /******************** SITE CUSTOMIZATION **********************/
 
 // email addresses & phone number to be listed in the site
-define ("EMAIL_FEATURE_REQUEST","admin@example.org"); // (is this actually used anywhere???)
+define ("EMAIL_FEATURE_REQUEST","admin@camlets.org.uk"); // (is this actually used anywhere???)
 //define ("EMAIL_NOREPLY","admin@camlets.org.uk");
-define ("EMAIL_ADMIN","admin@example.org");
+define ("EMAIL_ADMIN","admin@camlets.org.uk");
 
 define ("PHONE_ADMIN","360-321-1234"); // an email address may be substituted...
 
@@ -128,7 +126,7 @@ define ("PAGE_TITLE_HEADER", SITE_SHORT_TITLE);
 define ("SITE_KEYWORDS", "local currency,mutual credit,lets,exchange,". SITE_LONG_TITLE ."");
 
 // Logo Graphic for Header
-define ("HEADER_LOGO", "localx_logo.png");
+define ("HEADER_LOGO", "mosaic-110.jpg");
 
 // Title Graphic for Header
 define ("HEADER_TITLE", "localx_title.png");
@@ -142,24 +140,18 @@ define ("HOME_PIC", "localx_home.png");
 // What content should be in the site header and footer?
 //CT: todo - make nice
 
-define ("PAGE_HEADER_CONTENT", "<div class=\"masthead\"><a href=\"index.php\" class=\"logo\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " \"></a><div class=\"title\"><h1><a href=\"index.php\">" .  SITE_SHORT_TITLE ."</a></h1><div class=\"motto\">" .  SITE_MOTTO ."</div></div></div>");
+define ("PAGE_HEADER_CONTENT", "<div class=\"masthead\"><a href=\"index.php\" class=\"logo\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " \"></a><div class=\"title\"><h1><a href=\"index.php\">" .  SITE_SHORT_TITLE ."</a></h1><div class=\"motto\">Cambridge's local exchange and trading scheme</div></div></div>");
 
 define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"". SERVER_PATH_URL ."\">". SITE_LONG_TITLE ." </strong><br />Licensed under the <a href=\"http://www.gnu.org/copyleft/gpl.html\">GPL</a> &#8226; Local Exchange UK Ver. ".LOCALX_VERSION." <a href=\"http://". SERVER_DOMAIN . SERVER_PATH_URL ."/info/credits.php\">Credits</a></p>");
 
-//CT: if you want recaptcha protection for public forms, download securimage (simple php recaptcha) 
-// from https://www.phpcaptcha.org/ to the /thirdparty directory, configure the inc.configure.
-// Set RECAPTCHA_VALIDATION to true to start using it.
-define ("RECAPTCHA_VALIDATION",true);
-define ("RECAPTCHA_SRC","vendor/securimage/");
 
-//CT: set to TRUE if you want error messages to show to administrators
 
 /**********************************************************/
 /**************** DEFINE SIDEBAR MENU *********************/
 
 $SIDEBAR = array (
 	array("Home","index.php"),
-	array("Information", "pages.php?id=7"), // 
+	array("Information", "pages.php?id=7"), // old style info pages
 // [CDM] uncomment line below to activate new style info pages 	
 //  array("Information","pages.php?id=1"),
 	array("News &amp; events","pages.php?id=84"),
@@ -243,10 +235,10 @@ define ("EXPIRED_LISTINGS_MESSAGE", "Hello,\n\nDue to inactivity, your ".SITE_SH
 define ("JOIN_YEAR_MINIMUM", "2005");  
 
 define ("DEFAULT_COUNTRY", "United Kingdom");
-define ("DEFAULT_ZIP_CODE", ""); // This is the postcode.
-define ("DEFAULT_CITY", "London");
-define ("DEFAULT_STATE", "London");
-define ("DEFAULT_PHONE_AREA", "020");
+define ("DEFAULT_ZIP_CODE", "CB1"); // This is the postcode.
+define ("DEFAULT_CITY", "Cambridge");
+define ("DEFAULT_STATE", "Cambridgeshire");
+define ("DEFAULT_PHONE_AREA", "01223");
 
 // Should short date formats display month before day (US convention)?
 define ("MONTH_FIRST", false);		
@@ -341,3 +333,21 @@ define ("REDIRECT_URL",SERVER_PATH_URL."/redirect.php");
 
 //CT: put in form
 define ("MEM_LIST_DISPLAY_EMAIL", true);
+//CT NEW - used in mysql date formats - should match convention of the locale
+//UK
+define ("SHORT_DATE_FORMAT", "%e/%c/%y");
+define ("LONG_DATE_FORMAT", "%c %M %Y");	
+
+/*
+//US
+define ("SHORT_DATE_FORMAT", "%c/%e/%y"); 	
+define ("LONG_DATE_FORMAT", "%M %e %Y");	
+*/
+//CT: if you want recaptcha protection for public forms, download securimage (simple php recaptcha) 
+// from https://www.phpcaptcha.org/ to the /thirdparty directory, configure the inc.configure.
+// Set RECAPTCHA_VALIDATION to true to start using it.
+define ("RECAPTCHA_VALIDATION",true);
+define ("RECAPTCHA_SRC","vendor/securimage/");
+
+//CT: set to TRUE if you want error messages to show to administrators
+

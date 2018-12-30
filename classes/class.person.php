@@ -2,43 +2,42 @@
 
 class cPerson
 {
-	public $person_id;			
-	public $member_id;
-	public $primary_member;
-	public $directory_list;
-	public $first_name;
-	public $last_name;
-	public $mid_name;
-	public $dob;
-	public $mother_mn;
-	public $email;
-	public $phone1_area;
-	public $phone1_number;
-	public $phone1_ext;
-	public $phone2_area;
-	public $phone2_number;
-	public $phone2_ext;
-	public $fax_area;
-	public $fax_number;
-	public $fax_ext;
-	public $address_street1;
-	public $address_street2;
-	public $address_city;
-	public $address_state_code;
-	public $address_post_code;
-	public $address_country;
-	public $age;
-	public $sex;
-	public $about_me;
+	private $person_id;			
+	private $member_id;
+	private $primary_member;
+	private $directory_list;
+	private $first_name;
+	private $last_name;
+	private $mid_name;
+	private $dob;
+	private $mother_mn;
+	private $email;
+	private $phone1_area;
+	private $phone1_number;
+	private $phone1_ext;
+	private $phone2_area;
+	private $phone2_number;
+	private $phone2_ext;
+	private $fax_area;
+	private $fax_number;
+	private $fax_ext;
+	private $address_street1;
+	private $address_street2;
+	private $address_city;
+	private $address_state_code;
+    private $address_post_code;
+    private $safe_post_code;
+	private $address_country;
+	private $age;
+	private $sex;
+	private $about_me;
 
-	function cPerson($values=null) {
-		if($values) {
-			//CT: using proper constructor to avoid duplication
-			$this->SetPerson($values);	
-		}
-	}
-
-	function SaveNewPerson() {
+    public function cPerson($values=null) {
+        if ($values) {
+            $this->ConstructPerson($values);
+        }
+    }
+	public function SaveNewPerson() {
 		global $cDB, $cErr;
 
 		$duplicate_exists = $cDB->Query("SELECT NULL FROM ".DATABASE_PERSONS." WHERE member_id=". $cDB->EscTxt($this->member_id) ." AND first_name". $cDB->EscTxt2($this->first_name) ." AND last_name". $cDB->EscTxt2($this->last_name) ." AND mother_mn". $cDB->EscTxt2($this->mother_mn) ." AND mid_name". $cDB->EscTxt2($this->mid_name) ." AND dob". $cDB->EscTxt2($this->dob) .";");
@@ -53,7 +52,7 @@ class cPerson
 		return $insert;
 	}
 			
-	function SavePerson() {
+	public function SavePerson() {
 		global $cDB, $cErr;
 		
 		/*[chris]*/ // Added store personal profile data
@@ -65,7 +64,7 @@ class cPerson
 		return $update;
 	}
 
-	function LoadPerson($who)
+	public function LoadPerson($who)
 	{
 		global $cDB, $cErr;
 		
@@ -75,7 +74,7 @@ class cPerson
 		if($row = mysql_fetch_array($query))
 		{
 			//pass it on
-			$this->SetPerson($row);		
+			$this->ConstructPerson($row);		
 		}
 		else 
 		{
@@ -83,39 +82,41 @@ class cPerson
 			include("redirect.php");
 		}		
 	}
-	//CT: should there be a getter too for full object?
-	public function SetPerson($array)
+	//CT: todo - fixit! should be __Construct
+	private function ConstructPerson($array=null) 
     {
-    	//CT grabs values directly out of full result array passed to it. you can pass a partial set, as long as you respect name of members of array
-    	//$this->person = array();
+    	//CT grabs values directly out of full result array passed to it. you can pass a partial set
 
-		$this->setMemberId($array['member_id']);
-		$this->setPrimaryMember($array['primary_member']);
-		$this->setDirectoryList($array['directory_list']);
-		$this->setFirstName($array['first_name']);
-		$this->setLastName($array['last_name']);
-		$this->setMidName($array['mid_name']);
-		$this->setDob($array['dob']);
-		$this->setMotherMn($array['mother_mn']);
-		$this->setPhone1Area($array['phone1_area']);
-		$this->setPhone1Number($array['phone1_number']);
-		$this->setPhone1Ext($array['phone1_ext']);
-		$this->setPhone2Area($array['phone2_area']);
-		$this->setPhone2Number($array['phone2_number']);
-		$this->setPhone2Ext($array['phone2_ext']);
-		$this->setFaxArea($array['fax_area']);
-		$this->setFaxNumber($array['fax_number']);
-		$this->setPhone2Ext($array['fax_ext']);
-		$this->setAddressStreet1($array['address_street1']);
-		$this->setAddressStreet2($array['address_street2']);
-		$this->setAddressCity($array['address_city']);
-		$this->setAddressStateCode($array['address_state_code']);
-		$this->setAddressPostCode($array['address_post_code']);
-		$this->setAddressCountry($array['address_country']);
-		// CT Chris's social vars
-		$this->setAge($array['age']);
-		$this->setSex($array['sex']);
-		$this->setAboutMe($array['about_me']);
+        $this->setPersonId($array['person_id']);
+        $this->setMemberId($array['member_id']);
+        $this->setPrimaryMember($array['primary_member']);
+        $this->setDirectoryList($array['directory_list']);
+        $this->setFirstName($array['first_name']);
+        $this->setLastName($array['last_name']);
+        $this->setMidName($array['mid_name']);
+        $this->setDob($array['dob']);
+        $this->setEmail($array['email']);
+        $this->setMotherMn($array['mother_mn']);
+        $this->setPhone1Area($array['phone1_area']);
+        $this->setPhone1Number($array['phone1_number']);
+        $this->setPhone1Ext($array['phone1_ext']);
+        $this->setPhone2Area($array['phone2_area']);
+        $this->setPhone2Number($array['phone2_number']);
+        $this->setPhone2Ext($array['phone2_ext']);
+        $this->setFaxArea($array['fax_area']);
+        $this->setFaxNumber($array['fax_number']);
+        $this->setPhone2Ext($array['fax_ext']);
+        $this->setAddressStreet1($array['address_street1']);
+        $this->setAddressStreet2($array['address_street2']);
+        $this->setAddressCity($array['address_city']);
+        $this->setAddressStateCode($array['address_state_code']);
+        $this->setAddressPostCode($array['address_post_code']);
+        $this->setSafePostCode($array['address_post_code']);
+        $this->setAddressCountry($array['address_country']);
+        // CT Chris's social vars
+        $this->setAge($array['age']);
+        $this->setSex($array['sex']);
+        $this->setAboutMe($array['about_me']);
 
     }
 
@@ -315,7 +316,6 @@ class cPerson
     public function setEmail($email)
     {
         $this->email = $email;
-
         return $this;
     }
 
@@ -598,6 +598,33 @@ class cPerson
 
         return $this;
     }
+    /**
+     * @return mixed
+     */
+    public function getSafePostCode()
+    {
+        return $this->safe_post_code;
+    }
+
+    /**
+     * @param mixed $address_post_code
+     *
+     * @return self
+     */
+    public function setSafePostCode($zip)
+    {
+        if (DEFAULT_COUNTRY == "United Kingdom"){
+            $postParts = preg_split("([ /-/_])", $zip);
+            $zip = $postParts[0];
+            // CT: hack. just in case postcode has been put in without spaces or other dividers
+            if (strlen($zip) > 4) {
+                $zip = substr($zip, 0, 3);
+            }
+        } 
+        $this->safe_post_code = $zip;
+
+        return $this;
+    }
 
     /**
      * @return mixed
@@ -619,6 +646,15 @@ class cPerson
         return $this;
     }
 
+
+    /**
+     * @return mixed
+     */
+    public function getAge()
+    {
+        return $this->age;
+    }
+
     /**
      * @param mixed $address_country
      *
@@ -627,8 +663,15 @@ class cPerson
     public function setAge($age)
     {
         $this->age = $age;
-
         return $this;
+    }
+
+   /**
+     * @return mixed
+     */
+    public function getSex()
+    {
+        return $this->sex;
     }
 
     /**
@@ -642,7 +685,13 @@ class cPerson
 
         return $this;
     }
-
+   /**
+     * @return mixed
+     */
+    public function getAboutMe()
+    {
+        return $this->about_me;
+    }
     /**
      * @param mixed $address_country
      *
@@ -670,7 +719,7 @@ class cPerson
 		if (mysql_affected_rows() == 1) {
 			return true;
 		} else {
-			$cErr->Error("Error deleting joint member.  Please try again later.");
+			$cErr->Error("Error deleting joint member.");
 		}
 		
 	}
@@ -693,41 +742,28 @@ class cPerson
 		switch ($type)
 		{
 			case "1":
-				$phone_area = $this->phone1_area;
-				$phone_number = $this->phone1_number;
-				$phone_ext = $this->phone1_ext;
+				$phone_area = $this->getPhone1Area();
+				$phone_number = $this->getPhone1Number();
+				$phone_ext = $this->getPhone1Ext();
 				break;
 			case "2":
-				$phone_area = $this->phone2_area;
-				$phone_number = $this->phone2_number;
-				$phone_ext = $this->phone2_ext;
+                $phone_area = $this->getPhone2Area();
+                $phone_number = $this->getPhone2Number();
+                $phone_ext = $this->getPhone2Ext();
 				break;
 			case "fax":
-				$phone_area = $this->fax_area;
-				$phone_number = $this->fax_number;
-				$phone_ext = $this->fax_ext;
+                $phone_area = $this->getFaxArea();
+                $phone_number = $this->getFaxNumber();
+                $phone_ext = $this->getFaxExt();
 				break;								
 			default:
 				$cErr->Error("Phone type does not exist.");
 				return "ERROR";
 		}
-/*		
-		if($phone_number != "") {
-			if($phone_area != "" and $phone_area != DEFAULT_PHONE_AREA)
-				$phone = "(". $phone_area .") ";
-			else
-				$phone = "";
-				
-			$phone .= substr($phone_number,0,3) ."-". substr($phone_number,3,4);
-			if($phone_ext !="")
-				$phone .= " Ext. ". $phone_ext;
-		} else {
-			$phone = "";
-		}
-*/
+
         $phone = $phone_number;
 		
-		return $phone;
+		return $phone_number;
 	}
 }
 
@@ -831,6 +867,43 @@ class cPhone_uk {
     
 
     
+}
+class cSecondPerson extends cPerson {
+    public function cSecondPerson($values=null) {
+        if ($values) {
+            $this->ConstructSecondPerson($values);
+        }
+    }
+  
+    private function ConstructSecondPerson($array=null) 
+    {
+        //CT grabs values directly out of full result array passed to it. you can pass a partial set
+        $this->setMemberId($array['member_id']);
+        $this->setPrimaryMember('N');
+        $this->setDirectoryList($array['p2_directory_list']);
+         $this->setPersonId($array['p2_person_id']);
+       $this->setFirstName($array['p2_first_name']);
+        $this->setLastName($array['p2_last_name']);
+        $this->setMidName($array['p2_mid_name']);
+        $this->setDob($array['p2_dob']);
+        $this->setEmail($array['p2_email']);
+        $this->setMotherMn($array['p2_mother_mn']);
+        $this->setPhone1Area($array['p2_phone1_area']);
+        $this->setPhone1Number($array['p2_phone1_number']);
+        $this->setPhone1Ext($array['p2_phone1_ext']);
+        $this->setPhone2Area($array['p2_phone2_area']);
+        $this->setPhone2Number($array['p2_phone2_number']);
+        $this->setPhone2Ext($array['p2_phone2_ext']);
+        $this->setFaxArea($array['p2_fax_area']);
+        $this->setFaxNumber($array['p2_fax_number']);
+        $this->setPhone2Ext($array['p2_fax_ext']);
+        $this->setDirectoryList($array['p2_directory_list']);
+        // CT Chris's social vars
+        $this->setAge($array['p2_age']);
+        $this->setSex($array['p2_sex']);
+        $this->setAboutMe($array['p2_about_me']);
+
+    }
 }
 
 ?>

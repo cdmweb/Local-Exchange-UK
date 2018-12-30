@@ -13,7 +13,7 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is editing a member's accou
 	$cUser->MustBeLevel(1);
 	$member = new cMember;
 	$member->LoadMember($_REQUEST["member_id"]);
-	$form->addElement("header", null, "Edit Member " . $member->person[0]->first_name . " " . $member->person[0]->last_name);
+	$form->addElement("header", null, "Edit Member " . $member->AllNames());
 
 	$form->addElement("html", "<TR></TR>");
 	$form->addElement("hidden","mode","admin");
@@ -40,7 +40,7 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is editing a member's accou
 	$cUser->MustBeLoggedOn();
 	$form->addElement("header", null, "Edit Personal Profile");
 	$form->addElement("html", "<TR></TR>");
-	$form->addElement("hidden","member_id", $cUser->member_id);
+	$form->addElement("hidden","member_id", $cUser->getMemberId());
 	$form->addElement("hidden","mode","self");
 	$update_text="How often would you like to receive email updates?";
 	$update2_text="Do you wish to confirm payments that are made to you?";
@@ -131,18 +131,37 @@ if ($form->validate()) { // Form is validated so processes the data
 	else {
 		$member = $cUser;
     }
-			
-	$current_values = array ("member_id"=>$member->member_id, "first_name"=>$member->person[0]->first_name, "mid_name"=>$member->person[0]->mid_name, "last_name"=>$member->person[0]->last_name, "email"=>$member->person[0]->email, "phone1"=>$member->person[0]->DisplayPhone(1), "phone2"=>$member->person[0]->DisplayPhone(2), "fax"=>$member->person[0]->DisplayPhone("fax"), "email_updates"=>$member->email_updates, "address_street1"=>$member->person[0]->address_street1, "address_street2"=>$member->person[0]->address_street2, "address_city"=>$member->person[0]->address_city, "address_state_code"=>$member->person[0]->address_state_code, "address_post_code"=>$member->person[0]->address_post_code, "address_country"=>$member->person[0]->address_country, "age"=>$member->person[0]->age, "sex"=>$member->person[0]->sex, "about_me"=>$member->person[0]->about_me,"confirm_payments"=>$member->confirm_payments);
-
+	$primaryPerson = $member->getPrimaryPerson();		
+	$current_values = array (
+		"member_id"=>$member->getMemberId(), 
+		"first_name"=>$primaryPerson->getFirstName(), 
+		"mid_name"=>$primaryPerson->getMidName(), 
+		"last_name"=>$primaryPerson->getLastName(), 
+		"email"=>$primaryPerson->getEmail(), 
+		"phone1"=>$primaryPerson->DisplayPhone(1), 
+		"phone2"=>$primaryPerson->DisplayPhone(2), 
+		"fax"=>$primaryPerson->DisplayPhone("fax"), 
+		"email_updates"=>$member->getEmailUpdates(), 
+		"address_street1"=>$primaryPerson->getAddressStreet1(), 
+		"address_street2"=>$primaryPerson->getAddressStreet2(), 
+		"address_city"=>$primaryPerson->getAddressCity(), 
+		"address_state_code"=>$primaryPerson->getAddressStateCode(), 
+		"address_post_code"=>$primaryPerson->getAddressPostCode(), 
+		"address_country"=>$primaryPerson->getAddressCountry(), 
+		"age"=>$primaryPerson->getAge(), 
+		"sex"=>$primaryPerson->getSex(), 
+		"about_me"=>$primaryPerson->getAboutMe(),
+		"confirm_payments"=>$member->getConfirmPayments()
+	);
 	// Load defaults for extra fields visible by administrators
 	if($_REQUEST["mode"] == "admin") {
         $cUser->MustBeLevel(1);
 
-		$current_values["member_role"] = $member->member_role;
-		$current_values["account_type"] = $member->account_type;
-		$current_values["admin_note"] = $member->admin_note;
-		$current_values["join_date"] = array ('d'=>substr($member->join_date,8,2),'F'=>date('n',strtotime($member->join_date)),'Y'=>substr($member->join_date,0,4));
-		$current_values["mother_mn"] = $member->person[0]->mother_mn;
+		$current_values["member_role"] = $member->getMemberRole();
+		$current_values["account_type"] = $member->getAccountType();
+		$current_values["admin_note"] = $member->getAdminNote();
+		$current_values["join_date"] = array ('d'=>substr($member->getJoinDate(),8,2),'F'=>date('n',strtotime($member->getJoinDate())),'Y'=>substr($member->getJoinDate(),0,4));
+		$current_values["mother_mn"] = $primaryPerson->getMotherMn();
 		
 		if ($member->person[0]->dob) {		
 			$current_values["dob"] = array ('d'=>substr($member->person[0]->dob,8,2),'F'=>date('n',strtotime($member->person[0]->dob)),'Y'=>substr($member->person[0]->dob,0,4));  // Using 'n' due to a bug in Quickform
@@ -179,10 +198,10 @@ function process_data ($values) {
 		
 		$member->confirm_payments = htmlspecialchars($values["confirm_payments"]);
 	
-		$member->member_role = htmlspecialchars($values["member_role"]);
-		$member->account_type = htmlspecialchars($values["account_type"]);
-		$member->admin_note = htmlspecialchars($values["admin_note"]);
-		$member->person[0]->mother_mn = htmlspecialchars($values["mother_mn"]);
+		$member->setMemberRole(htmlspecialchars($values["member_role"]));
+		$member->setAccountType(htmlspecialchars($values["account_type"]));
+		$member->setAdminNote(htmlspecialchars($values["admin_note"]));
+		$member->getPrimaryPerson()->setMotherMn(htmlspecialchars($values["mother_mn"]));
 		
 		// [chris] fixed problem with passing this ARRAY to htmlspecialchars()...
 		$date = $values['join_date'];
@@ -202,49 +221,41 @@ function process_data ($values) {
 			$member->person[0]->dob = $dob; 
 		} // if date left as default (today's date), we don't want to set it
 	} 
-
-	$member->confirm_payments = htmlspecialchars($values["confirm_payments"]);
+	$member->setConfirmPayments(htmlspecialchars($values["confirm_payments"]));
 	
     // TODO: Add ability to temporarily disable an account (vacation) or to
     // disable altogether (left 4th Corner).  Also add ability for user to add
     // a personal note.
-	$member->person[0]->first_name = htmlspecialchars($values["first_name"]);
-	$member->person[0]->mid_name = htmlspecialchars($values["mid_name"]);
-	$member->person[0]->last_name = htmlspecialchars($values["last_name"]);
-	$member->person[0]->email = htmlspecialchars($values["email"]);
-	$member->email_updates = htmlspecialchars($values["email_updates"]);
-	$member->person[0]->address_street1 =
-                                htmlspecialchars($values["address_street1"]);
-	$member->person[0]->address_street2 = 
-                                htmlspecialchars($values["address_street2"]);
-	$member->person[0]->address_city =
-                                htmlspecialchars($values["address_city"]);
-	$member->person[0]->address_state_code =
-                                htmlspecialchars($values["address_state_code"]);
-	$member->person[0]->address_post_code =
-                                htmlspecialchars($values["address_post_code"]);
-	$member->person[0]->address_country =
-                                htmlspecialchars($values["address_country"]);	
+	$member->getPrimaryPerson()->setFirstName(htmlspecialchars($values["first_name"]));
+	$member->getPrimaryPerson()->setMidName(htmlspecialchars($values["mid_name"]));
+	$member->getPrimaryPerson()->setLastName(htmlspecialchars($values["last_name"]));
+	$member->getPrimaryPerson()->setEmail(htmlspecialchars($values["email"]));
+	$member->getPrimaryPerson()->setEmailUpdates(htmlspecialchars($values["emailUpdates"]));
+	$member->getPrimaryPerson()->setAddressStreet1(htmlspecialchars($values["address_street1"]));
+	$member->getPrimaryPerson()->setAddressStreet2(htmlspecialchars($values["address_street2"]));
+	$member->getPrimaryPerson()->setAddressStreetCity(htmlspecialchars($values["address_city"]));
+	$member->getPrimaryPerson()->setAddressStateCode(htmlspecialchars($values["address_state_code"]));
+	$member->getPrimaryPerson()->setPostCode(htmlspecialchars($values["address_post_code"]));
+		$member->getPrimaryPerson()->setAddressCountry(htmlspecialchars($values["address_country"]));	
 
 	$phone = new cPhone_uk($values['phone1']);
-	$member->person[0]->phone1_area = $phone->area;
-	$member->person[0]->phone1_number = $phone->SevenDigits();
-	$member->person[0]->phone1_ext = $phone->ext;
+	$member->getPrimaryPerson()->setPhone1Area($phone->area);
+	$member->getPrimaryPerson()->setPhone1Number($phone->SevenDigits());
+	$member->getPrimaryPerson()->setPhone1Ext($phone->ext);
 	$phone = new cPhone_uk($values['phone2']);
-	$member->person[0]->phone2_area = $phone->area;
-	$member->person[0]->phone2_number = $phone->SevenDigits();
-	$member->person[0]->phone2_ext = $phone->ext;	
+	$member->getPrimaryPerson()->setPhone2Area($phone->area);
+	$member->getPrimaryPerson()->setPhone2Number($phone->SevenDigits());
+	$member->getPrimaryPerson()->setPhone2Ext($phone->ext);
 	$phone = new cPhone_uk($values['fax']);
-	$member->person[0]->fax_area = $phone->area;
-	$member->person[0]->fax_number = $phone->SevenDigits();
-	$member->person[0]->fax_ext = $phone->ext;	
-	
+	$member->getPrimaryPerson()->setFaxArea($fax->area);
+	$member->getPrimaryPerson()->setFaxNumber($fax->SevenDigits());
+	$member->getPrimaryPerson()->setFaxExt($fax->ext);
 	/*[chris]*/
 	if (SOC_NETWORK_FIELDS==true) {
 	
-		$member->person[0]->age = htmlspecialchars($values["age"]);	
-		$member->person[0]->sex = htmlspecialchars($values["sex"]);	
-		$member->person[0]->about_me = ($values["about_me"]);	
+		$member->getPrimaryPerson()->setAge(htmlspecialchars($values["age"]));
+		$member->getPrimaryPerson()->setSex(htmlspecialchars($values["sex"]));
+		$member->getPrimaryPerson()->setAboutMe(htmlspecialchars($values["about_me"]));
 	}
 	
 	if($member->SaveMember()) {
@@ -288,8 +299,8 @@ function verify_role_allowed($element_name,$element_value) {
 function verify_role_allowed1($element_name,$element_value) {
 	global $cUser, $member;
 
-	if (($member->member_role > $cUser->member_role) &&
-          ($element_value != $member->member_role)) {
+	if ($member->getMemberRole() > $cUser->getMemberRole() &&
+          $element_value != $member->getMemberRole()) {
 		return false;
     }
 	else {

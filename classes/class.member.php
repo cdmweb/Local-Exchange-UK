@@ -6,32 +6,35 @@ if (!isset($global))
 }
 
 include_once("class.person.php");
+include_once("class.site.php");
 include_once("Text/Password.php");
+
 
 class cMember
 {
 	//CT: format as public
-	public $person;  // this will be an array of cPerson class objects
-	public $member_id;
-	public $password;
-	public $member_role;
-	public $security_q;
-	public $security_a;
-	public $status;
-	public $member_note;
-	public $admin_note;
-	public $join_date;
-	public $expire_date;
-	public $away_date;
-	public $account_type;
-	public $email_updates;
-	public $balance;
-	public $confirm_payments;
-	public $restriction;
+	private $person;  // array of cPerson objects
+	//private $secondary_person;  // secondary joint membership
+	private $member_id;
+	private $password;
+	private $member_role;
+	private $security_q;
+	private $security_a;
+	private $status;
+	private $member_note;
+	private $admin_note;
+	private $join_date;
+	private $expire_date;
+	private $away_date;
+	private $account_type;
+	private $email_updates;
+	private $balance;
+	private $confirm_payments;
+	private $restriction;
 
 	function cMember($values=null) {
 		if ($values) {
-			$this->SetMember($values);
+			$this->ConstructMember($values);
 		}
 	}
 	/* CT getters and setters
@@ -39,9 +42,10 @@ class cMember
     /**
      * @return mixed
      */
-    public function getPerson()
+    public function getPrimaryPerson()
     {
-        return $this->person;
+        //return $this->primary_person;
+        return $this->person[0];
     }
 
     /**
@@ -49,12 +53,23 @@ class cMember
      *
      * @return self
      */
-    public function setPerson($array, $n=0)
+    public function setPrimaryPerson($array)
     {
     	//CT grabs values directly out of full result array passed to it. you can pass a partial set, as long as you respey name of members of array
-    	//$this->person = array();
-		$this->person[$n] = new cPerson;			// instantiate new cPerson objects and set them
-		$this->person[$n]->SetPerson($array);
+        $this->person[0] = new cPerson($array);
+    }    
+
+    public function getSecondaryPerson()
+    {
+        return $this->person[1];
+    }
+
+    public function setSecondaryPerson($array)
+    {
+        if($array['account_type']=='J'){
+        	$this->person[1] = new cSecondPerson($array);            // instantiate new cSecondPerson 	 objects and set them
+        }
+        
     }
 
 
@@ -337,6 +352,24 @@ class cMember
         return $this;
     }
 
+ /**
+     * @param mixed $restriction
+     *
+     * @return self
+     */
+    public function setConfirmPayments($confirm_payments)
+    {
+        $this->confirm_payments = $confirm_payments;
+
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    public function getConfirmPayments()
+    {
+        return $this->confirm_payments;
+    }
     /**
      * @return mixed
      */
@@ -360,20 +393,43 @@ class cMember
 
 
 
-	function SaveNewMember() {
+	public function SaveNewMember() {
 		global $cDB, $cErr;	
 		
+
+
+
 		/* [chris] adjusted to store 'confirm_payments' preference */
-		$insert = $cDB->Query("INSERT INTO ".DATABASE_MEMBERS." (member_id, password, member_role, security_q, security_a, status, member_note, admin_note, join_date, expire_date, away_date, account_type, email_updates, confirm_payments, balance) VALUES (". $cDB->EscTxt($this->member_id) .",sha(". $cDB->EscTxt($this->password) ."),". $cDB->EscTxt($this->member_role) .",". $cDB->EscTxt($this->security_q) .",". $cDB->EscTxt($this->security_a) .",". $cDB->EscTxt($this->status) .",". $cDB->EscTxt($this->member_note) .",". $cDB->EscTxt($this->admin_note) .",". $cDB->EscTxt($this->join_date) .",". $cDB->EscTxt($this->expire_date) .",". $cDB->EscTxt($this->away_date) .",". $cDB->EscTxt($this->account_type) .",". $cDB->EscTxt($this->email_updates) .",". $cDB->EscTxt($this->confirm_payments) .",". $cDB->EscTxt($this->balance) .");");
+        /* ct removed mothers maiden, fax, do this for legibility*/
+                
+
+        $hash = password_hash($plainTextPassword, PASSWORD_DEFAULT);
+		$insert = $cDB->Query("INSERT INTO ".DATABASE_MEMBERS." (member_id, password, member_role, security_q, security_a, status, member_note, admin_note, join_date, expire_date, away_date, account_type, email_updates, confirm_payments, balance) VALUES (
+                {$this->getMemberRole()},
+                {$hash},
+                {$this->getMemberRole()},
+                {$this->getSecurityQ()},
+                {$this->getSecurityA()},
+                {$this->getStatus()},
+                {$this->getMemberNote()},
+                {$this->getAdminNote()},
+                {$this->getJoinDate()},
+                {$this->getExpireDate()},
+                {$this->getAwayDate()}
+                {$this->getAccountType()}
+                {$this->getEmailUpdates()},
+                {$this->getConfirmPayments()},
+                {$this->getBalance()}
+            ");
 
 		return $insert;
 	}
 
-	function RegisterWebUser()
+	public function RegisterWebUser()
 	{	
 //		if (isset($_SESSION["user_login"]) and $_SESSION["user_login"] != LOGGED_OUT) {
 		if (isset($_SESSION["user_login"])) {
-			$this->member_id = $_SESSION["user_login"];
+			$this->setMemberId($_SESSION["user_login"]);
 			$this->LoadMember($_SESSION["user_login"]);
 
             // Session regeneration added to boost server-side security.
@@ -385,7 +441,7 @@ class cMember
 		}		
 	}
 	
-	function LoginFromCookie()
+	public function LoginFromCookie()
 	{
 /*
 		if (isset($_COOKIE["login"]) && isset($_COOKIE["pass"]))
@@ -396,7 +452,7 @@ class cMember
         return false;
 	}
 
-	function IsLoggedOn()
+	public function IsLoggedOn()
 	{
 //		if (isset($_SESSION["user_login"]) and $_SESSION["user_login"] != LOGGED_OUT)
 		if (isset($_SESSION["user_login"]))
@@ -405,7 +461,7 @@ class cMember
 			return false;
 	}
 
-	function Login($user, $pass, $from_cookie=false) {
+	public function Login($user, $pass, $from_cookie=false) {
 		global $cDB,$cErr;
 		
 		$login_history = new cLoginHistory();
@@ -428,7 +484,7 @@ class cMember
 		return false;
 	}
 	
-	function ValidatePassword($pass) {
+	public function ValidatePassword($pass) {
 		global $cDB;
 
 		$query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = ". $cDB->EscTxt($this->member_id) ." AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .");");	
@@ -438,7 +494,7 @@ class cMember
 		else
 			return false;
 	}
-	function UnlockAccount() {
+	public function UnlockAccount() {
 		$history = new cLoginHistory;
 		$has_logged_on = $history->LoadLoginHistory($this->member_id);
 		if($has_logged_on) {
@@ -456,7 +512,7 @@ class cMember
 		return false;
 	}
 	
-	function DeactivateMember() {
+	public function DeactivateMember() {
 		if($this->status == ACTIVE) {
 			$this->status = INACTIVE;
 			return $this->SaveMember();
@@ -465,7 +521,7 @@ class cMember
 		}
 	}
 	
-	function ReactivateMember() {
+	public function ReactivateMember() {
 		if($this->status != ACTIVE) {
 			$this->status = ACTIVE;
 			return $this->SaveMember();
@@ -474,7 +530,7 @@ class cMember
 		}
 	}
 	
-	function ChangePassword($pass) { // TODO: Should use SaveMember and should reset $this->password
+	public function ChangePassword($pass) { // TODO: Should use SaveMember and should reset $this->password
 		global $cDB, $cErr;
 		
 		$update = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." SET password=sha(". $cDB->EscTxt($pass) .") WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
@@ -487,11 +543,11 @@ class cMember
 		}
 	}
 	
-	function GeneratePassword() {  
-		return Text_Password::create(6) . chr(rand(50,57));
+	public function GeneratePassword() {  
+		return Text_Password::create(8) . chr(rand(50,57));
 	}
 
-	function DoLoginStuff($user, $pass)
+	public function DoLoginStuff($user, $pass)
 	{
 		global $cDB;
 		
@@ -502,22 +558,33 @@ class cMember
 		$_SESSION["user_login"] = $user;
 	}
 
-	function UserLoginPage() // A free-standing login page
+	public function UserLoginPage() // A free-standing login page
 	{
-		$output = "<DIV STYLE='width=60%; padding: 5px;'><FORM ACTION=".SERVER_PATH_URL."/login.php METHOD=POST>
-					<INPUT TYPE=HIDDEN NAME=action VALUE=login>
-					<INPUT TYPE=HIDDEN NAME=location VALUE='".$_SERVER["REQUEST_URI"]."'>
-					<TABLE class=NoBorder><TR><TD ALIGN=LEFT>Member ID:</TD><TD ALIGN=LEFT><INPUT TYPE=TEXT SIZE=12 NAME=user></TD></TR>
-					<TR><TD ALIGN=LEFT>Password:</TD><TD ALIGN=LEFT><INPUT TYPE=PASSWORD SIZE=12 NAME=pass></TD></TR></TABLE>
-					<DIV align=LEFT><INPUT TYPE=SUBMIT VALUE='Login'></DIV>
-					</FORM></DIV>
-					<BR>
-					If you don't have an account, please contact us to join.
-					<BR>";	
+		global $p;
+        $output = $p->WrapFormElement('hidden', 'action', '', 'login');
+        $output .= $p->WrapFormElement('hidden', 'location', '', $_SERVER['REQUEST_URI']);
+        $output .= $p->WrapFormElement('text', 'user', 'Member ID');
+        $output .= $p->WrapFormElement('password', 'pass', 'Password');
+        $output .= $p->WrapFormElement('submit', 'submit', '', 'Log in');
+
+        $output = $p->WrapForm($output, SERVER_PATH_URL."/login.php", "post", "login");
+        $output .= $p->Wrap("If you don't have an account, please contact us to join. <a href='/members/password_reset.php'>Forgot your password?</a>", "p");
+
+        //return $output;
+        $output .= "<DIV STYLE='width=60%; padding: 5px;'><FORM ACTION=".SERVER_PATH_URL."/login.php METHOD=POST>
+                    <INPUT TYPE=HIDDEN NAME=action VALUE=login>
+                    <INPUT TYPE=HIDDEN NAME=location VALUE='".$_SERVER["REQUEST_URI"]."'>
+                    <TABLE class=NoBorder><TR><TD ALIGN=LEFT>Member ID:</TD><TD ALIGN=LEFT><INPUT TYPE=TEXT SIZE=12 NAME=user></TD></TR>
+                    <TR><TD ALIGN=LEFT>Password:</TD><TD ALIGN=LEFT><INPUT TYPE=PASSWORD SIZE=12 NAME=pass></TD></TR></TABLE>
+                    <DIV align=LEFT><INPUT TYPE=SUBMIT VALUE='Login'></DIV>
+                    </FORM></DIV>
+                    <BR>
+                    If you don't have an account, please contact us to join. <a href='/members/password_reset.php'>Forgot your password?</a>
+                    <BR>";  
 		return $output;
 	}
 
-	function UserLoginLogout() {
+	public function UserLoginLogout() {
 		if ($this->IsLoggedOn())
 		{
 			//$output = "<FONT SIZE=1><A HREF='".SERVER_PATH_URL."/member_logout.php'>Logout</A>&nbsp;&nbsp;&nbsp;";
@@ -530,7 +597,7 @@ class cMember
 		return $output;		
 	}
 
-	function MustBeLoggedOn()
+	public function MustBeLoggedOn()
 	{
 		global $p, $cErr;
 		
@@ -546,19 +613,19 @@ class cMember
 	}
 
 
-	function Logout() {
+	public function Logout() {
         setcookie(session_name(), session_id(), time() - 42000, '/');
 		$_SESSION = array();
         session_destroy();
 	}
 
-	function MustBeLevel($level) {
+	public function MustBeLevel($level) {
 		global $p;
 		$this->MustBeLoggedOn(); // seems prudent to check first.
 
-		if ($this->member_role<$level)
+		if ($this->getMemberRole()<$level)
 		{
-			$page = "<DIV Class='AccessDenied'>I'm sorry, but the action attempted was unable to be processed because you don't have permissions.<BR><BR>If you would like your access level increased, please <a href='mailto:".EMAIL_ADMIN."'>email the admin</a> and ask.</DIV>";
+			$page = "<p class='AccessDenied'>You don't have permissions for this action.  <a href='mailto:".EMAIL_ADMIN."'>Contact the admin</a> to raise your permissions</p>";
 			$p->DisplayPage($page);
 			exit;
 
@@ -566,40 +633,87 @@ class cMember
 
 	}
 	
-	function AccountIsRestricted() {
+	public function AccountIsRestricted() {
 		
 		if ($this->restriction==1)
 			return true;
 		
 		return false;
 	}
-
-	function LoadMember($member, $redirect=true) {
+    //CT this is a really dangerous function that was at the heart of most member objects - 
+    //why load and pass around password and all the other stuff if you don't need to? Defer to LoadQuickMember for most things
+	public function LoadMember($member, $redirect=false) {
 		global $cDB, $cErr;
 
 		//
 		// select all Member data and populate the properties
 		//
 		/*[chris] adjusted to retrieve 'confirm_payments' */
-		$query = $cDB->Query("SELECT member_id, password, member_role, security_q, security_a, status, member_note, admin_note, join_date, expire_date, away_date, account_type, email_updates, balance, confirm_payments, restriction FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member));
-		
+		//CT efficiency full object 
+        $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.password as password, 
+                m.member_role as member_role, 
+                m.security_q as security_q, 
+                m.security_a as security_a, 
+                m.status as status, 
+                m.admin_note as admin_note, 
+                m.join_date as join_date, 
+                m.expire_date as expire_date, 
+                m.email_updates as email_updates, 
+                m.restriction as restriction, 
+                p1.first_name as first_name, 
+                p1.last_name as last_name, 
+                p1.email as email, 
+                p1.person_id as person_id, 
+                p2.person_id as p2_person_id, 
+                p2.email as p2_email, 
+                p2.first_name as p2_first_name, 
+                p2.mid_name as p2_mid_name, 
+                p2.last_name as p2_last_name, 
+                p1.phone1_number as phone1_number, 
+                p1.primary_member as primary_member, 
+                p2.primary_member as p2_primary_member, 
+                p2.phone1_number as p2_phone1_number, 
+                p1.address_street1 as address_street1, 
+                p1.address_street2 as address_street2, 
+                p1.address_city as address_city, 
+                p1.address_state_code as address_state_code, 
+                p1.address_post_code as address_post_code, 
+                p1.address_country as address_country, 
+                p1.directory_list as directory_list, 
+                p2.directory_list as p2_directory_list, 
+                m.member_id as member_id, 
+                m.account_type as account_type, 
+                m.confirm_payments as confirm_payments, 
+                p1.age as age, 
+                p1.sex as sex, 
+                p1.about_me as about_me 
+                FROM member m 
+                left JOIN person p1 ON m.member_id=p1.member_id 
+                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+
+
 		if($row = mysql_fetch_array($query))
-		{		
-			$this->SetMember($row);
+		{	
+            //$cErr->Error(print_r($row, true));
+			$this->ConstructMember($row);
 		}
 		else
 		{
+            //CT - moved error message out of the redirect - don't you wnat to see errors even if not redirected?
+            $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+
 			if ($redirect) {
-				$cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
 				include("redirect.php");
 			}
 			return false;
 		}	
-						
+		//CT efficiency - wrap up the 'person' in complex join in 1 call, not 3, above. TODO: remove this
 		//
 		// Select associated person records and load into person object array
 		//
-
+        /*
 		$query = $cDB->Query("SELECT person_id FROM ".DATABASE_PERSONS." WHERE member_id=". $cDB->EscTxt($member) ." ORDER BY primary_member DESC, last_name, first_name");
 		$i = 0;
 		
@@ -617,30 +731,38 @@ class cMember
 				include("redirect.php");			
 			}
 			return false;
-		}
+		}*/
+
 		return true;
 	}
-	function SetMember($array){
-		$this->setPerson($array);  // this will be an array of cPerson class objects
-		$this->setMemberId($member_id);  
-		$this->setPassword($password);  
-		$this->setMemberRole($member_role);  
-		$this->setSecurityQ($security_q);  
-		$this->setSecurityA($security_a);  
-		$this->setStatus($status);  
-		$this->setMemberId($member_id);  
-		$this->setMemberNote($member_note);  
-		$this->setAdminNote($admin_note);  
-		$this->setJoinDate($join_date);  
-		$this->setExpireDate($expire_date);  
-		$this->setAwayDate($away_date);  
-		$this->setAccountType($account_type);  
-		$this->setEmailUpdates($email_updates);  
-		$this->setBalance($balance);  
-		$this->setRestriction($restriction);  
+	public function ConstructMember($array){
+		//print_r($array);
+
+		$this->setPrimaryPerson($array);  // this will be an array of cPerson class objects
+        if($array['account_type']=='J'){
+            $this->setSecondaryPerson($array);  // this will be an array of cPerson class objects
+        }
+		$this->setMemberId($array['member_id']);  
+		$this->setPassword($array['password']);  
+		$this->setMemberRole($array['member_role']);  
+		$this->setSecurityQ($array['security_q']);  
+		$this->setSecurityA($array['security_a']);  
+		$this->setStatus($array['status']);  
+		$this->setMemberId($array['member_id']);  
+		$this->setMemberNote($array['member_note']);  
+		$this->setAdminNote($array['admin_note']);  
+		$this->setJoinDate($array['join_date']);  
+		$this->setExpireDate($array['expire_date']);  
+		$this->setAwayDate($array['away_date']);  
+		$this->setAccountType($array['account_type']);  
+		$this->setEmailUpdates($array['email_updates']);  
+		$this->setBalance($array['balance']);  
+        $this->setRestriction($array['restriction']);  
+        //$this->setDirectoryList($array['directory_list']);  
+        //$this->setAge($array['age']);  
 	}
 
-	function ShowMember()
+	public function ShowMember()
 	{
 		$output = "Member Data:<BR>";
 		$output .= $this->member_id . ", " . $this->password . ", " . $this->member_role . ", " . $this->security_q . ", " . $this->security_a . ", " . $this->status . ", " . $this->member_note . ", " . $this->admin_note . ", " . $this->join_date . ", " . $this->expire_date . ", " . $this->away_date . ", " . $this->account_type . ", " . $this->email_updates . ", " . $this->balance . "<BR><BR>";
@@ -656,12 +778,12 @@ class cMember
 		return $output;
 	}		
 	
-	function UpdateBalance($amount) {
+	public function UpdateBalance($amount) {
 		$this->balance += $amount;
 		return $this->SaveMember();
 	}
 	
-	function SaveMember() {
+	public function SaveMember() {
 		global $cDB, $cErr;				
 		
 		// [chris] included 'confirm_payments' preference
@@ -677,95 +799,113 @@ class cMember
 		return $update;	
 	}
 	
-	function PrimaryName () {
-		return $this->person[0]->first_name . " " . $this->person[0]->last_name;
+	public function PrimaryName () {
+		return $this->getPrimaryPerson()->getFirstName() . " " . $this->getPrimaryPerson()->getLastName();
 	}
 	
-	function VerifyPersonInAccount($person_id) { // Make sure hacker didn't manually change URL
+	public function VerifyPersonInAccount($person_id) { // Make sure hacker didn't manually change URL
 		global $cErr;
 		foreach($this->person as $person) {
-			if($person->person_id == $person_id)
+			if($person->getPersonId() == $person_id)
 				return true;
 		}
 		$cErr->Error("Invalid person id in URL.  This break-in attempt has been reported.",ERROR_SEVERITY_HIGH);
 		include("redirect.php");
 	}
 	
-	function PrimaryAddress () {
-		if($this->person[0]->address_street1 != "") {
-			$address = $this->person[0]->address_street1 . ", ";
-			if($this->person[0]->address_street2 != "")
-				$address .= $this->person[0]->address_street2 . ", ";
-		} else {
-			$address = "";
-		}
+	public function PrimaryAddress () {
+        $address="";
+		if(!empty($this->person[0]->getAddressStreet1())) {
+			$address = $this->person[0]->getAddressStreet1();
+			if(!empty($this->person[0]->getAddressStreet2()))
+				$address .=   ", " . $this->person[0]->getAddressStreet2();
+		} 
 		
-		return $address . $this->person[0]->address_city;
+		return $address . ", " . $this->person[0]->getAddressCity();
 	}
 	
-	function AllNames () {
-		foreach($this->person as $person) {
-			if($person->primary_member == "Y") {
-				$names = $person->first_name ." ". $person->last_name;
-			} else {
-				$names .= ", ". $person->first_name ." ". $person->last_name;
-			}	
+	public function AllNames ($lastfirst=false) {
+		//can reverse appearance of name if lastfirst set
+		$names = "";
+		foreach ($this->person as $person) {
+			if ($person->getPrimaryMember() != "Y" && !empty($person->getFirstName())) $names .= " &amp; ";
+			if($lastfirst) {
+				$n = "{$person->getLastName()}, {$person->getFirstName()}";
+			} else{
+				$n = "{$person->getFirstName()} {$person->getLastName()}";
+			}
+            //$names .= "<span class='name'>{$n}</span>";
+            $names .= "{$n}";
+			//$names .= "{$person->getFirstName()}  {$person->getLastName()}";
 		}
 		return $names;
 	}
-
-	function AllPhones () {
+    //CT - firstnames
+    public function AllFirstNames () {
+        //can reverse appearance of name if lastfirst set
+        $names = "";
+        foreach ($this->person as $person) {
+            if ($person->getPrimaryMember() != "Y" && !empty($person->getFirstName())) $names .= " and ";
+            $n = "{$person->getFirstName()}";
+            //$names .= "<span class='name'>{$n}</span>";
+            $names .= "{$n}";
+            //$names .= "{$person->getFirstName()}  {$person->getLastName()}";
+        }
+        return $names;
+    }
+    public function AllPhones () {
 		$phones = "";
-		$reg_phones[]="";
-		$fax_phones[]="";
-		foreach($this->person as $person) {
-			if($person->primary_member == "Y") {
-				if($person->phone1_number != "") {
-					$phones .= $person->DisplayPhone(1);
-					$reg_phones[] = $person->DisplayPhone(1);
+		foreach ($this->person as $person) {
+            //$isSecondary = ($p->getPrimaryMember() != "Y"); 
+			if(!empty($person->getPhone1Number())) {
+				if ($person->getPrimaryMember() == "Y"){
+                    //$phones .= "<span class='phone'>{$person->getPhone1Number()}</span>";
+                    $phones .= "{$person->getPhone1Number()}";
+				} else{
+                    //$phones .=", <span class='phone'>{$person->getPhone1Number()} ({$person->getFirstName()})</span>";
+                    $phones .=", {$person->getPhone1Number()} ({$person->getFirstName()})";
 				}
-				if($person->phone2_number != "") {
-					$phones .= ", ". $person->DisplayPhone(2);
-					$reg_phones[] = $person->DisplayPhone(2);
-				}
-				if($person->fax_number != "") {
-					$phones .= ", ". $person->DisplayPhone("fax"). " (Fax)";
-					$fax_phones[] = $person->DisplayPhone("fax");
-				}
-			} else {
-				if($person->phone1_number != ""){ 
-					$phones .= ", ". $person->DisplayPhone(1). " (". $person->first_name .")";
-					$reg_phones[] = $person->DisplayPhone(1);
-				}
-				if($person->phone2_number != "") {
-					$phones .= ", ". $person->DisplayPhone(2). " (". $person->first_name .")";
-					$reg_phones[] = $person->DisplayPhone(2);
-				}
-				if($person->fax_number != "") {
-					$phones .= ", ". $person->DisplayPhone("fax"). " (". $person->first_name ."'s Fax)";
-					$fax_phones[] = $person->DisplayPhone("fax");
-				}
-			}	
+			}
+			if(!empty($person->getPhone2Number())) {
+				$phones .= ", ". $person->getPhone2Number();
+                if ($person->getPrimaryMember() != "Y") $phones .= " ({$person->getFirstName()})";              
+				//$reg_phones[] = $person->getPhone2Number();
+			}
+			if(!empty($person->getFaxNumber())) {
+				$phones .= ", ". $person->getFaxNumber();
+                if ($person->getPrimaryMember() != "Y") {
+                    $phones .= " ({$person->getFirstName()}'s fax')";
+                } else{
+                    $phones .= "(fax)";
+                }
+				//$fax_phones[] = $person->getFaxNumber();
+			}
+		
 		}
 		return $phones;		
 	}
-	
-	function AllEmails () {
-		$emails='';
-		foreach($this->person as $person) {
-			if(!empty($person->email)){
-				$email = "<a href='email.php?email_to={$person->email}&member_to={$this->member_id}'>11{$person->email}</a>";
-				if ($person->primary_member == "Y") {
-					$emails .="{$email}";
-				} else{
-					$emails .=", {$email} ({$person->first_name})";
-				}
+	public function makeLinkEmailForm($email){
+        //return "<a href='mailto:{$email}' class='normal'>{$email}</a>";
+        return "<a href='mailto:{$email}' class='normal'>{$email}</a>";
+    }
+	public function AllEmails () {
+        $emails='';
+		foreach ($this->person as $person) {
+			if(!empty($person->getEmail())){
+                //$email = $this->makeLinkEmailForm($person->getEmail());
+                $email = $person->getEmail();
+	            if($person->getPrimaryMember() != "Y") {
+	                $emails .= ", ";
+	            } 	
+                //$emails .= "{$email}'";    
+                $emails .= "<a href='mailto:{$email}'>{$email}</a>";    
 			}
-		}
+        }
+			
 		return $emails;	
 	}
 	
-	function VerifyMemberExists($member_id) {
+	public function VerifyMemberExists($member_id) {
 		global $cDB;
 	
 		$query = $cDB->Query("SELECT NULL FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member_id));
@@ -776,133 +916,151 @@ class cMember
 			return false;
 	}
 	
-	function MemberLink () {
-		return "<A HREF=member_summary.php?member_id=". $this->member_id .">". $this->member_id ."</A>";
+	public function MemberLink($text=null) {
+        if (empty($text)) $text = $this->member_id; //pass in name, or use member number if not there
+		return "<a href='member_summary.php?member_id=". $this->member_id ."''>". $text ."</a>";
 	}
 	
 	/*[chris] this function looks up the image for member ($mID) and places it in a HTML img tag */
-	function DisplayMemberImg($mID,$typ=false) {
-		
-		if (ALLOW_IMAGES!=true) // Images are turned off in config
-			return " ";
-			
-		global $cDB;
-		
-		// note: the 'typ' param has been deprecated since new method introduced for resizing imgs
-		/*
-		if ($typ=='thumb') {
-			$pH = MEMBER_PHOTO_HEIGHT_THUMB;
-			$pW = MEMBER_PHOTO_WIDTH_THUMB;
-		}
-		else {
-			
-			$pH = MEMBER_PHOTO_HEIGHT;
-			$pW = MEMBER_PHOTO_WIDTH;
-		}
-		*/
-		$query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID)." limit 0,1;");
-		
-		$num_results = mysql_num_rows($query);
-		
-		if ($num_results>0) {
-			
-			$row = mysql_fetch_array($query);
-			$imgLoc = 'uploads/'. stripslashes($row["filename"]);
-	
-			return 	"<img src='".$imgLoc."'><BR>";	
-		}
-		else
-			return 	" ";
+	public function DisplayMemberImg($mID,$typ=false) {
+        
+        if (ALLOW_IMAGES!=true) // Images are turned off in config
+            return " ";
+            
+        global $cDB;
+        
+        // note: the 'typ' param has been deprecated since new method introduced for resizing imgs
+        /*
+        if ($typ=='thumb') {
+            $pH = MEMBER_PHOTO_HEIGHT_THUMB;
+            $pW = MEMBER_PHOTO_WIDTH_THUMB;
+        }
+        else {
+            
+            $pH = MEMBER_PHOTO_HEIGHT;
+            $pW = MEMBER_PHOTO_WIDTH;
+        }
+        */
+        $query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID)." limit 0,1;");
+        //$query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID));
+        
+        $num_results = mysql_num_rows($query);
+        
+        if ($num_results>0) {
+            
+            $row = mysql_fetch_array($query);
+            $imgLoc = 'http://cam.letslink.org/members/uploads/' . stripslashes($row["filename"]);
+    
+            return  "<img src='".$imgLoc."'>";    
+        }
+        else
+            return  " ";
+    }
+    // CT pass in image title. todo - fix the filetype??
+    public function DisplayMemberImgFromTitle($mImage) {
+        
+        if (ALLOW_IMAGES!=true or empty($mImage)) {// Images are turned off in config of no iage
+            //echo("oops");
+            return "";
+        }
+        $imgLoc = 'http://cam.letslink.org/members/uploads/' . stripslashes($mImage);
+    
+        return  "<img src='".$imgLoc."' width='90' style='width:90px'>";    
+
+    }
+	//CT todo - put this somewhere for reuse..
+	public function FormatLabelValue($label, $value){
+		return "<p class='line'><span class='label'>{$label}: </span><span class='value'>{$value}</span></p>";
 	}
-	
-	function DisplayMember () {
+
+
+	public function DisplayMember () {
 		
 		/*[CDM] Added in image, placed all this in 2 column table, looks tidier */
 		
-		global $cDB,$agesArr,$sexArr;
+		global $cDB, $agesArr, $sexArr, $p;
+
+		$stats = new cTradeStatsCT($this->getMemberId());
+		$jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
 		
-		$output .= "<table width=100%><tr valign=top><td width=50%>";
-		
-		$output .= "<STRONG>Member:</STRONG> ". $this->PrimaryName() . " (". $this->MemberLink().")"."<BR>";
-		$stats = new cTradeStats($this->member_id);
-		$output .= "<STRONG>Activity:</STRONG> ";
-		if ($stats->most_recent == "")
-			$output .= "No exchanges yet<BR>";
-		else		
-			$output .= '<A HREF="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</A> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last on ". $stats->most_recent->ShortDate() ."<BR>";
-		$feedbackgrp = new cFeedbackGroup;
+        $statsText = (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent;
+        $locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " . $this->getPrimaryPerson()->getAddressCity() . ", " .$this->getPrimaryPerson()->getSafePostCode();
+
+		$feedbackgrp = new cFeedbackGroupCT;
 		$feedbackgrp->LoadFeedbackGroup($this->member_id);
-		if(isset($feedbackgrp->feedback)) {
-			$output .= "<b>Feedback:</b> <A HREF=feedback_all.php?mode=other&member_id=". $this->member_id . ">" . $feedbackgrp->PercentPositive() . "% positive</A> (" . $feedbackgrp->TotalFeedback() . " total, " . $feedbackgrp->num_negative ." negative & " . $feedbackgrp->num_neutral . " neutral)<BR>";		
-		}
+		$feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
+        
+        $output .= cMember::DisplayMemberImg($this->member_id);
+        $block = $this->FormatLabelValue("Location", $locationText);
+		
+        //activity;
+        $block = $this->FormatLabelValue("Balance", "{$this->balance} " . strtolower(UNITS));
+		$block .= $this->FormatLabelValue("Activity", "{$statsText}");
+		$block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
+        $output .= $p->Wrap($block, "div", "group activity");
 
-		$joined = new cDateTime($this->join_date);
-		$output .= "<STRONG>Joined:</STRONG> ". $joined->ShortDate() ."<BR>";
-
-		if($this->person[0]->email != "")
-			$output .= "<STRONG>Email:</STRONG> ". "<A HREF=email.php?email_to=". $this->person[0]->email ."&member_to=". $this->member_id .">". $this->person[0]->email ."</A><BR>";	
-		if($this->person[0]->phone1_number != "")
-			$output .= "<STRONG>Primary Phone:</STRONG> ". $this->person[0]->DisplayPhone("1") ."<BR>";
-		if($this->person[0]->phone2_number != "")
-			$output .= "<STRONG>Secondary Phone:</STRONG> ". $this->person[0]->DisplayPhone("2") ."<BR>";						
-		if($this->person[0]->fax_number != "")
-			$output .= "<STRONG>Fax:</STRONG> ". $this->person[0]->DisplayPhone("fax") ."<BR>";	
-		if($this->person[0]->address_street2 != "") {
-            $output .= "<STRONG>" . ADDRESS_LINE_2 . ": </STRONG>" .
-                           $this->person[0]->address_street2 . "<BR>";
+        if (SOC_NETWORK_FIELDS==true) {
+            $pAge = (empty($this->getPrimaryPerson()->getAge())) ? 'Unspecified' : $agesArr[$this->getPrimaryPerson()->getAge()];
+            $pSex = (empty($this->getPrimaryPerson()->getSex())) ? 'Unspecified' : $sexArr[$this->getPrimaryPerson()->getSex()];
+            $pAbout = (empty($this->getPrimaryPerson()->getAboutMe())) ? '<em>No description supplied.</em>' : stripslashes($this->getPrimaryPerson()->getAboutMe());
+            $block = "";
+            $block .= $this->FormatLabelValue("Age", $pAge);
+            $block .= $this->FormatLabelValue("Gender", $pSex);
+            $block .= $this->FormatLabelValue("About me", $pAbout);
+            $output .= $p->Wrap($block, "div", "group social");
+            
+     //       $output .= "<STRONG>Sex:</STRONG> ".$pSex."<p>";
+            
+     //       $output .= "<STRONG>About Me:</STRONG><p> ".$pAbout."<br>";
         }
-		if($this->person[0]->address_city != "") {
-            $output .= "<STRONG>" . ADDRESS_LINE_3 . ": </STRONG>" .
-                           $this->person[0]->address_city . "<BR>";
+        //contact
+        $block = "";
+        if(!empty($this->getPrimaryPerson()->getEmail())){
+            $block .= $this->FormatLabelValue("Email", $this->makeLinkEmailForm($this->getPrimaryPerson()->getEmail()));
         }
-		if($this->person[0]->address_post_code != "") {
-            $output .= "<STRONG>" . ZIP_TEXT . ": </STRONG>" .
-                           $this->person[0]->address_post_code . "<BR>";
+        if(!empty($this->getPrimaryPerson()->DisplayPhone("1"))){
+            $block .= $this->FormatLabelValue("Phone", $this->getPrimaryPerson()->DisplayPhone("1"));
         }
+        if(!empty($this->getPrimaryPerson()->DisplayPhone("2"))){
+            $block .= $this->FormatLabelValue("Secondary Phone", $this->getPrimaryPerson()->DisplayPhone("2"));
+        }
+        if(!empty($this->getPrimaryPerson()->DisplayPhone("fax"))){
+            $block .= $this->FormatLabelValue("Fax", $this->getPrimaryPerson()->DisplayPhone("fax"));
+        }
+        $output .= $p->Wrap($block, "div", "group contact");
+        //secondary
+        //TODO - directory list - is it really a choice?
+        $block = "";
+        //echo $this->getSecondaryPerson()->getDirectoryList();
+        if(!empty($this->getSecondaryPerson())){
+            $block .= $this->FormatLabelValue("Joint member", "{$this->getSecondaryPerson()->getFirstName()} {$this->getSecondaryPerson()->getLastName()}");
 
-
-		foreach($this->person as $person) {
-			if($person->primary_member == "Y")
-				continue;	// Skip the primary member, since we already displayed above
-		
-			if($person->directory_list == "Y") {
-				$output .= "<BR><STRONG>Joint Member:</STRONG> ". $person->first_name ." ". $person->last_name ."<BR>";
-				if($person->email != "")
-					$output .= "<STRONG>". $person->first_name ."'s Email:</STRONG> ". "<A HREF=email.php?email_to=". $person->email ."&member_to=". $this->member_id .">". $person->email ."</A><BR>";				
-				if($person->phone1_number != "")
-					$output .= "<STRONG>". $person->first_name ."'s Phone:</STRONG> ". $person->DisplayPhone("1") ."<BR>";
-				if($person->phone2_number != "")
-					$output .= "<STRONG>". $person->first_name ."'s Secondary Phone:</STRONG> ". $person->DisplayPhone("2") ."<BR>";						
-				if($person->fax_number != "")
-				$output .= "<STRONG>". $person->first_name ."'s Fax:</STRONG> ". $person->DisplayPhone("fax") ."<BR>";				
-			}
-		}		
-	
-	$output .= "</td><td width=50% align=center>";
-		
-	$output .= cMember::DisplayMemberImg($this->member_id);	
-		
-	$output .= "</td></tr></table>";
-	
-	if (SOC_NETWORK_FIELDS==true) {
-	
-		$output .= "<p><STRONG><I>PERSONAL INFORMATION</I></STRONG><P>";
-		
-		$pAge = (strlen($this->person[0]->age)<1) ? 'Unspecified' : $agesArr[$this->person[0]->age];
-		$pSex = (!$this->person[0]->sex) ? 'Unspecified' : $sexArr[$this->person[0]->sex];
-		$pAbout = (!stripslashes($this->person[0]->about_me)) ? '<em>No description supplied.</em>' : stripslashes($this->person[0]->about_me);
-		
-		$output .= "<STRONG>Age:</STRONG> ".$pAge."<br>";
-		
-		$output .= "<STRONG>Sex:</STRONG> ".$pSex."<p>";
-		
-		$output .= "<STRONG>About Me:</STRONG><p> ".$pAbout."<br>";
-	}
+            if(!empty($this->getSecondaryPerson()->getEmail())){
+                $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s email", $this->makeLinkEmailForm($this->getSecondaryPerson()->getEmail()));
+            }
+            if(!empty($this->getSecondaryPerson()->DisplayPhone("1"))){
+                $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s phone", $this->getSecondaryPerson()->DisplayPhone("1"));
+            }
+            if(!empty($this->getSecondaryPerson()->DisplayPhone("2"))){
+                $block .= $this->getSecondaryPerson("{$this->getSecondaryPerson()->getFirstName()}'s secondary phone", $this->getSecondaryPerson()->DisplayPhone("2"));
+            }
+            if(!empty($this->getPrimaryPerson()->DisplayPhone("fax"))){
+                $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s fax", $this->getPrimaryPerson()->DisplayPhone("fax"));
+            }
+            $output .= $p->Wrap($block, "div", "group joint");
+        }
+        //metadata
+        $join_date=new cDateTime($this->getJoinDate());
+        $expire_date=new cDateTime($this->getExpireDate());
+        $block = "";
+        $block .= $this->FormatLabelValue("Joined", "{$join_date->ShortDate()}");
+        $block .= $this->FormatLabelValue("Renewal", "{$expire_date->ShortDate()}");
+        $output .= $p->Wrap($block, "div", "group metadata");
 
 	return $output;	
 	}
 	
-	function MakeJointMemberArray() {
+	public function MakeJointMemberArray() {
 		global $cDB;
 		
 		$names = array();
@@ -915,7 +1073,7 @@ class cMember
 		return $names;	
 	}		
 	
-	function DaysSinceLastTrade() {
+	public function DaysSinceLastTrade() {
 		global $cDB;
 	
 		$query = $cDB->Query("SELECT max(trade_date) FROM ". DATABASE_TRADES ." WHERE member_id_to=". $cDB->EscTxt($this->member_id) ." OR member_id_from=". $cDB->EscTxt($this->member_id) .";");
@@ -930,7 +1088,7 @@ class cMember
 		return $last_trade->DaysAgo();
 	}
 	
-	function DaysSinceUpdatedListing() {
+	public function DaysSinceUpdatedListing() {
 		global $cDB;
 	
 		$query = $cDB->Query("SELECT max(posting_date) FROM ". DATABASE_LISTINGS ." WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
@@ -947,174 +1105,175 @@ class cMember
 }
 
 class cMemberGroup {
-	var $members;
-	
-	function LoadMemberGroup ($active_only=TRUE, $non_members=FALSE) {
-		global $cDB;
-				
-		if($active_only)
-			$exclusions = " AND status in ('A','L')";
-		else
-			$exclusions = null;
-			
-		if(!$non_members)
-			$exclusions .= " AND member_role != '9'";
-		
-		$query = $cDB->Query("SELECT ".DATABASE_MEMBERS.".member_id FROM ". DATABASE_MEMBERS .",". DATABASE_PERSONS." WHERE ". DATABASE_MEMBERS .".member_id=". DATABASE_PERSONS.".member_id". $exclusions. " AND primary_member='Y' ORDER BY first_name, last_name;");
-		
-		$i=0;
-		while($row = mysql_fetch_array($query))
-		{
-			$this->members[$i] = new cMember;			
-			$this->members[$i]->LoadMember($row[0]);
-			$i += 1;
-		}
-		
-		if($i == 0)
-			return false;
-		else
-			return true;		
-	}	
-	
-	function MakeIDArray() {
-		global $cDB, $cErr;
-		
-		$ids="";		
-		if($this->members) {
-			foreach($this->members as $member) {
-					$ids[$member->member_id] = $member->PrimaryName() ." (". $member->member_id .")";
-			}		
-		}
-		
-		return $ids;	
-	}	
-	
-	function MakeNameArray() {
-		global $cDB, $cErr;
-		
-		$names["0"] = "";
-		
-		if($this->members) {
-			foreach($this->members as $member) {
-				foreach ($member->person as $person) {			
-					$names[$member->member_id ."?". $person->person_id] = $person->first_name ." ". $person->last_name ." (". $member->member_id .")";
-				}
-			}	
-		
-			array_multisort($names);// sort purely by person name (instead of member, person)
-		}
-		
-		return $names;		
-	}	
-	
-	function DoNamePicker() {
-		
-		$tmp = '<script src=includes/autocomplete.js></script>';
-		
-		$mems = $this->MakeNameArray();
-		
-		$tmp .= "<select name=member_to>
-			<option id=0 value=0>".count($mems)." matching members...</option>";
-		
-		foreach($mems as $key=>$value) {
-			
-			$tmp .= "<option id='".$key."' value='".$key."'>".$value."</option>";
-		}
-		
-		$tmp .= "</select>";
-//		$form->addElement("select", "member_to", "...", $name_list->MakeNameArray());
-		$tmp .= '<input type=text size=20 name=picker value="Member search" onKeyUp="autoComplete(this,document.all.member_to,\'text\')"
-			onFocus="this.value=\'\'">
-			<!--<input type=button value="Update Dropdown List">-->';
-		return $tmp;
-	}
-	
-	// Use of this function requires the inclusion of class.listing.php
-	function EmailListingUpdates($interval) {
-		if(!isset($this->members)) {
-			if(!$this->LoadMemberGroup())
-				return false;
-		}
+    var $members;
+    
+    function LoadMemberGroup ($active_only=TRUE, $non_members=FALSE) {
+        global $cDB;
+                
+        if($active_only)
+            $exclusions = " AND status in ('A','L')";
+        else
+            $exclusions = null;
+            
+        if(!$non_members)
+            $exclusions .= " AND member_role != '9'";
+        
+        $query = $cDB->Query("SELECT ".DATABASE_MEMBERS.".member_id FROM ". DATABASE_MEMBERS .",". DATABASE_PERSONS." WHERE ". DATABASE_MEMBERS .".member_id=". DATABASE_PERSONS.".member_id". $exclusions. " AND primary_member='Y' ORDER BY first_name, last_name;");
+        
+        $i=0;
+        while($row = mysql_fetch_array($query))
+        {
+            $this->members[$i] = new cMember;           
+            $this->members[$i]->LoadMember($row[0]);
+            $i += 1;
+        }
+        
+        if($i == 0)
+            return false;
+        else
+            return true;        
+    }   
+    
+    public function MakeIDArray() {
+        global $cDB, $cErr;
+        
+        $ids="";        
+        if($this->members) {
+            foreach($this->members as $member) {
+                    $ids[$member->member_id] = $member->PrimaryName() ." (". $member->member_id .")";
+            }       
+        }
+        
+        return $ids;    
+    }   
+    
+    public function MakeNameArray() {
+        global $cDB, $cErr;
+        
+        $names["0"] = "";
+        
+        if($this->members) {
+            foreach($this->members as $member) {
+                foreach ($member->person as $person) {          
+                    $names[$member->member_id ."?". $person->person_id] = $person->first_name ." ". $person->last_name ." (". $member->member_id .")";
+                }
+            }   
+        
+            array_multisort($names);// sort purely by person name (instead of member, person)
+        }
+        
+        return $names;      
+    }   
+    
+    public function DoNamePicker() {
+        
+        $tmp = '<script src=includes/autocomplete.js></script>';
+        
+        $mems = $this->MakeNameArray();
+        
+        $tmp .= "<select name=member_to>
+            <option id=0 value=0>".count($mems)." matching members...</option>";
+        
+        foreach($mems as $key=>$value) {
+            
+            $tmp .= "<option id='".$key."' value='".$key."'>".$value."</option>";
+        }
+        
+        $tmp .= "</select>";
+//      $form->addElement("select", "member_to", "...", $name_list->MakeNameArray());
+        $tmp .= '<input type=text size=20 name=picker value="Member search" onKeyUp="autoComplete(this,document.all.member_to,\'text\')"
+            onFocus="this.value=\'\'">
+            <!--<input type=button value="Update Dropdown List">-->';
+        return $tmp;
+    }
+    
+    // Use of this function requires the inclusion of class.listing.php
+    public function EmailListingUpdates($interval) {
+        if(!isset($this->members)) {
+            if(!$this->LoadMemberGroup())
+                return false;
+        }
 
-		$listings = new cListingGroup(OFFER_LISTING);
-		$since = new cDateTime("-". $interval ." days");
-		$listings->LoadListingGroup(null,null,null,$since->MySQLTime());
-		$offered_text = $listings->DisplayListingGroup(true);
-		$listings = new cListingGroup(WANT_LISTING);
-		$listings->LoadListingGroup(null,null,null,$since->MySQLTime());
-		$wanted_text = $listings->DisplayListingGroup(true);
-		
-		$email_text = "";
-		if($offered_text != "No listings found.")
-			$email_text .= "<h2>Offered Listings</h2><br>". $offered_text ."<p><br>";
-		if($wanted_text != "No listings found.")
-			$email_text .= "<h2>Wanted Listings</h2><br>". $wanted_text;
-		if(!$email_text)
-			return; // If no new listings, don't email
-		
-		$email_text = "<html><body>". LISTING_UPDATES_MESSAGE ."<p><br>".$email_text. "</body></html>";
-			
-		if ($interval == '1')
-			$period = "day";
-		elseif ($interval == '7')
-			$period = "week";
-		else
-			$period = "month";			
-		
-		foreach($this->members as $member) {						
-			if($member->email_updates == $interval and $member->person[0]->email) {
-				mail($member->person[0]->email, SITE_SHORT_TITLE .": New and updated listings during the last ". $period, wordwrap($email_text, 64), "From:". EMAIL_ADMIN ."\nMIME-Version: 1.0\n" . "Content-type: text/html; charset=iso-8859-1"); 
-			}
-		
-		}
-	
-	}
-	
-	// Use of this function requires the inclusion of class.listing.php
-	function ExpireListings4InactiveMembers() {
-		if(!isset($this->members)) {
-			if(!$this->LoadMemberGroup())
-				return false;
-		}
-		
-		foreach($this->members as $member) {
-			if($member->DaysSinceLastTrade() >= MAX_DAYS_INACTIVE
-			and $member->DaysSinceUpdatedListing() >= MAX_DAYS_INACTIVE) {
-				$offer_listings = new cListingGroup(OFFER_LISTING);
-				$want_listings = new cListingGroup(WANT_LISTING);
-				
-				$offered_exist = $offer_listings->LoadListingGroup(null, null, $member->member_id, null, false);
-				$wanted_exist = $want_listings->LoadListingGroup(null, null, $member->member_id, null, false);
-				
-				if($offered_exist or $wanted_exist)	{
-					$expire_date = new cDateTime("+". EXPIRATION_WINDOW ." days");
-					if($offered_exist)
-						$offer_listings->ExpireAll($expire_date);
-					if($wanted_exist)
-						$want_listings->ExpireAll($expire_date);
-				
-					if($member->person[0]->email != null) {
-						mail($member->person[0]->email, "Important information about your ". SITE_SHORT_TITLE ." account", wordwrap(EXPIRED_LISTINGS_MESSAGE, 64), "From:". EMAIL_ADMIN); 
-						$note = "";
-						$subject_note = "";
-					} else {
-						$note = "\n\n***NOTE: This member does not have an email address in the system, so they will need to be notified by phone that their listings have been inactivated.";
-						$subject_note = " (member has no email)";
-					}
-					
-					mail(EMAIL_ADMIN, SITE_SHORT_TITLE ." listings expired for ". $member->member_id. $subject_note, wordwrap("All of this member's listings were automatically expired due to inactivity.  To turn off this feature, see inc.config.php.". $note, 64) , "From:". EMAIL_ADMIN);
-				}
-			}
-		}
-	}
+        $listings = new cListingGroup(OFFER_LISTING);
+        $since = new cDateTime("-". $interval ." days");
+        $listings->LoadListingGroup(null,null,null,$since->MySQLTime());
+        $offered_text = $listings->DisplayListingGroup(true);
+        $listings = new cListingGroup(WANT_LISTING);
+        $listings->LoadListingGroup(null,null,null,$since->MySQLTime());
+        $wanted_text = $listings->DisplayListingGroup(true);
+        
+        $email_text = "";
+        if($offered_text != "No listings found.")
+            $email_text .= "<h2>Offered Listings</h2><br>". $offered_text ."<p><br>";
+        if($wanted_text != "No listings found.")
+            $email_text .= "<h2>Wanted Listings</h2><br>". $wanted_text;
+        if(!$email_text)
+            return; // If no new listings, don't email
+        
+        $email_text = "<html><body>". LISTING_UPDATES_MESSAGE ."<p><br>".$email_text. "</body></html>";
+            
+        if ($interval == '1')
+            $period = "day";
+        elseif ($interval == '7')
+            $period = "week";
+        else
+            $period = "month";          
+        
+        foreach($this->members as $member) {                        
+            if($member->email_updates == $interval and $member->person[0]->email) {
+                mail($member->person[0]->email, SITE_SHORT_TITLE .": New and updated listings during the last ". $period, wordwrap($email_text, 64), "From:". EMAIL_ADMIN ."\nMIME-Version: 1.0\n" . "Content-type: text/html; charset=iso-8859-1"); 
+            }
+        
+        }
+    
+    }
+    
+    // Use of this function requires the inclusion of class.listing.php
+    public function ExpireListings4InactiveMembers() {
+        if(!isset($this->members)) {
+            if(!$this->LoadMemberGroup())
+                return false;
+        }
+        
+        foreach($this->members as $member) {
+            if($member->DaysSinceLastTrade() >= MAX_DAYS_INACTIVE
+            and $member->DaysSinceUpdatedListing() >= MAX_DAYS_INACTIVE) {
+                $offer_listings = new cListingGroup(OFFER_LISTING);
+                $want_listings = new cListingGroup(WANT_LISTING);
+                
+                $offered_exist = $offer_listings->LoadListingGroup(null, null, $member->member_id, null, false);
+                $wanted_exist = $want_listings->LoadListingGroup(null, null, $member->member_id, null, false);
+                
+                if($offered_exist or $wanted_exist) {
+                    $expire_date = new cDateTime("+". EXPIRATION_WINDOW ." days");
+                    if($offered_exist)
+                        $offer_listings->ExpireAll($expire_date);
+                    if($wanted_exist)
+                        $want_listings->ExpireAll($expire_date);
+                
+                    if($member->person[0]->email != null) {
+                        mail($member->person[0]->email, "Important information about your ". SITE_SHORT_TITLE ." account", wordwrap(EXPIRED_LISTINGS_MESSAGE, 64), "From:". EMAIL_ADMIN); 
+                        $note = "";
+                        $subject_note = "";
+                    } else {
+                        $note = "\n\n***NOTE: This member does not have an email address in the system, so they will need to be notified by phone that their listings have been inactivated.";
+                        $subject_note = " (member has no email)";
+                    }
+                    
+                    mail(EMAIL_ADMIN, SITE_SHORT_TITLE ." listings expired for ". $member->member_id. $subject_note, wordwrap("All of this member's listings were automatically expired due to inactivity.  To turn off this feature, see inc.config.php.". $note, 64) , "From:". EMAIL_ADMIN);
+                }
+            }
+        }
+    }
 }
+
 
 class cMemberGroupMenu extends cMemberGroup {		
 	var $id;
 	var $name;
 	var $person_id;
 
-	function MakeMenuArrays() {
+	public function MakeMenuArrays() {
 		global $cDB, $cErr;
 		
 		$i = 0;
@@ -1139,7 +1298,7 @@ class cMemberGroupMenu extends cMemberGroup {
 class cBalancesTotal {
 	var $balance;
 	
-	function Balanced() {
+	public function Balanced() {
 		global $cDB, $cErr;
 		
 		$query = $cDB->Query("SELECT sum(balance) from ". DATABASE_MEMBERS .";");
@@ -1160,7 +1319,7 @@ class cBalancesTotal {
 
 class cIncomeTies extends cMember {
 	
-	function getTie($member_id) {
+	public function getTie($member_id) {
 		
 		global $cDB;
 		
@@ -1175,7 +1334,7 @@ class cIncomeTies extends cMember {
 		return $row;
 	}
 	
-	function saveTie($data) {
+	public function saveTie($data) {
 		
 		global $cDB;
 		
@@ -1198,7 +1357,7 @@ class cIncomeTies extends cMember {
 		return "Income Share saved successfully.";
 	}
 	
-	function deleteTie($member_id) {
+	public function deleteTie($member_id) {
 		
 		global $cDB;
 		
@@ -1218,8 +1377,114 @@ class cIncomeTies extends cMember {
 	}
 	
 }
+//CT adjusted 
+class cMemberSummaryView extends cMember {
+    public function cMemberSummaryView($values=null) {
+        if(!empty($values)){
+            $this->ConstructMember();
+        }
+    }
+    public function LoadMember($member, $redirect=true) {
+        global $cDB, $cErr;
+//CT efficiency 
+        $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.status as status, 
+                m.join_date as join_date, 
+                m.expire_date as expire_date, 
+                p1.first_name as first_name, 
+                p1.last_name as last_name, 
+                p1.email as email, 
+                p1.person_id as person_id, 
+                p2.person_id as p2_person_id, 
+                p2.email as p2_email, 
+                p2.first_name as p2_first_name, 
+                p2.last_name as p2_last_name, 
+                p1.phone1_number as phone1_number, 
+                p1.primary_member as primary_member, 
+                p2.primary_member as p2_primary_member, 
+                p1.phone1_number as p1_phone1_number, 
+                p2.phone1_number as p2_phone1_number, 
+                p1.address_street2 as address_street2, 
+                p1.address_city as address_city, 
+                p1.address_state_code as address_state_code, 
+                p1.address_post_code as address_post_code, 
+                p1.directory_list as directory_list, 
+                p2.directory_list as p2_directory_list, 
+                m.member_id as member_id, 
+                p1.age as age, 
+                p1.sex as sex, 
+                p1.about_me as about_me 
+                FROM member m 
+                left JOIN person p1 ON m.member_id=p1.member_id 
+                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
 
-$cUser = new cMember();
+        //$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, p1.age as age, p1.about_me as about_me, m.member_id as member_id, m.account_type as account_type, DATE_FORMAT(join_date, '".SHORT_DATE_FORMAT."') as join_date, DATE_FORMAT(expire_date, '".SHORT_DATE_FORMAT."') as expire_date FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' and m.member_id = '{$member}' ");
+        //$query = $cDB->Query("SELECT member_id, join_date, expire_date, away_date, account_type, email_updates, balance, confirm_payments, restriction FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member));
+        
+        if($row = mysql_fetch_array($query))
+        {       
+            //$cErr->Error(print_r($row, true));
+            $this->ConstructMember($row);
+        }
+        else
+        {
+            if ($redirect) {
+                $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+                include("redirect.php");
+            }
+            return false;
+        }               
+    }
+}
+//CT adjusted small, just load what you need of current user
+class cMemberUser extends cMember {
+    public function cMemberUser($values=null) {
+        if(!empty($values)){
+            $this->ConstructMember();
+        }
+    }
+    public function LoadMember($member, $redirect=false) {
+        global $cDB, $cErr;
+        //CT barebones
+/*        $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.status as status, 
+                m.member_role as member_role, 
+                m.expire_date as expire_date, 
+                p1.first_name as first_name, 
+                p1.last_name as last_name, 
+                p2.first_name as p2_first_name, 
+                p2.last_name as p2_last_name, 
+                m.member_id as member_id, 
+                FROM member m 
+                left JOIN person p1 ON m.member_id=p1.member_id 
+                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+*/        
+    $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.status as status, 
+                m.member_role as member_role, 
+                m.expire_date as expire_date, 
+                m.member_id as member_id
+                FROM member m 
+                where m.member_id=". $cDB->EscTxt($member));
+        
+        if($row = mysql_fetch_array($query))
+        {       
+            $this->ConstructMember($row);
+            return true;
+        }
+        else
+        {
+            $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+            return false;
+        }               
+    }
+}
+
+
+$cUser = new cMemberUser();
 $cUser->RegisterWebUser();
 
 ?>

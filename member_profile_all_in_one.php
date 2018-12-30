@@ -4,42 +4,62 @@ $p->site_section = SITE_SECTION_OFFER_LIST;
 
 $cUser->MustBeLoggedOn();
 
-$list = "<H2>Welcome to ". SITE_SHORT_TITLE .", ". $cUser->person[0]->first_name ."!</H2>";
-$list .= "Please choose from the following options, or navigate using the buttons on the sidebar to the left.<P>";
+$p->page_title = "My profile";
+$list = $p->Wrap("Welcome to ". SITE_SHORT_TITLE .", ". $cUser->AllFirstNames() . "!", "h3");
 
-$list .= "<STRONG>Member Settings</STRONG><P>";
-$list .= "<A HREF=password_change.php><FONT SIZE=2>Change My Password</FONT></A><BR>";
-$list .= "<A HREF=member_edit.php?mode=self><FONT SIZE=2>Edit My Personal Information</FONT></A><BR>";
-$list .= "<A HREF=member_contact_create.php?mode=self><FONT SIZE=2>Add a Joint Member to My Account</FONT></A><BR>";
-$list .= "<A HREF=member_contact_choose.php><FONT SIZE=2>Edit a Joint Member</FONT></A><P>";
+//todo: message for restricted?
+if ($cUser->AccountIsRestricted()) $list .= LEECH_NOTICE;
 
-$list .= "<STRONG>Offered Listings</STRONG><P>";
-$list .= "<A HREF=listings.php?type=Offer><FONT SIZE=2>View Offered Listings</FONT></A><BR>";
-$list .= "<A HREF=listing_create.php?type=Offer><FONT SIZE=2>Create New Offer Listing</FONT></A><BR>";
-$list .= "<A HREF=listing_to_edit.php?type=Offer><FONT SIZE=2>Edit Offered Listings</FONT></A><BR>";
-$list .= "<A HREF=listing_delete.php?type=Offer><FONT SIZE=2>Delete Offered Listings</FONT></A><P>";
+$menuArray = array();
+$menuArray[] = $p->MenuItemArray("Edit my personal information", "member_edit.php?mode=self");
+$menuArray[] = $p->MenuItemArray("Add a joint member to my account", "member_contact_create.php?mode=self");
+$menuArray[] = $p->MenuItemArray("Edit a joint member", "member_contact_choose.php");
+$menuHtml = $p->Menu($menuArray);
+//CT - rewrote page so that its easier to read and manage, plus modern html
+$title = $p->Wrap("Member Settings", "h3");
+$list .= $p->Wrap($title . $menuHtml, "div", "col");
 
-$list .= "<STRONG>Wanted Listings</STRONG><P>";
-$list .= "<A HREF=listings.php?type=Want><FONT SIZE=2>View Wanted Listings</FONT></A><BR>";
-$list .= "<A HREF=listing_create.php?type=Want><FONT SIZE=2>Create New Want Listing</FONT></A><BR>";
-$list .= "<A HREF=listing_to_edit.php?type=Want><FONT SIZE=2>Edit Wanted Listings</FONT></A><BR>";
-$list .= "<A HREF=listing_delete.php?type=Want><FONT SIZE=2>Delete Wanted Listings</FONT></A><P>";
-
-$list .= "<STRONG>Exchanges</STRONG><P>";
-$list .= "<A HREF=trade.php><FONT SIZE=2>Record an Exchange</FONT></A><BR>";
-$list .= "<A HREF=trade_history.php?mode=self><FONT SIZE=2>View My Balance and Exchange History</FONT></A><BR>";
-$list .= "<A HREF=trades_to_view.php><FONT SIZE=2>View Another Member's Exchange History</FONT></A><P>";
-
-if ($cUser->member_role > 0) {
-	$list .= "<STRONG>Administration</STRONG><P>";
-	$list .= "<A HREF=member_create.php><FONT SIZE=2>Create a New Member Account</FONT></A><BR>";
-	$list .= "<A HREF=member_to_edit.php><FONT SIZE=2>Edit a Member Account</FONT></A><BR>";
-	$list .= "<A HREF=member_contact_create.php?mode=admin><FONT SIZE=2>Add a Joint Member to an Existing Account</FONT></A><BR>";
-	$list .= "<A HREF=member_contact_to_edit.php><FONT SIZE=2>Edit a Joint Member</FONT></A><BR>";
+//core and above
+if ($cUser->getMemberRole() > 0) {
+	$menuArray = array();
+	$menuArray[] = $p->MenuItemArray("Create a new member account", "member_create.php");
+	$menuArray[] = $p->MenuItemArray("Edit a member account", "member_to_edit.php");
+	$menuArray[] = $p->MenuItemArray("Add a joint member to an existing account", "member_contact_create.php?mode=admin");
+	$menuArray[] = $p->MenuItemArray("Edit a joint member", "member_contact_to_edit.php");
+	//admin
+	if ($cUser->getMemberRole() > 1) {
+		$menuArray[] = $p->MenuItemArray("Reverse an exchange that was made in error", "trade_reverse.php");
+	}
+	$menuHtml = $p->Menu($menuArray);
+	$title = $p->Wrap("Administration", "h3");
+	$list .= $p->Wrap($title . $menuHtml, "div", "col");
 }
-if ($cUser->member_role > 1) {
-	$list .= "<A HREF=trade_reverse.php><FONT SIZE=2>Reverse an Exchange that was Made in Error</FONT></A><BR>";
-}
+$menuArray = array();
+$menuArray[] = $p->MenuItemArray("View offered listings", "listings.php?type=Offer");
+$menuArray[] = $p->MenuItemArray("Create new offer listing", "listing_create.php?type=Offer");
+$menuArray[] = $p->MenuItemArray("Edit offered listings", "listing_to_edit.php?type=Offer");
+$menuArray[] = $p->MenuItemArray("Delete offered listings", "listing_delete.php?type=Offer");
+$menuHtml = $p->Menu($menuArray);
+$title = $p->Wrap("Offered listings", "h3");
+$list .= $p->Wrap($title . $menuHtml, "div", "col");
+
+
+$menuArray = array();
+$menuArray[] = $p->MenuItemArray("View wanted listings", "listings.php?type=Want");
+$menuArray[] = $p->MenuItemArray("Create new wanted listing", "listing_create.php?type=Want");
+$menuArray[] = $p->MenuItemArray("Edit wanted listings", "listing_to_edit.php?type=Want");
+$menuArray[] = $p->MenuItemArray("Delete wanted listings", "listing_delete.php?type=Want");
+$menuHtml = $p->Menu($menuArray);
+$title = $p->Wrap("Wanted listings", "h3");
+$list .= $p->Wrap($title . $menuHtml, "div", "col");
+
+$menuArray = array();
+$menuArray[] = $p->MenuItemArray("Record an exchange", "trade.php");
+$menuArray[] = $p->MenuItemArray("View my balance and exchange history", "trade_history.php?mode=self");
+$menuArray[] = $p->MenuItemArray("View another member's exchange history", "trades_to_view.php");
+$menuHtml = $p->Menu($menuArray);
+$title = $p->Wrap("Exchanges", "h3");
+$list .= $p->Wrap($title . $menuHtml, "div", "col");
 
 $p->DisplayPage($list);
 

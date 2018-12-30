@@ -29,7 +29,7 @@ class cPage {
 			$this->AddSidebarButton($button[0], $button[1]);
 		}
 		
-		if ($cUser->member_role > 0)
+		if ($cUser->getMemberRole() > 0)
 			$this->AddSidebarButton("Administration", "admin_menu.php");	
 	}		
 									
@@ -41,7 +41,7 @@ class cPage {
 		$this->top_buttons[] = new cMenuItem($button_text, $url);
 	}
 
-	function MakePageHeader() {
+	function MakeDocHeader() {
 		global $cUser;
 		
 		if(isset($this->page_title)) 
@@ -49,18 +49,16 @@ class cPage {
 		else
 			$title = "";
 		
-		$output = "<!DOCTYPE HTML>
+		return "<!DOCTYPE HTML>
 		<html>
 		<head>
 		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
 		<meta name='viewport' content='user-scalable=yes'/>
 		<title>". $title . PAGE_TITLE_HEADER ."</title>
-		<link rel='stylesheet' href='http://". HTTP_BASE ."/". SITE_STYLESHEET ."'' type='text/css'></link>";
-		$output .= "<body><div class=\"page\">";
-		$output .= $this->page_header ;
-
-	
-		return $output;
+		<link rel='stylesheet' href='http://". HTTP_BASE ."/". SITE_STYLESHEET ."'' type='text/css'></link></head><body>";
+	}
+	function MakePageHeader() {
+		return $this->page_header ;
 	}
 	//CT: simple adding of errors
 	function AddError($error){
@@ -95,12 +93,12 @@ class cPage {
 	}
 									
 	function MakePageFooter() {
-		global $cUser;
-		$output .= "<div class=\"footer\">";
-		$output .= $this->page_footer ."</div></div>";
-		$output .= "</body></html>";
-		return $output;
+		return $this->Wrap($this->page_footer, "div", "footer");
 	}	
+	function MakeDocFooter() {
+		return "</body></html>";
+	}	
+
 	function MakePageContent() {
 		//global $cUser;
 		if(strlen($this->page_content)<1) { 
@@ -108,13 +106,9 @@ class cPage {
 			$this->AddError('No page content set');
 			$this->page_content = "Nothing to show.";
 		}
-		$output .= "<div class=\"content\">";
-		$output .= $this->MakePageTitle();
-		//$output .= $cError;
-		$output .= $this->MakeErrorContent();
-		//$output .= $content;
-		$output .= $this->page_content ."</div>";
-		return $output;
+
+		$content = $this->MakePageTitle() . $this->MakeErrorContent() . $this->page_content;
+		return $this->Wrap($content, "div", "content");
 	}
 	function MakeErrorContent() {
 		//global $cUser;
@@ -124,7 +118,8 @@ class cPage {
 		//$this->errors=array_merge($this->errors,$cErr->arrErrors);
 		//$this->AddError("test");
 		if(count($cErr->arrErrors)<1) return "";
-		$output = "<div class=\"errors\"><p>Messages:</p><ul>";
+		//$output = "<div class=\"errors\"><p>Messages:</p><ul>";
+		$output = "<div class=\"errors\"><ul>";
 		//var_dump
 		foreach ($cErr->arrErrors as $error) {
 			$output .= '<li>'. $error[1] . "</li>";
@@ -138,14 +133,75 @@ class cPage {
 
 		if(strlen($content)>0) $this->page_content = $content;
 		//print "cnte" . $p->page_content;
-		$output = $this->MakePageHeader();
-		$output .= "<div class=\"main\">";
-		$output .= $this->MakePageMenu();
-		$output .= $this->MakePageContent();
-		$output .= "</div>";
-		$output .= $this->MakePageFooter();
+		$header = $this->MakePageHeader();
+		//$output .= "<div class=\"main\">";
+		$main = $this->MakePageMenu() . $this->MakePageContent();
+		$main = $this->Wrap($main, "div", "main");
+		$footer = $this->MakePageFooter();
+		$page = $this->Wrap($header . $main . $footer, "div", "page");
+		//CT - wrap in div for control
+		$output = $this->MakeDocHeader() . $page . $this->MakeDocFooter();
 		print $output;
+	}
+	function MenuItemArray($string, $link){
+		$arr = array(
+			"string" => $string, 
+			"link" => $link
+		);
+		return $arr;
 	}	
+	function Menu($array){
+		//$array is text, link;
+		$menu = "";
+		foreach ($array as $key => $value){
+			$menu .= $this->Wrap($value['string'], "li", null, $value['link']);
+			//$menu .= $p->Wrap($value['string'], "li", null, $value['link']);
+		}
+		return $this->Wrap($menu, "ul");
+	}
+	function Wrap($string, $elementName, $cssClass=null, $link=null){
+		if(!empty($link)){
+			$string = $this->Link($string, $link);
+		}
+		if(!empty($cssClass)){
+			$cText=" class='{$cssClass}'";
+		}
+		return "<{$elementName} {$cText}>{$string}</{$elementName}>";
+	}
+	function Link($string, $link){
+		return "<a href='{$link}'>{$string}</a>";
+	}
+	function WrapForm($string, $action, $method="get", $cssClass=""){
+		//default method as get, and cssclass
+		return "<form action='{$action}' method='{$method}' class='{$cssClass}'>{$string}</form>";
+	}
+	function WrapFormElement($type, $name, $label='', $value='', $cssClass=''){
+		switch ($type){
+			case 'text':
+				$output = "<label class='text'><span>{$label}:</span><input type='text' value='{$value}' name='{$name}'  /></label>";
+			break;
+			case 'password':
+				$output = "<label class='password'><span>{$label}:</span><input type='password' name='{$name}' /></label>";
+			break;
+			case 'hidden':
+				$output = "<input type='hidden' value='{$value}' name='{$name}' /></label>";
+			break;
+			case 'textarea': 
+				$output = "<label class='textarea'><span>{$label}:</span><texarea value='{$value}' name='{$name}' /></label>";
+			break;
+			case 'checkbox':
+				$output = "<label class='checkbox'><input type='text' value='{$value}' name='{$name}' /><span>{$label}</span></label>";
+			break;
+			case 'submit':
+				$output = "<input type='submit' value='{$value}' name='{$name}' />";
+			break;
+			default:
+				$output= 'nothing';
+				//
+		}
+		if($type !="hidden") $output=$this->Wrap($output, 'div', "l_".$type);
+		return $output;
+	}
 	
 	
 }

@@ -37,8 +37,9 @@ class cLoginHistory {
 		global $cDB, $cErr;				
 
 		$update = $cDB->Query("UPDATE ".DATABASE_LOGINS." SET total_failed=". $this->total_failed .", consecutive_failures=". $this->consecutive_failures .", last_failed_date=". $cDB->EscTxt($this->last_failed_date) .", last_success_date=". $cDB->EscTxt($this->last_success_date) ." WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
+		$cErr->Error(print_r($this, true));	
 
-		if(!$update) {
+		if(empty($update)) {
 			$cErr->Error("Could not save changes to login history '". $this->member_id ."'. Please try again later.");	
 			include("redirect.php");
 		} else {
@@ -83,14 +84,14 @@ class cLoginHistory {
 			if($this->consecutive_failures > FAILED_LOGIN_LIMIT) {
 				$member = new cMember;
 				$member->LoadMember($member_id);
-				$member->status = LOCKED;
+				$member->setStatus(LOCKED);
 				$member->SaveMember();
 			}
 			return $this->SaveLoginHistory();
 		} else {
-			$query = $cDB->Query("SELECT NULL FROM ". DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member_id) .";");
-			if (!$row = mysql_fetch_array($query))
-				return false;	// Userid must have been misspelled or didn't exist.
+			//$query = $cDB->Query("SELECT NULL FROM ". DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member_id) .";");
+			//if (!$row = mysql_fetch_array($query))
+			//	return false;	// Userid must have been misspelled or didn't exist.
 			
 			$this->member_id = $member_id;
 			$this->total_failed = 1;

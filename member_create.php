@@ -32,13 +32,13 @@ $form->addElement("text", "last_name", "Last Name", array("size" => 20, "maxleng
 $form->addElement("static", null, null, null); 
 
 $options = array("language"=> "en", "format" => "dFY", "maxYear"=>$today["year"], "minYear"=>"1880"); 
-$form->addElement("date", "dob", "Date of Birth", $options);
-$form->addElement("text", "mother_mn", "Mother's Maiden Name", array("size" => 20, "maxlength" => 30)); 
+//$form->addElement("date", "dob", "Date of Birth", $options);
+//$form->addElement("text", "mother_mn", "Mother's Maiden Name", array("size" => 20, "maxlength" => 30)); 
 $form->addElement("static", null, null, null);
 $form->addElement("text", "email", "Email Address", array("size" => 25, "maxlength" => 40));
 $form->addElement("text", "phone1", "Primary Phone", array("size" => 20));
 $form->addElement("text", "phone2", "Secondary Phone", array("size" => 20));
-$form->addElement("text", "fax", "Fax Number", array("size" => 20));
+//$form->addElement("text", "fax", "Fax Number", array("size" => 20));
 $form->addElement("static", null, null, null);
 $frequency = array("0"=>"Never", "1"=>"Daily", "7"=>"Weekly", "30"=>"Monthly");
 $form->addElement("select", "email_updates", "How frequently should the member receive email updates?", $frequency);
@@ -74,7 +74,7 @@ $form->addRule('member_id','Special characters are not allowed','verify_good_mem
 $form->registerRule('verify_good_password','function','verify_good_password');
 $form->addRule('password', 'Password must contain at least one number', 'verify_good_password');
 $form->registerRule('verify_no_apostraphes_or_backslashes','function','verify_no_apostraphes_or_backslashes');
-$form->addRule("password", "You have the right idea, but it's best not to use apostraphes or backslashes in passwords", "verify_no_apostraphes_or_backslashes");
+$form->addRule("password", "Don\'t use apostraphes or backslashes in passwords", "verify_no_apostraphes_or_backslashes");
 $form->registerRule('verify_role_allowed','function','verify_role_allowed');
 $form->addRule('member_role','You cannot assign a higher level of access than you have','verify_role_allowed');
 $form->registerRule('verify_not_future_date','function','verify_not_future_date');
@@ -137,10 +137,10 @@ function process_data ($values) {
 	$values['phone2_area'] = $phone->area;
 	$values['phone2_number'] = $phone->SevenDigits();
 	$values['phone2_ext'] = $phone->ext;	
-	$phone = new cPhone_uk($values['fax']);
-	$values['fax_area'] = $phone->area;
-	$values['fax_number'] = $phone->SevenDigits();
-	$values['fax_ext'] = $phone->ext;	
+	//$phone = new cPhone_uk($values['fax']);
+	//$values['fax_area'] = $phone->area;
+	//$values['fax_number'] = $phone->SevenDigits();
+	//$values['fax_ext'] = $phone->ext;	
 
 
 	$new_member = new cMember($values);
@@ -191,10 +191,12 @@ function verify_good_member_id ($element_name,$element_value) {
 
 function verify_role_allowed($element_name,$element_value) {
 	global $cUser;
-	if($element_value > $cUser->member_role)
+	if($element_value > $cUser->getMemberRole()){
 		return false;
-	else
+	}
+	else {
 		return true;
+	}
 }
 		
 function verify_reasonable_dob($element_name,$element_value) {

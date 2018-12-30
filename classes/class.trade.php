@@ -9,13 +9,17 @@ include_once("class.category.php");
 include_once("class.feedback.php");
 
 class cTrade {
+
+
 	var $trade_id;
 	var $trade_date;
 	var $status;
+	var $member_id_from;
+	var $member_id_to;
 	var $member_from;
 	var $member_to;
 	var $amount;
-	var $category;		// this will be an object of class cCategory
+	var $category;		// CT - just the description is fine here - 1 string.
 	var $description;
 	var $type;
 	var $feedback_buyer;	// added after trade completed; object of type cFeedback
@@ -37,7 +41,7 @@ class cTrade {
 	function ShowTrade() {
 		global $cDB;
 		
-		$content = $this->trade_id .", ". $this->trade_date .", ". $this->status .", ". $this->member_from->member_id .", ". $this->member_to->member_id .", ". $this->amount .", ". $this->category->id .", ". $this->description .", ". $this->type;
+		$content = $this->trade_id .", ". $this->trade_date .", ". $this->status .", ". $this->member_from->member_id .", ". $this->member_id_to .", ". $this->amount .", ". $this->category->id .", ". $this->description .", ". $this->type;
 		
 		return $content;
 	}
@@ -45,7 +49,7 @@ class cTrade {
 	function SaveTrade() {  // This function should never be called directly
 		global $cDB, $cErr;
 		
-		$insert = $cDB->Query("INSERT INTO ". DATABASE_TRADES ." (trade_date, status, member_id_from, member_id_to, amount, category, description, type) VALUES (now(), ". $cDB->EscTxt($this->status) .", ". $cDB->EscTxt($this->member_from->member_id) .", ". $cDB->EscTxt($this->member_to->member_id) .", ". $cDB->EscTxt($this->amount) .", ". $cDB->EscTxt($this->category->id) .", ". $cDB->EscTxt($this->description) .", ". $cDB->EscTxt($this->type) .");");
+		$insert = $cDB->Query("INSERT INTO ". DATABASE_TRADES ." (trade_date, status, member_id_from, member_id_to, amount, category, description, type) VALUES (now(), ". $cDB->EscTxt($this->status) .", ". $cDB->EscTxt($this->member_from->member_id) .", ". $cDB->EscTxt($this->member_id_to) .", ". $cDB->EscTxt($this->amount) .", ". $cDB->EscTxt($this->category->id) .", ". $cDB->EscTxt($this->description) .", ". $cDB->EscTxt($this->type) .");");
 
 		if(mysql_affected_rows() == 1) {
 		
@@ -61,39 +65,68 @@ class cTrade {
 	
 	function LoadTrade($trade_id) {
 		global $cDB, $cErr;
-		
-		$query = $cDB->Query("SELECT date_format(trade_date,'%Y-%m-%d'), status, member_id_from, member_id_to, amount, description, type, category FROM ".DATABASE_TRADES." WHERE trade_id=". $cDB->EscTxt($trade_id) .";");
+		//CT - efficiency - combine db calls. categories, feedback comes free!
+		$query = $cDB->Query("SELECT date_format(trade_date,'%Y-%m-%d'), status, trade_id, member_id_from, member_id_to, amount, t.description as description, type, c.description as category FROM ".DATABASE_TRADES." t left join t.category on t.category = c.category_id WHERE trade_id=". $cDB->EscTxt($trade_id) .";");
 		
 		if($row = mysql_fetch_array($query)) {		
-			$this->trade_id = $trade_id;
-			$this->trade_date = $row[0];
-			$this->status = $row[1];
-			$this->member_from = new cMember;
-			$this->member_from->LoadMember($row[2]);
-			$this->member_to = new cMember;
-			$this->member_to->LoadMember($row[3]);
-			$this->amount = $row[4];
-			$this->description = $cDB->UnEscTxt($row[5]);
-			$this->type = $row[6];
-			$this->category = new cCategory();
-			$this->category->LoadCategory($row[7]);
-			
+			$this->ConstructTrade($row);
+/*
 			$feedback = new cFeedback;
-			$feedback_id = $feedback->FindTradeFeedback($trade_id, $this->member_from->member_id);
+			$feedback_id = $feedback->FindTradeFeedback($trade_id, $this->member_from->getMemberId());
 			if($feedback_id) {
 				$this->feedback_buyer = new cFeedback;
 				$this->feedback_buyer->LoadFeedback($feedback_id);
 			}
-			$feedback_id = $feedback->FindTradeFeedback($trade_id, $this->member_to->member_id);
+			$feedback_id = $feedback->FindTradeFeedback($trade_id, $this->member_to->getMemberId());
+			if($feedback_id) {
+				$this->feedback_seller = new cFeedback;
+				$this->feedback_seller->LoadFeedback($feedback_id);
+			}*/
+			
+		} else {
+			$cErr->Error("There was an error accessing the trades table.  Please try again later.");
+			//include("redirect.php");
+		}				
+	}
+	//no need to call each line separately in a db call, you've got it! jsut used the array
+	function ConstructTrade($array) {
+		global $cDB, $cErr;
+		
+		//$query = $cDB->Query("SELECT date_format(trade_date,'%Y-%m-%d'), status, member_id_from, member_id_to, amount, description, type, category FROM ".DATABASE_TRADES." WHERE trade_id=". $cDB->EscTxt($trade_id) .";");
+		
+		//if($row = mysql_fetch_array($query)) {		
+			$this->trade_id = $array['trade_id'];
+			$this->trade_date = $array['trade_date'];
+			$this->status = $array['status'];
+			//doesnt appear to be needed, only ids are listed.
+			$this->member_from = new cMember;
+			//CT - todo - create v small class extension to stop loading EVERYTHING for one fraking line
+			$this->member_from->ConstructMember(array('member_id' => $array['member_id_from']));
+			$this->member_to = new cMember;
+			$this->member_from->ConstructMember(array('member_id' => $array['member_id_to']));
+			
+			$this->member_id_from = $array['member_id_from'];
+			$this->member_id_to = $array['member_id_to'];
+			$this->amount = $array['amount'];
+			$this->description = $cDB->UnEscTxt($array['description']);
+			$this->category = $cDB->UnEscTxt($array['category']);
+			$this->type = $array['type'];
+			//$this->category = new cCategory();
+			//$this->category->LoadCategory($array['category']);
+			
+/*			$feedback = new cFeedback;
+			$feedback_id = $feedback->FindTradeFeedback($trade_id, $this->member_from->getMemberId());
+			if($feedback_id) {
+				$this->feedback_buyer = new cFeedback;
+				$this->feedback_buyer->LoadFeedback($feedback_id);
+			}
+			$feedback_id = $feedback->FindTradeFeedback($trade_id, $this->member_to->getMemberId());
 			if($feedback_id) {
 				$this->feedback_seller = new cFeedback;
 				$this->feedback_seller->LoadFeedback($feedback_id);
 			}
-			
-		} else {
-			$cErr->Error("There was an error accessing the trades table.  Please try again later.");
-			include("redirect.php");
-		}				
+*/			
+					
 	}
 
 	// It is very important that this function prevent the database from going out balance.
@@ -107,7 +140,7 @@ class cTrade {
 			return false;
 			
 		
-		if ($this->member_from->member_id == $this->member_to->member_id)
+		if ($this->member_from->member_id == $this->member_id_to)
 			return false;		// don't allow trade to self
 		
 		if ($this->member_from->restriction==1) { // This member's account has been restricted - he is not allowed to make outgoing trades
@@ -219,32 +252,31 @@ class cTradeGroup {
 		
 		$to_date = strtotime("+1 days", strtotime($this->to_date));
 		
-        if ("individual" == $type)
-        {
-		//select all trade_ids for this member
-		$query = $cDB->Query("SELECT trade_id FROM ".DATABASE_TRADES." WHERE (member_id_from LIKE ". $cDB->EscTxt($this->member_id) ." OR member_id_to LIKE ". $cDB->EscTxt($this->member_id) .") AND trade_date > ". $cDB->EscTxt($this->from_date) ." AND trade_date < ". $cDB->EscTxt(date("Ymd", $to_date)) ." ORDER BY trade_date DESC;");
-        }
-        else
-        {
-            $trade_type = TRADE_MONTHLY_FEE;
-            $trade_type_refund = TRADE_MONTHLY_FEE_REVERSAL;
 
         // Ignore monthly fees.
-				if (SHOW_GLOBAL_FEES!=true)
-					$query = $cDB->Query("SELECT trade_id FROM ".DATABASE_TRADES." WHERE (member_id_from LIKE ". $cDB->EscTxt($this->member_id) ." OR member_id_to LIKE ". $cDB->EscTxt($this->member_id) .") AND trade_date > ". $cDB->EscTxt($this->from_date) ." AND trade_date < ". $cDB->EscTxt(date("Ymd", $to_date)) ." AND type!='S' AND type != '$trade_type' AND type != '$trade_type_refund' ORDER BY trade_date DESC");
-       	else
-       			$query = $cDB->Query("SELECT trade_id FROM ".DATABASE_TRADES." WHERE (member_id_from LIKE ". $cDB->EscTxt($this->member_id) ." OR member_id_to LIKE ". $cDB->EscTxt($this->member_id) .") AND trade_date > ". $cDB->EscTxt($this->from_date) ." AND trade_date < ". $cDB->EscTxt(date("Ymd", $to_date)) ." ORDER BY trade_date DESC");
+       
+        $trade_type = TRADE_MONTHLY_FEE;
+        $trade_type_refund = TRADE_MONTHLY_FEE_REVERSAL;
+
+
+		$gf = (SHOW_GLOBAL_FEES !=true) ? "AND type !='S' AND type != '{$trade_type}' AND type != '{$trade_type_refund}'" : "";
        	
-        }
+		$query = $cDB->Query("SELECT date_format(trade_date,'%Y-%m-%d') as trade_date, status, trade_id, member_id_from, member_id_to, amount, t.description as description, type, c.description as category FROM ".DATABASE_TRADES." t left join categories c on t.category = c.category_id WHERE (member_id_from LIKE ". $cDB->EscTxt($this->member_id) ." OR member_id_to LIKE ". $cDB->EscTxt($this->member_id) .") AND trade_date > ". $cDB->EscTxt($this->from_date) ." AND trade_date < ". $cDB->EscTxt(date("Ymd", $to_date)) ." {$gf} ORDER BY trade_date DESC;");
+
+    
 
 		// instantiate new cTrade objects and load them
+
 		$i=0;
-		while($row = mysql_fetch_array($query))
+
+		while($row = mysql_fetch_array($query)) // Each of our SQL results
 		{
-			$this->trade[$i] = new cTrade;			
-			$this->trade[$i]->LoadTrade($row[0]);
-			$i += 1;
+			//echo $row['balance'];
+			$this->trade[$i] = new cTrade;	
+			$this->trade[$i]->ConstructTrade($row); 	
+			$i++;
 		}
+		
 		
 		if($i == 0)
 			return false;
@@ -253,12 +285,21 @@ class cTradeGroup {
 	}
 	
 	function DisplayTradeGroup() {
-		global $cDB, $cUser;
+		global $cDB, $cUser, $p;
 		
-		$output = "<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3 WIDTH=\"100%\"><TR BGCOLOR=\"#d8dbea\"><TD><FONT SIZE=2><B>Date</B></FONT></TD><TD><FONT SIZE=2><B>From</B></FONT></TD><TD><FONT SIZE=2><B>To</B></FONT></TD><TD ALIGN=RIGHT><FONT SIZE=2><B>". UNITS ."&nbsp;</B></FONT></TD><TD><FONT SIZE=2><B>&nbsp;Description</B></FONT></TD></TR>";
+		//$output = "<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3 WIDTH=\"100%\"><TR BGCOLOR=\"#d8dbea\"><TD><FONT SIZE=2><B>Date</B></FONT></TD><TD><FONT SIZE=2><B>From</B></FONT></TD><TD><FONT SIZE=2><B>To</B></FONT></TD><TD ALIGN=RIGHT><FONT SIZE=2><B>". UNITS ."&nbsp;</B></FONT></TD><TD><FONT SIZE=2><B>&nbsp;Description</B></FONT></TD></TR>";
+		//CT restructured so its got a running total and structure like a bank statement
+		$output = "
+			<tr>
+				<th>Date</th>
+				<th>From</th>
+				<th>To</th>
+				<th>Category</th>
+				<th>Description</th>
+				<th class='units'>Amount</th>
+			</tr>";
 		
-		if(!$this->trade)
-			return $output. "</TABLE>";   // No trades yet, presumably
+		if(empty($this->trade)) return $p->Wrap($output, "table", "tabulated");   // No trades yet, presumably
 		
 		$i=0;
 		foreach($this->trade as $trade) {
@@ -270,26 +311,94 @@ class cTradeGroup {
                 continue;
             }
 */
-			if($trade->type == TRADE_REVERSAL or
-                                             $trade->status == TRADE_REVERSAL)
-				$fcolor = "pink";
-			else if ($trade->member_to->member_id == $this->member_id)
-				$fcolor = "#4a5fa4";
-			else
-				$fcolor = "#554f4f";
+			$hname = "t{$trade->trade_id}";			
+			$statusclass = "credit";
+			$from = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_from}#{$hname}'>{$trade->member_id_from}</a>";
+			$to = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_to}#{$hname}'>{$trade->member_id_to}</a>";
+			$out = "{$trade->amount}";
+			
+			if($trade->type == TRADE_REVERSAL or $trade->status == TRADE_REVERSAL){
+				$statusclass = "reversal";
+			}
 				
-			if($i % 2)
-				$bgcolor = "#e4e9ea";
-			else
-				$bgcolor = "#FFFFFF";
 			
-			$trade_date = new cDateTime($trade->trade_date);			
+			//CT: use css styles not html colors - cleaner
+			$rowclass = ($i % 2) ? "even" : "odd";	
 			
-			$output .= "<TR VALIGN=TOP BGCOLOR=". $bgcolor ."><TD><FONT SIZE=2 COLOR=".$fcolor.">". $trade_date->ShortDate()."</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $trade->member_from->member_id ."</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $trade->member_to->member_id ."</FONT></TD><TD ALIGN=RIGHT><FONT SIZE=2 COLOR=".$fcolor.">". $trade->amount ."&nbsp;</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $cDB->UnEscTxt($trade->description) ."</FONT></TD></TR>";
+			$trade_date = new cDateTime($trade->trade_date);
+				
+			
+			$output .= "<tr class='{$rowclass} {$statusclass}' id='{$hname}'><td>{$trade_date->ShortDate()}</td><td>{$from}</td><td>{$to}</td><td>{$cDB->UnEscTxt($trade->category)}</td><td>{$cDB->UnEscTxt($trade->description)}</td><td class='units'>{$out}</td></tr>";
 			$i+=1;
 		}
 		
-		return $output . "</TABLE>";
+		return $p->Wrap($output, "table", "tabulated");
+	}	
+	
+	function DisplayTradeGroupUser($runningbalance=null) {
+		global $cDB, $cUser, $p;
+		
+		//CT restructured so its got a running total and structure like a bank statement
+		$output = "
+			<tr>
+				<th>Date</th>
+				<th>Traded with</th>
+				<th>Category</th>
+				<th>Description</th>
+				<th class='units'>Out</th>
+				<th class='units'>In</th>";
+		if(!empty($runningbalance)){
+			$output .= "<th class='units balance'>Balance</th>";
+		}
+				
+			$output .= "</tr>";
+		
+		if(empty($this->trade)) return $p->Wrap($output, "table", "tabulated");   // No trades yet, presumably
+		
+		$i=0;
+		foreach($this->trade as $trade) {
+
+			
+/*
+            // Ignore monthly fees.
+            if ($trade->type == TRADE_MONTHLY_FEE or
+                                    $trade->type == TRADE_MONTHLY_FEE_REVERSAL)
+            {
+                continue;
+            }
+*/			$hname = "t{$trade->trade_id}";			
+            $currentbalance = number_format((float)$runningbalance, 2, '.', '');
+			if ($trade->member_id_to == $this->member_id)
+			{
+				$runningbalance = $runningbalance - $trade->amount;
+				$statusclass = "credit";
+				$tradewith = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_from}#{$hname}'>{$trade->member_id_from}</a>";
+				$in = "{$trade->amount}";
+				$out = "";
+			}
+			else
+			{				
+				$runningbalance = $runningbalance + $trade->amount;
+				$statusclass = "debit";
+				$tradewith = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_to}#{$hname}'>{$trade->member_id_to}</a>";
+				$in = "";
+				$out = "{$trade->amount}";
+			}
+			if($trade->type == TRADE_REVERSAL or $trade->status == TRADE_REVERSAL){
+				$statusclass = "reversal";
+			}
+				
+			
+			//CT: use css styles not html colors - cleaner
+			$rowclass = ($i % 2) ? "even" : "odd";	
+			
+			$trade_date = new cDateTime($trade->trade_date);				
+			
+			$output .= "<tr class='{$rowclass} {$statusclass}' id='{$hname}'><td>{$trade_date->ShortDate()}</td><td>{$tradewith}</td><td>{$cDB->UnEscTxt($trade->category)}</td><td>{$cDB->UnEscTxt($trade->description)}</td><td class='units'>{$out}</td><td class='units'>{$in}</td><td class='units balance'>{$currentbalance}</td></tr>";
+			$i+=1;
+		}
+		
+		return $p->Wrap($output, "table", "tabulated");
 	}
 	
 	function MakeTradeArray() {
@@ -297,7 +406,7 @@ class cTradeGroup {
 		if($this->trade) {
 			foreach($this->trade as $trade) {
 				if($trade->type != "R" and $trade->status != "R") {
-					$trades[$trade->trade_id] = "#". $trade->trade_id ." - ". $trade->amount ." ". UNITS . " FROM ". $trade->member_from->member_id ." TO ". $trade->member_to->member_id ." ON ". $trade->trade_date;
+					$trades[$trade->trade_id] = "#". $trade->trade_id ." - ". $trade->amount ." ". UNITS . " FROM ". $trade->member_from->member_id ." TO ". $trade->member_id_to ." ON ". $trade->trade_date;
 				}
 			}
 		}
@@ -313,6 +422,7 @@ class cTradeStats extends cTradeGroup {
 	
 	function cTradeStats ($member_id="%", $from_date=LONG_LONG_AGO, $to_date=FAR_FAR_AWAY) {
 		$this->cTradeGroup($member_id, $from_date, $to_date);
+		
 		if(!$this->LoadTradeGroup())
 			return;
 		
@@ -328,6 +438,27 @@ class cTradeStats extends cTradeGroup {
 			} elseif ($this->most_recent->MySQLDate() < $trade->trade_date) {
 				$this->most_recent->Set($trade->trade_date);
 			}	
+		}
+	}
+
+}
+class cTradeStatsCT{
+	//ct todo - make less hacky. as part of member result...
+	var $total_trades;
+	var $total_units;
+	var $most_recent; //short date
+
+	// bit messy in code - but v efficient. Does stats in one call, directy from the mysql
+	function cTradeStatsCT ($member_id, $from_date=LONG_LONG_AGO, $to_date=FAR_FAR_AWAY) {
+		global $cDB;
+		$query = $cDB->Query("SELECT COUNT(trade_date), SUM(amount), DATE_FORMAT(trade_date, '".SHORT_DATE_FORMAT."') FROM (SELECT trade_date, amount FROM ".DATABASE_TRADES." WHERE (member_id_from LIKE ". $cDB->EscTxt($member_id) ." OR member_id_to LIKE ". $cDB->EscTxt($member_id) .") AND trade_date > ". $cDB->EscTxt($from_date) ." AND trade_date < ". $cDB->EscTxt($to_date) ." AND NOT type='R' AND NOT status='R' ORDER BY trade_date DESC) as t1;");
+		if (!$query || mysql_num_rows($query)<1) // None found = none pending!
+			return;
+		// loop - should just be once
+		while($row = mysql_fetch_array($query)) {
+			$this->total_trades = $row[0];
+			$this->total_units = $row[1];
+			$this->most_recent = $row[2];
 		}
 	}
 

@@ -152,7 +152,10 @@ class cFeedbackGroup {
 				
 		$this->member_id = $member_id;
 		$this->since_date = new cDateTime($since_date);
-				
+		
+		//CT this is kinda what it should be		
+		//SELECT positive, negative, neutral FROM (select member_id_about, count(feedback_id) as positive from feedback where feedback_date >= '19700101000000' AND member_id_about='0737' AND status='A' AND rating='3') as t1 left join (select member_id_about, count(feedback_id) as negative from feedback where feedback_date >= '19700101000000' AND member_id_about='0737' AND status='A' AND rating='1') as t2 on t1.member_id_about=t2.member_id_about left join (select member_id_about, count(feedback_id) as neutral from feedback where feedback_date >= '19700101000000' AND member_id_about='0737' AND status='A' AND rating='2') as t3 on t1.member_id_about=t3.member_id_about where 1
+		//SELECT rating, count(*) FROM `feedback` where member_id_about='0737' group by rating ORDER BY `rating` asc
 		$query = "SELECT feedback_id FROM ".DATABASE_FEEDBACK;
 		
 		if($context == BUYER)
@@ -232,6 +235,60 @@ class cFeedbackGroup {
 		return $output ."</TABLE>";
 	}
 	
+}
+//CT efficient stats - do everything in mysql
+class cFeedbackGroupCT extends cFeedbackGroup {
+	var $num_total;
+
+	function LoadFeedbackGroup ($member_id, $context=null, $since_date=LONG_LONG_AGO) {
+		global $cDB, $cErr;
+				
+		$this->member_id = $member_id;
+		$this->since_date = $since_date;
+		$this->num_positive = 0;
+		$this->num_negative = 0;
+		$this->num_neutral = 0;
+		$this->num_total = 0;
+		
+		//CT this is kinda what it should be		
+		//$query = "SELECT (case WHEN rating='3' THEN 'positive' WHEN rating='2' THEN 'neutral' WHEN rating='1' THEN 'negative'  END) AS rating_text, count(*) as num FROM ".DATABASE_FEEDBACK;
+		$query = "SELECT rating, count(*) as num FROM ".DATABASE_FEEDBACK;
+		
+		if($context == BUYER)
+			$query .= ", ". DATABASE_TRADES ." WHERE member_id_to=member_id_about AND";
+		elseif ($context == SELLER) 
+			$query .= ", ". DATABASE_TRADES ." WHERE member_id_from=member_id_about AND";
+		else
+			$query .= " WHERE";
+		
+		$query .= " feedback_date >= '{$this->since_date}' AND member_id_about='{$this->member_id}' AND status='A' GROUP BY rating;";
+		//echo $query;
+		
+		$query = $cDB->Query($query);
+		if(mysql_num_rows($query) < 1) return false;
+
+		while($row = mysql_fetch_array($query))
+		{
+			switch ($row['rating']) {
+				case POSITIVE:
+					$this->num_positive = $row['num'];
+					break;
+				case NEUTRAL:
+					$this->num_neutral = $row['num'];
+					break;
+				case NEGATIVE:
+				default:
+					$this->num_negative = $row['num'];
+					break;
+			}
+		}
+		$this->num_total = $this->num_negative + $this->num_neutral + $this->num_positive;
+
+		return true;
+	}
+	function PercentPositive() {
+		return number_format($this->num_positive / $this->num_total * 100, 0); 
+	}
 }
 
 class cFeedbackRebuttal {

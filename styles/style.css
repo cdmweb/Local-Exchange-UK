@@ -7,6 +7,27 @@ body {
 	margin:0;
 	text-align: center;
 }
+h2{
+	font-size: 1.8em;
+	margin: 1.9em 0 0.7em 0
+
+}
+h3{
+	font-size: 1.4em;
+	margin: 1.9em 0 0.7em 0
+}
+h4{
+	font-size: 1.2em;
+	margin: 0.9em 0 0.4em 0
+}
+h5{
+	font-size: 1em;
+	margin: 0.8em 0 0.1em 0
+}
+p{
+	margin: 0.3em 0 0.6em 0
+
+}
 .page{
 	max-width:1000px;
 	text-align:left;
@@ -79,13 +100,16 @@ table.tabulated tr.even td{
 
 table.tabulated th, table.tabulated td{
 	padding:5px;
+	vertical-align: top;
 	border:none;
+}
+table.tabulated td{
+	border-left: solid 1px #DDD;
 }
 table.tabulated th{
 	background-color: #e7dfc8;
-}
-table.tabulated tr.even td{
-	background-color: #EEE;
+	border-left: solid 1px #e2d5b1;
+
 }
 
  #footer {
@@ -158,5 +182,53 @@ table.tabulated tr.even td{
 	padding: 10px;
 
 }
+.name, .phone{
+	white-space: nowrap;
+}
+.line{margin:0 0 0.3em 0;}
+.line .label{
+	display: inline-block;
+	width: 8em;
+	font-weight: bold;
+}
+.line .value{
+	display: inline-block;
+}
 
+.line > .col{
+	display:inline-block;
+	width:36%;
+	vertical-align:top;
+	margin-right:1%;
+	overflow: hidden;
+}
+.line > .col.shortdate{
+	width:20%;
+}
+/* table - units - styles */
+.units{text-align: right}
+/* table.tabulated th.units, table.tabulated td.units{border-left: solid 1px #CCC} */
+table.tabulated tr.odd td.balance{background-color: #efefef;}
+table.tabulated tr.even td.balance{background-color: #e6e6e6;}
+table.tabulated tr th.balance{background-color: #e4d0c8;}
 
+div.group{
+	margin: 0 0 1em 0;
+}
+div.since{float:right; font-weight: normal;}
+
+/* div.listing{display: table; width:100%;}
+div.listing div{display: table-cell; padding: 0 10px 10px 0;}
+div.listing{ margin-bottom:20px;}
+div.listing div.title {float:left; width: 240px;} 
+*/
+
+.title{font-weight:bold;}
+/*
+h3, div.listing {clear:both;}
+
+.profileimg{float:left; padding:10px; width: 160px; max-height: 180px; margin-right:10px; margin-bottom:10px;} 
+.profileimg span{display:block; width: 160px; max-height: 180px; overflow: hidden; }
+.profileimg img{width: 160px; }
+.profile{display:table-cell; }
+*/

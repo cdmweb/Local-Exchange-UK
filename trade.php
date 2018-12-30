@@ -21,13 +21,13 @@ if($cUser->member_id == "ADMIN") {
 if($_REQUEST["mode"] == "admin") {
 	$cUser->MustBeLevel(1);
 	$member->LoadMember($_REQUEST["member_id"]);
-	$p->page_title .= " for ". $member->PrimaryName();
+	$p->page_title .= " for ". $member->AllNames();
 } else {
 	$cUser->MustBeLoggedOn();
 	$member = $cUser;
 }	
 	
-$form->addElement('hidden', 'member_id', $member->member_id);
+$form->addElement('hidden', 'member_id', $member->getMemberId());
 $form->addElement('hidden', 'mode', $_REQUEST["mode"]);
 $form->addElement("html", "<TR></TR>");  // TODO: Move this to the header
 
@@ -120,7 +120,7 @@ function process_data ($values) {
 	
 	if ($_REQUEST["typ"]==1 || $member_to->confirm_payments==1) { // Member wishes to confirm payments made to him OR this is an invoice
 		
-		if (htmlspecialchars($values['units']) >= 0 && $member_to_id != $member->member_id) {
+		if (htmlspecialchars($values['units']) >= 0 && $member_to_id != $member->getMemberId()) {
 			
 			global $cDB;
 			
@@ -129,9 +129,9 @@ function process_data ($values) {
 				if ($member->restriction==1) {
 					$list .= "<p>".LEECH_NOTICE;
 				}
-				else if ($cDB->Query("INSERT INTO trades_pending (trade_date, member_id_from, member_id_to, amount, category, description, typ) VALUES (now(), ". 	$cDB->EscTxt($member->member_id) .", ". $cDB->EscTxt($member_to_id) .", ". $cDB->EscTxt($values["units"]) .", ". $cDB->EscTxt($values["category"]) .", ". 	$cDB->EscTxt($values["description"]) .", \"T\");")) {
+				else if ($cDB->Query("INSERT INTO trades_pending (trade_date, member_id_from, member_id_to, amount, category, description, typ) VALUES (now(), ". 	$cDB->EscTxt($member->getMemberId()) .", ". $cDB->EscTxt($member_to_id) .", ". $cDB->EscTxt($values["units"]) .", ". $cDB->EscTxt($values["category"]) .", ". 	$cDB->EscTxt($values["description"]) .", \"T\");")) {
 					
-					$mailed = mail($member_to->person[0]->email, "Payment Received on ".SITE_LONG_TITLE."", "Hi ".$member_to_id.",\n\nJust letting you know that you have received a new payment from ".$member->member_id."\n\nAs you have elected to confirm all payments made to you, please log into your account now and confirm or reject this payment using the following URL...\n\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."/trades_pending.php?action=incoming", EMAIL_FROM);
+					$mailed = mail($member_to->person[0]->email, "Payment Received on ".SITE_LONG_TITLE."", "Hi ".$member_to_id.",\n\nJust letting you know that you have received a new payment from ".$member->getMemberId()."\n\nAs you have elected to confirm all payments made to you, please log into your account now and confirm or reject this payment using the following URL...\n\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."/trades_pending.php?action=incoming", EMAIL_FROM);
 			
 					$list .= $member_to_id." has been notified that you wish to transfer ". $values['units'] ." ". strtolower(UNITS) ." to him/her.<p>This member has opted to confirm all transactions made to him/her. Once the member accepts this transaction your payment will be actioned and you will be invited to leave Feedback for this member.<p>
 							Would you like to <A HREF=trade.php?mode=".$_REQUEST["mode"]."&member_id=". $_REQUEST["member_id"].">record another</A> exchange?";
@@ -143,9 +143,9 @@ function process_data ($values) {
 				
 				if (MEMBERS_CAN_INVOICE!=true) // Invoicing is turned off, user has no right to be here!
 					$list .= "Sorry, the Invoicing facility has been disabled by the site administrator.";	
-				else if ($cDB->Query("INSERT INTO trades_pending (trade_date, member_id_from, member_id_to, amount, category, description, typ) VALUES (now(), ". 	$cDB->EscTxt($member->member_id) .", ". $cDB->EscTxt($member_to_id) .", ". $cDB->EscTxt($values["units"]) .", ". $cDB->EscTxt($values["category"]) .", ". 	$cDB->EscTxt($values["description"]) .", \"I\");")) {
+				else if ($cDB->Query("INSERT INTO trades_pending (trade_date, member_id_from, member_id_to, amount, category, description, typ) VALUES (now(), ". 	$cDB->EscTxt($member->getMemberId()) .", ". $cDB->EscTxt($member_to_id) .", ". $cDB->EscTxt($values["units"]) .", ". $cDB->EscTxt($values["category"]) .", ". 	$cDB->EscTxt($values["description"]) .", \"I\");")) {
 					
-					$mailed = mail($member_to->person[0]->email, "Invoice Received on ".SITE_LONG_TITLE."", "Hi ".$member_to_id.",\n\nJust letting you know that you have received a new Invoice from ".$member->member_id."\n\nPlease log into your account now to pay or reject this invoice using the following URL...\n\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."/trades_pending.php?action=outgoing", EMAIL_FROM);
+					$mailed = mail($member_to->person[0]->email, "Invoice Received on ".SITE_LONG_TITLE."", "Hi ".$member_to_id.",\n\nJust letting you know that you have received a new Invoice from ".$member->getMemberId()."\n\nPlease log into your account now to pay or reject this invoice using the following URL...\n\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."/trades_pending.php?action=outgoing", EMAIL_FROM);
 			
 					$list .= $member_to_id." has been sent an invoice for ". $values['units'] ." ". strtolower(UNITS) .".<p> You will be informed when the member pays this invoice and will be invited to leave Feedback for this member.<p>
 						Would you like to <A HREF=trade.php?mode=".$_REQUEST["mode"]."&member_id=". $_REQUEST["member_id"].">record another</A> exchange?";
@@ -169,7 +169,7 @@ function process_data ($values) {
 				$list .= LEECH_NOTICE;
 		}
 		else
-			$list .= "You have transferred ". $values['units'] ." ". strtolower(UNITS) ." to ". $member_to_id .".  Would you like to <A HREF=trade.php?mode=".$_REQUEST["mode"]."&member_id=". $_REQUEST["member_id"].">record another</A> exchange?<P>Or would you like to leave <A HREF=feedback.php?mode=". $_REQUEST["mode"] ."&author=". $member->member_id ."&about=". $member_to_id ."&trade_id=". $trade->trade_id .">feedback</A> for this member?";
+			$list .= "You have transferred ". $values['units'] ." ". strtolower(UNITS) ." to ". $member_to_id .".  Would you like to <A HREF=trade.php?mode=".$_REQUEST["mode"]."&member_id=". $_REQUEST["member_id"].">record another</A> exchange?<P>Or would you like to leave <A HREF=feedback.php?mode=". $_REQUEST["mode"] ."&author=". $member->getMemberId() ."&about=". $member_to_id ."&trade_id=". $trade->trade_id .">feedback</A> for this member?";
 		
 		// Has the recipient got an income tie set-up? If so, we need to transfer a percentage of this elsewhere...
 		
@@ -197,7 +197,7 @@ function process_data ($values) {
 function verify_not_self($element_name,$element_value) {
 	global $member;
 	$member_id = substr($element_value,0, strpos($element_value,"?"));
-	if ($member_id == $member->member_id)
+	if ($member_id == $member->getMemberId())
 		return false;
 	else
 		return true;

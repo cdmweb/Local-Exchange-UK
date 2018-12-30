@@ -29,7 +29,7 @@ $p->site_section = SECTION_INFO;
 //CT show page
 if($pg){
 	$p->page_title = stripslashes($pg["title"]);
-	if ($cUser->member_role>0){
+	if ($cUser->getMemberRole>0){
 		$p->page_content .= '<div class=\"edit\"><a href=do_info_edit.php?id='.$_REQUEST["id"].'>[Edit]</a></div>';
 	}
 	$p->page_content .= stripslashes($pg["body"]);

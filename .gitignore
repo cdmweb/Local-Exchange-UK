@@ -13,6 +13,8 @@
 /PEAR
 /Spreadsheet
 /Text
+/temp-reports
+/images
 /XML
 /DB.php
 /File.php
@@ -25,3 +27,9 @@
 /README
 /RELEASENOTES.txt
 /System.php
+/includes/inc.config.php
+/uploads
+/.htaccess
+/.gitignore
+/.DS_Store
+/images/.DS_Store
