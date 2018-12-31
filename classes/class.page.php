@@ -25,12 +25,13 @@ class cPage {
 		$this->page_header = PAGE_HEADER_CONTENT;
 		$this->page_footer = PAGE_FOOTER_CONTENT;
 		
+		if ($cUser->getMemberRole() > 0)
+			$this->AddSidebarButton("Administration", "admin_menu.php");
+
 		foreach ($SIDEBAR as $button) {
 			$this->AddSidebarButton($button[0], $button[1]);
 		}
-		
-		if ($cUser->getMemberRole() > 0)
-			$this->AddSidebarButton("Administration", "admin_menu.php");	
+
 	}		
 									
 	function AddSidebarButton ($button_text, $url) {
@@ -216,7 +217,13 @@ class cMenuItem {
 	}
 	
 	function DisplayButton() {
-		return "<li><a href=\"http://". HTTP_BASE ."/". $this->url ."\">". $this->button_text ."</a></li>";
+		if ($this->url=="" || $this->button_text ==""){
+			$button = "<li><br /></li>";
+		} else{
+			$button = "<li><a href=\"http://". HTTP_BASE ."/". $this->url ."\">". $this->button_text ."</a></li>";
+
+		}
+		return $button;
 
         // The following is for url-based sessions.
 //		return "<li><div align=left><a href=\"" . $this->url ."\">". $this->button_text ."</a></div></li>";

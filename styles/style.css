@@ -9,7 +9,7 @@ body {
 }
 h2{
 	font-size: 1.8em;
-	margin: 1.9em 0 0.7em 0
+	/* margin: 1.9em 0 0.7em 0 */
 
 }
 h3{
@@ -232,3 +232,36 @@ h3, div.listing {clear:both;}
 .profileimg img{width: 160px; }
 .profile{display:table-cell; }
 */
+
+
+.sidebar>ul.menu li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.sidebar>ul.menu {
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+.sidebar a {
+    text-decoration: none;
+    display: block;
+    padding: 5px;
+    border: 1px solid #CCC;
+    text-decoration: none;
+    background-color: #FFFFCC;
+    color: #003300;
+}
+
+.sidebar a:hover{
+ 	color: #FFFFFF;
+ 	background-color: #336600;
+ 	border: 1px solid #000;
+ }
+ .sidebar a:active  {  	
+ 	color: #FFFFFF;
+ 	background-color: #996600;
+ 	border: 1px solid #000;
+ } 

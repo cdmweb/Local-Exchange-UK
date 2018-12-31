@@ -5,7 +5,7 @@ $p->site_section = SITE_SECTION_OFFER_LIST;
 $cUser->MustBeLoggedOn();
 
 $p->page_title = "My profile";
-$list = $p->Wrap("Welcome to ". SITE_SHORT_TITLE .", ". $cUser->AllFirstNames() . "!", "h3");
+$list = $p->Wrap("Hola, ". $cUser->AllFirstNames() . "!", "h3");
 
 //todo: message for restricted?
 if ($cUser->AccountIsRestricted()) $list .= LEECH_NOTICE;
@@ -19,6 +19,7 @@ $menuHtml = $p->Menu($menuArray);
 $title = $p->Wrap("Member Settings", "h3");
 $list .= $p->Wrap($title . $menuHtml, "div", "col");
 
+/*
 //core and above
 if ($cUser->getMemberRole() > 0) {
 	$menuArray = array();
@@ -34,6 +35,7 @@ if ($cUser->getMemberRole() > 0) {
 	$title = $p->Wrap("Administration", "h3");
 	$list .= $p->Wrap($title . $menuHtml, "div", "col");
 }
+*/
 $menuArray = array();
 $menuArray[] = $p->MenuItemArray("View offered listings", "listings.php?type=Offer");
 $menuArray[] = $p->MenuItemArray("Create new offer listing", "listing_create.php?type=Offer");

@@ -846,11 +846,14 @@ class cMember
         $names = "";
         foreach ($this->person as $person) {
             if ($person->getPrimaryMember() != "Y" && !empty($person->getFirstName())) $names .= " and ";
+            
+            //$n = "{$person->getFirstName()}";
             $n = "{$person->getFirstName()}";
             //$names .= "<span class='name'>{$n}</span>";
             $names .= "{$n}";
             //$names .= "{$person->getFirstName()}  {$person->getLastName()}";
         }
+
         return $names;
     }
     public function AllPhones () {
@@ -1447,20 +1450,65 @@ class cMemberUser extends cMember {
     public function LoadMember($member, $redirect=false) {
         global $cDB, $cErr;
         //CT barebones
-/*        $query = $cDB->Query("SELECT 
+
+       $query = $cDB->Query("SELECT 
                 m.balance as balance, 
                 m.status as status, 
                 m.member_role as member_role, 
                 m.expire_date as expire_date, 
                 p1.first_name as first_name, 
                 p1.last_name as last_name, 
+                p1.primary_member as primary_member, 
                 p2.first_name as p2_first_name, 
                 p2.last_name as p2_last_name, 
-                m.member_id as member_id, 
+                p2.primary_member as p2_primary_member, 
+                m.member_id as member_id
                 FROM member m 
                 left JOIN person p1 ON m.member_id=p1.member_id 
                 left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
-*/        
+    $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.password as password, 
+                m.member_role as member_role, 
+                m.security_q as security_q, 
+                m.security_a as security_a, 
+                m.status as status, 
+                m.admin_note as admin_note, 
+                m.join_date as join_date, 
+                m.expire_date as expire_date, 
+                m.email_updates as email_updates, 
+                m.restriction as restriction, 
+                p1.first_name as first_name, 
+                p1.last_name as last_name, 
+                p1.email as email, 
+                p1.person_id as person_id, 
+                p2.person_id as p2_person_id, 
+                p2.email as p2_email, 
+                p2.first_name as p2_first_name, 
+                p2.mid_name as p2_mid_name, 
+                p2.last_name as p2_last_name, 
+                p1.phone1_number as phone1_number, 
+                p1.primary_member as primary_member, 
+                p2.primary_member as p2_primary_member, 
+                p2.phone1_number as p2_phone1_number, 
+                p1.address_street1 as address_street1, 
+                p1.address_street2 as address_street2, 
+                p1.address_city as address_city, 
+                p1.address_state_code as address_state_code, 
+                p1.address_post_code as address_post_code, 
+                p1.address_country as address_country, 
+                p1.directory_list as directory_list, 
+                p2.directory_list as p2_directory_list, 
+                m.member_id as member_id, 
+                m.account_type as account_type, 
+                m.confirm_payments as confirm_payments, 
+                p1.age as age, 
+                p1.sex as sex, 
+                p1.about_me as about_me 
+                FROM member m 
+                left JOIN person p1 ON m.member_id=p1.member_id 
+                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+    /*
     $query = $cDB->Query("SELECT 
                 m.balance as balance, 
                 m.status as status, 
@@ -1469,7 +1517,7 @@ class cMemberUser extends cMember {
                 m.member_id as member_id
                 FROM member m 
                 where m.member_id=". $cDB->EscTxt($member));
-        
+    */
         if($row = mysql_fetch_array($query))
         {       
             $this->ConstructMember($row);
