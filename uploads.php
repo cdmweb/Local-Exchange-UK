@@ -5,7 +5,7 @@ include("classes/class.uploads.php");
 $p->site_section = EVENTS;
 $p->page_title = "Uploads";
 
-$output = "<P><BR>";
+$output = "";
 
 $uploadGroup = new cUploadGroupCT();
 $uploadGroup->LoadUploadGroup();
@@ -24,13 +24,14 @@ foreach($uploadGroup->uploads as $upload) {
 		$output .= $p->Wrap($groupTitle, "h2");
 	}
 	$output .= $p->Wrap($block, "p", "line");
+
+
 	$i++;
 }
 
 if ($i == 0)
 	$output .= "Nothing has been uploaded";
 else
-	$output .= "</UL>";
 
 $p->DisplayPage($output);
 

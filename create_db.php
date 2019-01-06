@@ -243,6 +243,8 @@ $cDB->Query("INSERT INTO `settings` VALUES ('35', 'LEECH_NOTICE', 'Message Displ
 
 $cDB->Query("INSERT INTO `settings` VALUES ('36', 'SHOW_GLOBAL_FEES', 'Show monthly fees and service charges in global exchange view', 'bool', '', null, 'FALSE', '', 'Do you want to show monthly fees and service charges in the global exchange view? (Note: individual members will still be able to see this in their own personal exchange history).', '7')") or die("Error - Could not insert row into settings table.");
 
+$cDB->Query("INSERT INTO `settings` (`id`, `name`, `display_name`, `typ`, `current_value`, `options`, `default_value`, `max_length`, `descrip`, `section`) VALUES (NULL, 'SHOW_DATE_ON_LISTINGS', 'Show Date on Listings', 'bool', 'TRUE', '', 'TRUE', '', 'Do you want to display the Date alongside the offers/wants in the main listings?', '7')") or die("Error - Could not insert row into settings table.");
+
 
 /* END upgrade to 1.01 */
 

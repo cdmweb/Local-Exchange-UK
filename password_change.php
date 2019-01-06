@@ -7,12 +7,14 @@ $p->site_section = SITE_SECTION_OFFER_LIST;
 
 include("includes/inc.forms.php");
 
+$p->page_title = "Change my password";
+
 //
 // Define form elements
 //
-$form->addElement('header', null, 'Change Password for '. $cUser->person[0]->first_name ." " . $cUser->person[0]->last_name);
-$form->addElement('html', '<TR></TR>');  // TODO: Move this to the header
-$form->addElement('static',null,'For your security, passwords must be at least 7 characters long and include at least one number.');
+
+
+$list = $p->Wrap('Your password must be at least 7 characters long and include at least one number. <a href="https://www.wikihow.tech/Create-a-Secure-Password target="_blank">Tips on how to create a secure password</a>', 'p');
 $form->addElement('html', '<TR></TR>');
 $options = array('size' => 10, 'maxlength' => 15);
 $form->addElement('password', 'old_passwd', 'Old Password',$options);
@@ -34,6 +36,7 @@ $form->addRule('old_passwd', 'Password is incorrect', 'verify_old_password');
 $form->registerRule('verify_good_password','function','verify_good_password');
 $form->addRule('new_passwd', 'Passwords must contain at least one number', 'verify_good_password');
 
+$list .= $form->toHtml();
 //
 //	Display or process the form
 //
@@ -41,7 +44,7 @@ if ($form->validate()) { // Form is validated so processes the data
    $form->freeze();
  	$form->process('process_data', false);
 } else {
-   $p->DisplayPage($form->toHtml());  // just display the form
+   $p->DisplayPage($list);  // just display the form
 }
 
 function process_data ($values) {

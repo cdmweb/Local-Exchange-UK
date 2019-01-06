@@ -75,7 +75,7 @@ class cSettings {
 			return false;
 		
 		$num_results = mysql_num_rows($result);
-		
+		//foreach $row = mysql_fetch_object($result)
 		if ($num_results>0) {
 			
 			for ($i=0;$i<$num_results;$i++) {
@@ -83,7 +83,7 @@ class cSettings {
 				
 				if (!$row->current_value || strlen("".$row->current_value."")<1)
 					$row->current_value = $row->default_value;
-					
+				//print_r($row);	
 				$this->theSettings[] = $row;
 			}
 		

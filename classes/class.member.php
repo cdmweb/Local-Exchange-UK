@@ -17,7 +17,8 @@ class cMember
 	//private $secondary_person;  // secondary joint membership
 	private $member_id;
 	private $password;
-	private $member_role;
+    private $all_names; // ct - bit messy but this needs to geo here
+    private $member_role;
 	private $security_q;
 	private $security_a;
 	private $status;
@@ -92,6 +93,25 @@ class cMember
 
         return $this;
     }
+    /**
+     * @return mixed
+     */
+    public function getAllNames()
+    {
+        return $this->all_names;
+    }
+
+    /**
+     * @param mixed $all_names
+     *
+     * @return self
+     */
+    public function setAllNames($all_names)
+    {
+        $this->all_names = $all_names;
+
+        return $this;
+    }
 
     /**
      * @return mixed
@@ -118,6 +138,7 @@ class cMember
      */
     public function getMemberRole()
     {
+        //print('member role' . $this->member_role);
         return $this->member_role;
     }
 
@@ -179,6 +200,19 @@ class cMember
     public function getStatus()
     {
         return $this->status;
+    }
+
+    public function getStatusLabel()
+    {
+        
+        $status = $this->getStatus();
+        if($status == 'I'){
+            $label= "Inactive";
+
+        } else{
+            $label= "Active";
+        }
+        return $label;
     }
 
     /**
@@ -407,7 +441,7 @@ class cMember
 		$insert = $cDB->Query("INSERT INTO ".DATABASE_MEMBERS." (member_id, password, member_role, security_q, security_a, status, member_note, admin_note, join_date, expire_date, away_date, account_type, email_updates, confirm_payments, balance) VALUES (
                 {$this->getMemberRole()},
                 {$hash},
-                {$this->getMemberRole()},
+                {$this->getAllNames()},
                 {$this->getSecurityQ()},
                 {$this->getSecurityA()},
                 {$this->getStatus()},
@@ -642,31 +676,43 @@ class cMember
 	}
     //CT this is a really dangerous function that was at the heart of most member objects - 
     //why load and pass around password and all the other stuff if you don't need to? Defer to LoadQuickMember for most things
-	public function LoadMember($member, $redirect=false) {
+	public function LoadMember($member, $is_full=true, $redirect=false) {
 		global $cDB, $cErr;
 
+        if($is_full==false){
+            $extended_querystring = "";
+        }else{
+            $extended_querystring = ", m.confirm_payments as confirm_payments, 
+                p2.phone1_number as p2_phone1_number, 
+                p1.address_street1 as address_street1, 
+                m.password as password,
+                m.admin_note as admin_note, 
+                m.security_q as security_q, 
+                m.security_a as security_a, 
+                p1.first_name as first_name,
+                m.member_role as member_role,
+                p1.directory_list as directory_list, 
+                p2.directory_list as p2_directory_list,  
+                p1.last_name as last_name ";
+        
+        }
+            
+        
 		//
 		// select all Member data and populate the properties
 		//
 		/*[chris] adjusted to retrieve 'confirm_payments' */
-		//CT efficiency full object 
+		//CT efficiency full object - remove all the dupes argh
         $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.password as password, 
-                m.member_role as member_role, 
-                m.security_q as security_q, 
-                m.security_a as security_a, 
+                m.balance as balance,                 
                 m.status as status, 
                 m.admin_note as admin_note, 
                 m.join_date as join_date, 
                 m.expire_date as expire_date, 
                 m.email_updates as email_updates, 
                 m.restriction as restriction, 
-                p1.first_name as first_name, 
-                p1.last_name as last_name, 
+                concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
                 p1.email as email, 
-                p1.person_id as person_id, 
-                p2.person_id as p2_person_id, 
                 p2.email as p2_email, 
                 p2.first_name as p2_first_name, 
                 p2.mid_name as p2_mid_name, 
@@ -675,21 +721,16 @@ class cMember
                 p1.primary_member as primary_member, 
                 p2.primary_member as p2_primary_member, 
                 p2.phone1_number as p2_phone1_number, 
-                p1.address_street1 as address_street1, 
                 p1.address_street2 as address_street2, 
                 p1.address_city as address_city, 
                 p1.address_state_code as address_state_code, 
                 p1.address_post_code as address_post_code, 
                 p1.address_country as address_country, 
-                p1.directory_list as directory_list, 
-                p2.directory_list as p2_directory_list, 
                 m.member_id as member_id, 
                 m.account_type as account_type, 
-                m.confirm_payments as confirm_payments, 
                 p1.age as age, 
                 p1.sex as sex, 
-                p1.about_me as about_me 
-                FROM member m 
+                p1.about_me as about_me" . $extended_querystring . " FROM member m 
                 left JOIN person p1 ON m.member_id=p1.member_id 
                 left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
 
@@ -735,6 +776,66 @@ class cMember
 
 		return true;
 	}
+/* CT marked for deletion
+    public function LoadQuickMember($member, $redirect=false) {
+        global $cDB, $cErr;
+
+        //
+        // select some Member data and populate the properties
+        //
+        //CT efficiency full object 
+        $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.status as status, 
+                m.join_date as join_date, 
+                m.expire_date as expire_date, 
+                m.email_updates as email_updates, 
+                m.restriction as restriction, 
+                p1.first_name as first_name, 
+                p1.last_name as last_name, 
+                p1.email as email, 
+                p1.person_id as person_id, 
+                p2.person_id as p2_person_id, 
+                p2.email as p2_email, 
+                p2.first_name as p2_first_name, 
+                p2.mid_name as p2_mid_name, 
+                p2.last_name as p2_last_name, 
+                p1.phone1_number as phone1_number, 
+                p1.primary_member as primary_member, 
+                p2.primary_member as p2_primary_member, 
+                p2.phone1_number as p2_phone1_number, 
+                p1.directory_list as directory_list, 
+                p2.directory_list as p2_directory_list, 
+                m.member_id as member_id, 
+                m.account_type as account_type, 
+                m.confirm_payments as confirm_payments, 
+                p1.age as age, 
+                p1.sex as sex, 
+                p1.about_me as about_me 
+                FROM member m 
+                left JOIN person p1 ON m.member_id=p1.member_id 
+                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+
+
+        if($row = mysql_fetch_array($query))
+        {   
+            //$cErr->Error(print_r($row, true));
+            $this->ConstructMember($row);
+        }
+        else
+        {
+            //CT - moved error message out of the redirect - don't you wnat to see errors even if not redirected?
+            $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+
+            if ($redirect) {
+                include("redirect.php");
+            }
+            return false;
+        }   
+        return true;
+    }*/
+
+
 	public function ConstructMember($array){
 		//print_r($array);
 
@@ -744,7 +845,8 @@ class cMember
         }
 		$this->setMemberId($array['member_id']);  
 		$this->setPassword($array['password']);  
-		$this->setMemberRole($array['member_role']);  
+        $this->setMemberRole($array['member_role']);  
+        $this->setAllNames($array['all_names']);  
 		$this->setSecurityQ($array['security_q']);  
 		$this->setSecurityA($array['security_a']);  
 		$this->setStatus($array['status']);  
@@ -787,7 +889,21 @@ class cMember
 		global $cDB, $cErr;				
 		
 		// [chris] included 'confirm_payments' preference
-		$update = $cDB->Query("UPDATE ".DATABASE_MEMBERS." SET password=". $cDB->EscTxt($this->password) .", member_role=". $cDB->EscTxt($this->member_role) .", security_q=". $cDB->EscTxt($this->security_q) .", security_a=". $cDB->EscTxt($this->security_a) .", status=". $cDB->EscTxt($this->status) .", member_note=". $cDB->EscTxt($this->member_note) .", admin_note=". $cDB->EscTxt($this->admin_note) .", join_date=". $cDB->EscTxt($this->join_date) .", expire_date=". $cDB->EscTxt($this->expire_date) .", away_date=". $cDB->EscTxt($this->away_date) .", account_type=". $cDB->EscTxt($this->account_type) .", email_updates=". $cDB->EscTxt($this->email_updates) .", confirm_payments=".$cDB->EscTxt($this->confirm_payments).", balance=". $cDB->EscTxt($this->balance) ." WHERE member_id=". $cDB->EscTxt($this->member_id) .";");	
+		$update = $cDB->Query("UPDATE ".DATABASE_MEMBERS." 
+            SET  
+            member_role=". $cDB->EscTxt($this->member_role) .", 
+            security_q=". $cDB->EscTxt($this->security_q) .", 
+            security_a=". $cDB->EscTxt($this->security_a) .", 
+            status=". $cDB->EscTxt($this->status) .", 
+            member_note=". $cDB->EscTxt($this->member_note) .", 
+            admin_note=". $cDB->EscTxt($this->admin_note) .", 
+            join_date=". $cDB->EscTxt($this->join_date) .", 
+            expire_date=". $cDB->EscTxt($this->expire_date) .", 
+            away_date=". $cDB->EscTxt($this->away_date) .", 
+            account_type=". $cDB->EscTxt($this->account_type) .", 
+            email_updates=". $cDB->EscTxt($this->email_updates) .", 
+            confirm_payments=".$cDB->EscTxt($this->confirm_payments).", 
+            WHERE member_id=". $cDB->EscTxt($this->member_id) .";");	
 
 		if(!$update)
 			$cErr->Error("Could not save changes to member '". $this->member_id ."'. Please try again later.");
@@ -823,7 +939,7 @@ class cMember
 		
 		return $address . ", " . $this->person[0]->getAddressCity();
 	}
-	
+	/* ct marked for removal
 	public function AllNames ($lastfirst=false) {
 		//can reverse appearance of name if lastfirst set
 		$names = "";
@@ -839,7 +955,7 @@ class cMember
 			//$names .= "{$person->getFirstName()}  {$person->getLastName()}";
 		}
 		return $names;
-	}
+	} */
     //CT - firstnames
     public function AllFirstNames () {
         //can reverse appearance of name if lastfirst set
@@ -920,8 +1036,10 @@ class cMember
 	}
 	
 	public function MemberLink($text=null) {
-        if (empty($text)) $text = $this->member_id; //pass in name, or use member number if not there
-		return "<a href='member_summary.php?member_id=". $this->member_id ."''>". $text ."</a>";
+        global $p;
+        if (empty($text)) $text = "#" . $this->member_id; //pass in name, or use member number if not there
+        $link = "member_summary.php?member_id=". $this->member_id;
+		return $p->Link($text, $link);
 	}
 	
 	/*[chris] this function looks up the image for member ($mID) and places it in a HTML img tag */
@@ -977,29 +1095,29 @@ class cMember
 	}
 
 
-	public function DisplayMember () {
-		
-		/*[CDM] Added in image, placed all this in 2 column table, looks tidier */
-		
-		global $cDB, $agesArr, $sexArr, $p;
+    public function DisplayMember () {
+        
+        /*[CDM] Added in image, placed all this in 2 column table, looks tidier */
+        
+        global $cDB, $agesArr, $sexArr, $p;
 
-		$stats = new cTradeStatsCT($this->getMemberId());
-		$jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
-		
+        $stats = new cTradeStatsCT($this->getMemberId());
+        $jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
+        
         $statsText = (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent;
         $locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " . $this->getPrimaryPerson()->getAddressCity() . ", " .$this->getPrimaryPerson()->getSafePostCode();
 
-		$feedbackgrp = new cFeedbackGroupCT;
-		$feedbackgrp->LoadFeedbackGroup($this->member_id);
-		$feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
+        $feedbackgrp = new cFeedbackGroupCT;
+        $feedbackgrp->LoadFeedbackGroup($this->member_id);
+        $feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
         
         $output .= cMember::DisplayMemberImg($this->member_id);
         $block = $this->FormatLabelValue("Location", $locationText);
-		
+        
         //activity;
         $block = $this->FormatLabelValue("Balance", "{$this->balance} " . strtolower(UNITS));
-		$block .= $this->FormatLabelValue("Activity", "{$statsText}");
-		$block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
+        $block .= $this->FormatLabelValue("Activity", "{$statsText}");
+        $block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
         $output .= $p->Wrap($block, "div", "group activity");
 
         if (SOC_NETWORK_FIELDS==true) {
@@ -1053,15 +1171,52 @@ class cMember
             $output .= $p->Wrap($block, "div", "group joint");
         }
         //metadata
-        $join_date=new cDateTime($this->getJoinDate());
-        $expire_date=new cDateTime($this->getExpireDate());
+        //$join_date=new cDateTime($this->getJoinDate());
+        //$expire_date=new cDateTime($this->getExpireDate());
         $block = "";
-        $block .= $this->FormatLabelValue("Joined", "{$join_date->ShortDate()}");
-        $block .= $this->FormatLabelValue("Renewal", "{$expire_date->ShortDate()}");
+        $block .= $this->FormatLabelValue("Joined", $p->FormatLongDate($this->getJoinDate()));
+        $block .= $this->FormatLabelValue("Renewal", $p->FormatLongDate($this->getExpireDate()));
         $output .= $p->Wrap($block, "div", "group metadata");
 
-	return $output;	
-	}
+    return $output; 
+    }
+    public function DisplaySummaryMember () {
+        
+        /*[CDM] Added in image, placed all this in 2 column table, looks tidier */
+        
+        global $cDB, $agesArr, $sexArr, $p;
+
+        $link = $this->MemberLink();
+        $block = $p->Wrap($this->getAllNames() . " " . $link, "h4");
+        $contact = "";
+        $contact .= $p->Wrap("Email " . $this->AllEmails() . " or phone " . $this->AllPhones(), "p");
+        //$contact .= $p->WrapLabelValue("Phone",$this->AllPhones());
+        //$contact .= $p->WrapLabelValue("Email",$this->AllEmails());
+        
+        //$contact .= $p->Wrap($contact, "div", "group contact");
+        //secondary
+        //TODO - directory list - is it really a choice?
+ 
+        $stats = new cTradeStatsCT($this->getMemberId());
+        $jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
+        
+        $statsText = (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent;
+        $locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " .$this->getPrimaryPerson()->getSafePostCode();
+
+        $feedbackgrp = new cFeedbackGroupCT;
+        $feedbackgrp->LoadFeedbackGroup($this->member_id);
+        $feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
+        
+        $block .= $this->FormatLabelValue("Location", $locationText);
+        
+        //activity;
+        $block .= $this->FormatLabelValue("Balance", "{$this->balance} " . strtolower(UNITS));
+        $block .= $this->FormatLabelValue("Activity", "{$statsText}");
+        $block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
+        $output .= $p->Wrap($block, "div", "summary");
+
+    return $output; 
+    }
 	
 	public function MakeJointMemberArray() {
 		global $cDB;
@@ -1108,26 +1263,52 @@ class cMember
 }
 
 class cMemberGroup {
+    //CT this should be private 
     var $members;
     
-    function LoadMemberGroup ($active_only=TRUE, $non_members=FALSE) {
+    public function getMembers()
+    {
+        return $this->members;
+    }
+    /**
+     * @param mixed $join_date
+     *
+     * @return self
+     */
+    public function setMembers($members)
+    {
+        $this->members = $members;
+
+        return $this;
+    }
+
+
+
+    function LoadMemberGroup ($show_inactive=false, $show_non_members=false) {
         global $cDB;
-                
-        if($active_only)
-            $exclusions = " AND status in ('A','L')";
-        else
-            $exclusions = null;
+        $condition = "";
+        if(!$show_inactive){
+            $condition .= " AND status in ('A','L')";
+        }
             
-        if(!$non_members)
-            $exclusions .= " AND member_role != '9'";
+        if($show_non_members){
+            $condition .= " AND member_role != '9'";
+        }
         
-        $query = $cDB->Query("SELECT ".DATABASE_MEMBERS.".member_id FROM ". DATABASE_MEMBERS .",". DATABASE_PERSONS." WHERE ". DATABASE_MEMBERS .".member_id=". DATABASE_PERSONS.".member_id". $exclusions. " AND primary_member='Y' ORDER BY first_name, last_name;");
+        $query = $cDB->Query("SELECT m.member_id as member_id, 
+            concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,            
+            m.status as status 
+            FROM member m 
+            left JOIN person p1 ON m.member_id=p1.member_id 
+            left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id 
+            where p1.primary_member = 'Y' {$condition} 
+            ORDER BY all_names");
         
         $i=0;
         while($row = mysql_fetch_array($query))
         {
             $this->members[$i] = new cMember;           
-            $this->members[$i]->LoadMember($row[0]);
+            $this->members[$i]->ConstructMember($row);
             $i += 1;
         }
         
@@ -1141,11 +1322,15 @@ class cMemberGroup {
         global $cDB, $cErr;
         
         $ids="";        
-        if($this->members) {
-            foreach($this->members as $member) {
-                    $ids[$member->member_id] = $member->PrimaryName() ." (". $member->member_id .")";
-            }       
-        }
+        $ids[""] = "-- Select member --";
+        foreach($this->getMembers() as $member) {
+            // make options label
+
+            $labeltext = ($member->getStatus() != "A") ? " - INACTIVE" : "";
+
+            
+          $ids[$member->getMemberId()] = $member->getAllNames() . " (#" . $member->getMemberId() . $labeltext . ")";
+        }       
         
         return $ids;    
     }   
@@ -1158,7 +1343,7 @@ class cMemberGroup {
         if($this->members) {
             foreach($this->members as $member) {
                 foreach ($member->person as $person) {          
-                    $names[$member->member_id ."?". $person->person_id] = $person->first_name ." ". $person->last_name ." (". $member->member_id .")";
+                    $names[$member->getMemberId() ."?". $person->getPersonId()] = $person->getFirstName() ." ". $person->getLastName() ." (". $member->getMemberId() .")";
                 }
             }   
         
@@ -1192,7 +1377,7 @@ class cMemberGroup {
     
     // Use of this function requires the inclusion of class.listing.php
     public function EmailListingUpdates($interval) {
-        if(!isset($this->members)) {
+        if(empty($this->getMembers())) {
             if(!$this->LoadMemberGroup())
                 return false;
         }
@@ -1380,66 +1565,60 @@ class cIncomeTies extends cMember {
 	}
 	
 }
-//CT adjusted 
-class cMemberSummaryView extends cMember {
-    public function cMemberSummaryView($values=null) {
-        if(!empty($values)){
-            $this->ConstructMember();
-        }
-    }
-    public function LoadMember($member, $redirect=true) {
-        global $cDB, $cErr;
-//CT efficiency 
-        $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.status as status, 
-                m.join_date as join_date, 
-                m.expire_date as expire_date, 
-                p1.first_name as first_name, 
-                p1.last_name as last_name, 
-                p1.email as email, 
-                p1.person_id as person_id, 
-                p2.person_id as p2_person_id, 
-                p2.email as p2_email, 
-                p2.first_name as p2_first_name, 
-                p2.last_name as p2_last_name, 
-                p1.phone1_number as phone1_number, 
-                p1.primary_member as primary_member, 
-                p2.primary_member as p2_primary_member, 
-                p1.phone1_number as p1_phone1_number, 
-                p2.phone1_number as p2_phone1_number, 
-                p1.address_street2 as address_street2, 
-                p1.address_city as address_city, 
-                p1.address_state_code as address_state_code, 
-                p1.address_post_code as address_post_code, 
-                p1.directory_list as directory_list, 
-                p2.directory_list as p2_directory_list, 
-                m.member_id as member_id, 
-                p1.age as age, 
-                p1.sex as sex, 
-                p1.about_me as about_me 
-                FROM member m 
-                left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+// //CT adjusted 
+// class cMemberSummaryView extends cMember {
+//     public function cMemberSummaryView($values=null) {
+//         if(!empty($values)){
+//             $this->ConstructMember();
+//         }
+//     }
+//     public function LoadMember($member, $redirect=true) {
+//         global $cDB, $cErr;
+// //CT efficiency 
+//         $query = $cDB->Query("SELECT 
+//                 m.balance as balance, 
+//                 m.status as status, 
+//                 m.join_date as join_date, 
+//                 m.expire_date as expire_date, 
+//                 concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" + \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
+//                 p2.email as p2_email, 
+//                 p1.phone1_number as phone1_number, 
+//                 p1.primary_member as primary_member, 
+//                 p2.primary_member as p2_primary_member, 
+//                 p1.phone1_number as p1_phone1_number, 
+//                 p2.phone1_number as p2_phone1_number, 
+//                 p1.address_street2 as address_street2, 
+//                 p1.address_city as address_city, 
+//                 p1.address_state_code as address_state_code, 
+//                 p1.address_post_code as address_post_code, 
+//                 p1.directory_list as directory_list, 
+//                 p2.directory_list as p2_directory_list, 
+//                 m.member_id as member_id, 
+//                 p1.age as age, 
+//                 p1.sex as sex, 
+//                 p1.about_me as about_me 
+//                 FROM member m 
+//                 left JOIN person p1 ON m.member_id=p1.member_id 
+//                 left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
 
-        //$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, p1.age as age, p1.about_me as about_me, m.member_id as member_id, m.account_type as account_type, DATE_FORMAT(join_date, '".SHORT_DATE_FORMAT."') as join_date, DATE_FORMAT(expire_date, '".SHORT_DATE_FORMAT."') as expire_date FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' and m.member_id = '{$member}' ");
-        //$query = $cDB->Query("SELECT member_id, join_date, expire_date, away_date, account_type, email_updates, balance, confirm_payments, restriction FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member));
+//         //$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, p1.age as age, p1.about_me as about_me, m.member_id as member_id, m.account_type as account_type, DATE_FORMAT(join_date, '".SHORT_DATE_FORMAT."') as join_date, DATE_FORMAT(expire_date, '".SHORT_DATE_FORMAT."') as expire_date FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' and m.member_id = '{$member}' ");
+//         //$query = $cDB->Query("SELECT member_id, join_date, expire_date, away_date, account_type, email_updates, balance, confirm_payments, restriction FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member));
         
-        if($row = mysql_fetch_array($query))
-        {       
-            //$cErr->Error(print_r($row, true));
-            $this->ConstructMember($row);
-        }
-        else
-        {
-            if ($redirect) {
-                $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
-                include("redirect.php");
-            }
-            return false;
-        }               
-    }
-}
+//         if($row = mysql_fetch_array($query))
+//         {       
+//             //$cErr->Error(print_r($row, true));
+//             $this->ConstructMember($row);
+//         }
+//         else
+//         {
+//             if ($redirect) {
+//                 $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+//                 include("redirect.php");
+//             }
+//             return false;
+//         }               
+//     }
+// }
 //CT adjusted small, just load what you need of current user
 class cMemberUser extends cMember {
     public function cMemberUser($values=null) {
@@ -1447,37 +1626,37 @@ class cMemberUser extends cMember {
             $this->ConstructMember();
         }
     }
-    public function LoadMember($member, $redirect=false) {
+    public function LoadMember($member, $is_full=true, $redirect=false) {
         global $cDB, $cErr;
         //CT barebones
 
-       $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.status as status, 
-                m.member_role as member_role, 
-                m.expire_date as expire_date, 
-                p1.first_name as first_name, 
-                p1.last_name as last_name, 
-                p1.primary_member as primary_member, 
-                p2.first_name as p2_first_name, 
-                p2.last_name as p2_last_name, 
-                p2.primary_member as p2_primary_member, 
-                m.member_id as member_id
-                FROM member m 
-                left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
-    $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.password as password, 
-                m.member_role as member_role, 
-                m.security_q as security_q, 
-                m.security_a as security_a, 
-                m.status as status, 
+        if(!$is_full){
+            $extended_querystring = "";
+        }else{
+            $extended_querystring = "
+                p1.person_id as person_id, p2.person_id as p2_person_id,
+                p2.phone1_number as p2_phone1_number, 
+                p1.address_street1 as address_street1, 
+                p1.address_street2 as address_street2, 
+                p1.address_city as address_city, 
+                p1.address_state_code as address_state_code, 
+                p1.address_post_code as address_post_code, 
+                p1.address_country as address_country, 
+                m.password as password,
                 m.admin_note as admin_note, 
+                m.security_q as security_q, 
+                m.security_a as security_a, ";
+        }
+
+        $query = $cDB->Query("SELECT 
+                m.balance as balance, 
+                m.member_role as member_role, 
+                m.status as status, 
                 m.join_date as join_date, 
                 m.expire_date as expire_date, 
                 m.email_updates as email_updates, 
                 m.restriction as restriction, 
+                concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
                 p1.first_name as first_name, 
                 p1.last_name as last_name, 
                 p1.email as email, 
@@ -1489,15 +1668,7 @@ class cMemberUser extends cMember {
                 p2.last_name as p2_last_name, 
                 p1.phone1_number as phone1_number, 
                 p1.primary_member as primary_member, 
-                p2.primary_member as p2_primary_member, 
-                p2.phone1_number as p2_phone1_number, 
-                p1.address_street1 as address_street1, 
-                p1.address_street2 as address_street2, 
-                p1.address_city as address_city, 
-                p1.address_state_code as address_state_code, 
-                p1.address_post_code as address_post_code, 
-                p1.address_country as address_country, 
-                p1.directory_list as directory_list, 
+                p2.primary_member as p2_primary_member, " . $extended_querystring . "p1.directory_list as directory_list, 
                 p2.directory_list as p2_directory_list, 
                 m.member_id as member_id, 
                 m.account_type as account_type, 
@@ -1507,7 +1678,7 @@ class cMemberUser extends cMember {
                 p1.about_me as about_me 
                 FROM member m 
                 left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+                left JOIN (select * from person where person.primary_member = \"N\") p2 on p1.member_id=p2.member_id where p1.primary_member = \"Y\" and m.member_id=". $cDB->EscTxt($member));
     /*
     $query = $cDB->Query("SELECT 
                 m.balance as balance, 

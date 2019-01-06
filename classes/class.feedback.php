@@ -199,40 +199,52 @@ class cFeedbackGroup {
 	}
 	
 	function DisplayFeedbackTable($member_viewing) {		
-		$output = "<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3 WIDTH=\"100%\"><TR BGCOLOR=\"#d8dbea\"><TD><FONT SIZE=2><B>Type</B></FONT></TD><TD><FONT SIZE=2><B>Date</B></FONT></TD><TD><FONT SIZE=2><B>Context</B></FONT></TD><TD><FONT SIZE=2><B>From</B></FONT></TD><TD><FONT SIZE=2><B>Comment</B></FONT></TD></TR>";
+		//$output = "<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=3 WIDTH=\"100%\"><TR BGCOLOR=\"#d8dbea\"><TD><FONT SIZE=2><B>Type</B></FONT></TD><TD><FONT SIZE=2><B>Date</B></FONT></TD><TD><FONT SIZE=2><B>Context</B></FONT></TD><TD><FONT SIZE=2><B>From</B></FONT></TD><TD><FONT SIZE=2><B>Comment</B></FONT></TD></TR>";
+		$output = "<table class='tabulated'><tr>
+			<th>Type</th>
+			<th>Date</th>
+			<th>Context</th>
+			<th>From</th>
+			<th>Comment</th>
+		</tr>";
 		
 		if(!$this->feedback)
 			return $output. "</TABLE>";   // No feedback yet, presumably
 		
 		$i=0;
 		foreach($this->feedback as $feedback) {
+			$rowclass = ($i % 2) ? "even" : "odd";	
 			if($feedback->rating == NEGATIVE)
-				$fcolor = "red";
+				$rowclass .= " negative";
 			elseif ($feedback->rating == POSITIVE)
-				$fcolor = "#4a5fa4";
+				$rowclass .= " positive";
 			else
-				$fcolor = "#554f4f";
+				$rowclass .= " neutral";;
 				
-			if($i % 2)
-				$bgcolor = "#e4e9ea";
-			else
-				$bgcolor = "#FFFFFF";
 				
-			$output .= "<TR VALIGN=TOP BGCOLOR=". $bgcolor ."><TD><FONT SIZE=2 COLOR=".$fcolor.">". $feedback->RatingText()."</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $feedback->feedback_date->ShortDate() ."</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $feedback->Context() .": " . $feedback->category->description ."</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $feedback->member_author->member_id ."</FONT></TD><TD><FONT SIZE=2 COLOR=".$fcolor.">". $feedback->comment;
+			$output .= "<tr class='$rowclass'>
+				<td>{$feedback->RatingText()}</td>
+				<td>{$feedback->feedback_date->ShortDate()}</td>
+				<td>{$feedback->Context()}: {$feedback->category->description}</td>
+				<td><a href='member_summary.php?member_id={$feedback->member_author->getMemberId()}'>{$feedback->member_author->getMemberId()}</a></td>
+				<td>{$feedback->comment}";
 			if(isset($feedback->rebuttals))
-				$output .= $feedback->rebuttals->DisplayRebuttalGroup($feedback->member_about->member_id); // TODO: Shouldn't have to pass this value, should incorporate into cFeedbackRebuttal
+				$output .= $feedback->rebuttals->DisplayRebuttalGroup($feedback->member_about->getMemberId()); // TODO: Shouldn't have to pass this value, should incorporate into cFeedbackRebuttal
 			
 			if($feedback->rating != POSITIVE) {
-				if ($member_viewing == $feedback->member_about->member_id)
-					$output .= "<BR><A HREF=feedback_reply.php?feedback_id=". $feedback->feedback_id ."&mode=self&author=". $member_viewing ."&about=".$feedback->member_author->member_id .">Reply</A> "; 
-				elseif ($member_viewing == $feedback->member_author->member_id)
-					$output .= "<BR><A HREF=feedback_reply.php?feedback_id=". $feedback->feedback_id ."&mode=self&author=". $member_viewing ."&about=".$feedback->member_about->member_id .">Follow Up</A> ";
+
+				if ($member_viewing == $feedback->member_about->getMemberId())
+					$text="Reply";
+				elseif ($member_viewing == $feedback->member_author->getMemberId())
+					$text="Follow up";
+
+				$output .= "<br /><a href='feedback_reply.php?feedback_id={$feedback->feedback_id}&mode=self&author={$member_viewing}&about={$feedback->member_author->getMemberId()}''>{$text}</a> "; 
 			}
 			
-			$output .= "</FONT></TD></TR>";
+			$output .= "</td></tr>";
 			$i+=1;
 		}	
-		return $output ."</TABLE>";
+		return $output ."</table>";
 	}
 	
 }

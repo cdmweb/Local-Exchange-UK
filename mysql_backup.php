@@ -2,15 +2,11 @@
 include_once("includes/inc.global.php");
 $p->site_section = ADMINISTRATION;
 $p->page_title = "MySQL Backup";
-
 $cUser->MustBeLevel(2);
-
 global $cDB;
-
 if ($_REQUEST["backup"]==true) {
 	
 	global $dbhost, $dbuname, $dbpass, $dbname;
-
 	$dbhost =  DATABASE_SERVER;
 	$dbuname = DATABASE_USERNAME;
 	$dbpass = DATABASE_PASSWORD;
@@ -34,18 +30,16 @@ if ($_REQUEST["backup"]==true) {
 	$strat = "at";
 	$strby = "by";
 	$date_jour = date ("m-d-Y");
-	//CT: missing linebreak for default
-	$crlf="\r\n";
-
+	
 	$client = getenv("HTTP_USER_AGENT");
 	
 	if(ereg('[^(]*\((.*)\)[^)]*',$client,$regs)) {
 		
 		$os = $regs[1];
-		
+		//CT  linebreaks for linux too - most common server
 		// this looks better under WinX
-		if (eregi("Win",$os)) 
-		    $crlf="\r\n";
+		//if (eregi("Win",$os)) 
+		$crlf="\r\n";
 	}
 	
 	function my_handler($sql_insert) {
@@ -53,6 +47,8 @@ if ($_REQUEST["backup"]==true) {
 		    global $crlf;
 		    echo "$sql_insert;$crlf";
 	}
+
+
 	
 		// Get the content of $table as a series of INSERT statements.
 		// After every row, a custom callback function $handler gets called.
@@ -99,16 +95,23 @@ if ($_REQUEST["backup"]==true) {
 		function get_table_def($db, $table, $crlf)
 		{
 		    $schema_create = "";
-		    $schema_create .= "DROP TABLE IF EXISTS $table;$crlf";
-		    $schema_create .= "CREATE TABLE $table ($crlf";
+		    $schema_create .= "DROP TABLE IF EXISTS $table;$crlf ";
+		    $schema_create .= "CREATE TABLE $table ($crlf ";
 		
 		    $result = mysql_db_query($db, "SHOW FIELDS FROM $table") or mysql_die();
 		    while($row = mysql_fetch_array($result))
 		    {
+
 		        $schema_create .= "   $row[Field] $row[Type]";
 		
 		        if(isset($row["Default"]) && (!empty($row["Default"]) || $row["Default"] == "0"))
-		            $schema_create .= " DEFAULT '$row[Default]'";
+		            //CT exclude current timestamp from quotes as it broke dump
+		            if ($row["Default"] != "CURRENT_TIMESTAMP"){
+						$schema_create .= " DEFAULT '$row[Default]'";
+		            } else{
+		            	$schema_create .= " DEFAULT $row[Default]";
+		        	}
+		        	//print($row[Default]);
 		        if($row["Null"] != "YES")
 		            $schema_create .= " NOT NULL";
 		        if($row["Extra"] != "")
@@ -139,8 +142,6 @@ if ($_REQUEST["backup"]==true) {
 		    }
 		
 		    $schema_create .= "$crlf)";
-		    //CT: correct issue with timestamps in recent mysql versions
-		    $schema_create = str_replace("'CURRENT_TIMESTAMP'", "CURRENT_TIMESTAMP", $schema_create, $count);
 		    return (stripslashes($schema_create));
 		}
 		
@@ -161,8 +162,8 @@ if ($_REQUEST["backup"]==true) {
 		
 		
 		@mysql_select_db("$dbname") or die ("Unable to select database");
-		//CT: todo - include tables not views with this replacement - TABLE_TYPE='base table' should work but can't get it to..;
-		$tables = mysql_query("SHOW TABLES FROM $dbname");		
+		// CT exclude views from the dump
+		$tables = mysql_db_query($dbname, "SHOW FULL TABLES where Table_type='BASE TABLE'") or mysql_die();
 		//$tables = mysql_list_tables($dbname);
 		
 		$num_tables = @mysql_numrows($tables);
@@ -184,7 +185,7 @@ print "# This Backup was made with MySql-Tool Version 2.0$crlf";
 print "# http://www.nukeland.de (michaelius@nukeland.de)$crlf";
 print "# $crlf";
 print "# Modified for use with Local Exchange UK software$crlf";
-print "# chris@cdmweb.co.uk$crlf";
+print "# chris@cdmweb.co.uk and me@claratodd.com$crlf";
 print "# $crlf";
 print "# $strName : $dbname$crlf";
 print "# $strDone $datum $strat $stunden !$crlf";
@@ -215,9 +216,8 @@ $i++;
 	
 	exit;
 }
-
 $output = "Use this tool to backup your MySQL Database.<p>";
-$output .= "<a href=mysql_backup.php?backup=true>Backup Now</a>";
+$output .= "<a href='mysql_backup.php?backup=true' class='large'>Backup Now</a>";
 		
 $p->DisplayPage($output);
 ?>

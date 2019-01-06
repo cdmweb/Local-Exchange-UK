@@ -370,18 +370,23 @@ class cTradeGroup {
             $currentbalance = number_format((float)$runningbalance, 2, '.', '');
 			if ($trade->member_id_to == $this->member_id)
 			{
-				$runningbalance = $runningbalance - $trade->amount;
+				if(!empty($runningbalance)){
+					$runningbalance = $runningbalance - $trade->amount;
+				}
+
 				$statusclass = "credit";
 				$tradewith = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_from}#{$hname}'>{$trade->member_id_from}</a>";
 				$in = "{$trade->amount}";
-				$out = "";
+				$out = "-";
 			}
 			else
 			{				
-				$runningbalance = $runningbalance + $trade->amount;
+				if(!empty($runningbalance)){
+					$runningbalance = $runningbalance + $trade->amount;
+				}
 				$statusclass = "debit";
 				$tradewith = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_to}#{$hname}'>{$trade->member_id_to}</a>";
-				$in = "";
+				$in = "-";
 				$out = "{$trade->amount}";
 			}
 			if($trade->type == TRADE_REVERSAL or $trade->status == TRADE_REVERSAL){
@@ -394,7 +399,11 @@ class cTradeGroup {
 			
 			$trade_date = new cDateTime($trade->trade_date);				
 			
-			$output .= "<tr class='{$rowclass} {$statusclass}' id='{$hname}'><td>{$trade_date->ShortDate()}</td><td>{$tradewith}</td><td>{$cDB->UnEscTxt($trade->category)}</td><td>{$cDB->UnEscTxt($trade->description)}</td><td class='units'>{$out}</td><td class='units'>{$in}</td><td class='units balance'>{$currentbalance}</td></tr>";
+			$output .= "<tr class='{$rowclass} {$statusclass}' id='{$hname}'><td>{$trade_date->ShortDate()}</td><td>{$tradewith}</td><td>{$cDB->UnEscTxt($trade->category)}</td><td>{$cDB->UnEscTxt($trade->description)}</td><td class='units'>{$out}</td><td class='units'>{$in}</td>";
+			if(!empty($runningbalance)){
+				$output .= "<td class='units balance'>{$currentbalance}</td></tr>";
+			}
+			
 			$i+=1;
 		}
 		

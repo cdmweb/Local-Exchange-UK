@@ -144,6 +144,7 @@ $order=$_REQUEST["orderBy"];
 
 $query = $cDB->Query("SELECT 
 	m.balance as balance, 
+	concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
 	p1.first_name as first_name, 
 	p1.last_name as last_name, 
 	p1.email as email, 
@@ -158,9 +159,9 @@ $query = $cDB->Query("SELECT
 	p1.address_street2 as address_street2, 
 	p1.address_city as address_city,
 	p1.address_post_code as address_post_code, 
-	m.member_id as member_id, 
-	m.account_type as account_type, 
-	m.account_type as account_type FROM member m 
+	m.member_id as member_id,  
+	m.account_type as account_type 
+	FROM member m 
 	left JOIN person p1 ON m.member_id=p1.member_id 
 	left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id 
 	where p1.primary_member = 'Y' and m.status = 'A' {$condition} 
@@ -192,10 +193,10 @@ if($member_list->members) {
 				$rowclass = ($i % 2) ? "even" : "odd";
 	
 				//$postcode = $member->getPrimaryPerson()->getAddressPostCode());
-				$name = ($order !='lf') ? $member->AllNames() : $member->AllNames(true);
+				
 				$output .="<tr class='{$rowclass}'>
 				   <td>{$member->MemberLink()}</td>
-				   <td>{$name}</td>
+				   <td>{$member->getAllNames()}</td>
 				   <td>{$member->AllPhones()}";
 				if (MEM_LIST_DISPLAY_EMAIL==true)  {   
 					$output .= "<div>{$member->AllEmails()}</div>";

@@ -20,7 +20,7 @@ if($_REQUEST["mode"] == "admin") {
 	$cUser->MustBeLevel(1);
 	$member->LoadMember($_REQUEST["member_id"]);
 	
-	$p->page_title = "Upload/Replace photo for ".$member->member_id;
+	$p->page_title = "Upload/Replace photo for ".$member->getMemberId();
 } else {
 	$cUser->MustBeLoggedOn();
 	$member = $cUser;
@@ -28,10 +28,10 @@ if($_REQUEST["mode"] == "admin") {
 
 }
 
-$query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$member->member_id)." limit 0,1;");
+$query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$member->getMemberId())." limit 0,1;");
 		
 $num_results = mysql_num_rows($query);
-$mIMG = cMember::DisplayMemberImg($member->member_id);
+$mIMG = cMember::DisplayMemberImg($member->getMemberId());
 
 if ($mIMG!=false) {
 			
@@ -41,7 +41,7 @@ if ($mIMG!=false) {
 else
 	$submitTxt = 'Upload Image';
 		
-$form->addElement('hidden', 'member_id', $member->member_id);
+$form->addElement('hidden', 'member_id', $member->getMemberId());
 $form->addElement('hidden', 'mode', $_REQUEST["mode"]);
 
 $form->addElement('file', 'userfile', 'Select file to upload:', array("MAX_FILE_SIZE"=>MAX_FILE_UPLOAD));

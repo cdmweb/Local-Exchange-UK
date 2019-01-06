@@ -12,8 +12,10 @@ include("includes/inc.forms.php");
 if($_REQUEST["mode"] == "admin") {  // Administrator is editing a member's account
 	$cUser->MustBeLevel(1);
 	$member = new cMember;
-	$member->LoadMember($_REQUEST["member_id"]);
-	$form->addElement("header", null, "Edit Member " . $member->AllNames());
+
+	$member->LoadMember($_REQUEST["member_id"],true);
+	//$form->addElement("header", null, "Edit Member " . $member->getAllNames());
+
 
 	$form->addElement("html", "<TR></TR>");
 	$form->addElement("hidden","mode","admin");
@@ -31,14 +33,14 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is editing a member's accou
 	$options = array("language"=> "en", "format" => "dFY", "minYear"=>JOIN_YEAR_MINIMUM, "maxYear"=>	$today["year"]);
 	$form->addElement("date", "join_date",	"Join Date", $options);	
 	$options = array("language"=> "en", "format" => "dFY", "maxYear"=>$today["year"], "minYear"=>"1880"); 	
-	$form->addElement("date", "dob", "Date of Birth", $options);
-	$form->addElement("text", "mother_mn", "Mother's Maiden Name", array("size" => 20, "maxlength" => 30)); 	
+	// CT remove fields that we shouldnt have for GDPR
+	//$form->addElement("date", "dob", "Date of Birth", $options);
+	//$form->addElement("text", "mother_mn", "Mother's Maiden Name", array("size" => 20, "maxlength" => 30)); 	
 	$form->addElement("static", null, null, null);		
 	$update_text="How frequently should the member receive email updates?";
 	$update2_text="Should the member confirm any payments made to him/her?";
 } else {  // Member is editing own profile
 	$cUser->MustBeLoggedOn();
-	$form->addElement("header", null, "Edit Personal Profile");
 	$form->addElement("html", "<TR></TR>");
 	$form->addElement("hidden","member_id", $cUser->getMemberId());
 	$form->addElement("hidden","mode","self");
@@ -54,7 +56,7 @@ $form->addElement("static", null, null, null);
 $form->addElement("text", "email", "Email Address", array("size" => 25, "maxlength" => 40));
 $form->addElement("text", "phone1", "Primary Phone", array("size" => 20));
 $form->addElement("text", "phone2", "Secondary Phone", array("size" => 20));
-$form->addElement("text", "fax", "Fax Number", array("size" => 20));
+//$form->addElement("text", "fax", "Fax Number", array("size" => 20));
 $form->addElement("static", null, null, null);
 $frequency = array("0"=>"Never", "1"=>"Daily", "7"=>"Weekly", "30"=>"Monthly");
 $form->addElement("select", "email_updates", $update_text, $frequency);
@@ -113,7 +115,7 @@ $form->addRule('email', 'Not a valid email address', 'verify_valid_email');
 $form->registerRule('verify_phone_format','function','verify_phone_format');
 $form->addRule('phone1', 'Phone format invalid', 'verify_phone_format');
 $form->addRule('phone2', 'Phone format invalid', 'verify_phone_format');
-$form->addRule('fax', 'Phone format invalid', 'verify_phone_format');
+//$form->addRule('fax', 'Phone format invalid', 'verify_phone_format');
 
 
 //
@@ -123,14 +125,15 @@ if ($form->validate()) { // Form is validated so processes the data
    $form->freeze();
  	$form->process("process_data", false);
 } else {  // Otherwise we need to load the existing values
-	$member = new cMember;
+	//$member = new cMember;
 	if($_REQUEST["mode"] == "admin") {
         $cUser->MustBeLevel(1);
-		$member->LoadMember($_REQUEST["member_id"]);
+		//$member->LoadMember($_REQUEST["member_id"], true);
     }
 	else {
-		$member = $cUser;
+		//$member->LoadMember($cUser->getMemberId(), true);
     }
+
 	$primaryPerson = $member->getPrimaryPerson();		
 	$current_values = array (
 		"member_id"=>$member->getMemberId(), 
@@ -140,7 +143,7 @@ if ($form->validate()) { // Form is validated so processes the data
 		"email"=>$primaryPerson->getEmail(), 
 		"phone1"=>$primaryPerson->DisplayPhone(1), 
 		"phone2"=>$primaryPerson->DisplayPhone(2), 
-		"fax"=>$primaryPerson->DisplayPhone("fax"), 
+//		"fax"=>$primaryPerson->DisplayPhone("fax"), 
 		"email_updates"=>$member->getEmailUpdates(), 
 		"address_street1"=>$primaryPerson->getAddressStreet1(), 
 		"address_street2"=>$primaryPerson->getAddressStreet2(), 
@@ -161,17 +164,28 @@ if ($form->validate()) { // Form is validated so processes the data
 		$current_values["account_type"] = $member->getAccountType();
 		$current_values["admin_note"] = $member->getAdminNote();
 		$current_values["join_date"] = array ('d'=>substr($member->getJoinDate(),8,2),'F'=>date('n',strtotime($member->getJoinDate())),'Y'=>substr($member->getJoinDate(),0,4));
-		$current_values["mother_mn"] = $primaryPerson->getMotherMn();
-		
+		//$current_values["mother_mn"] = $primaryPerson->getMotherMn();
+		/*
 		if ($member->person[0]->dob) {		
 			$current_values["dob"] = array ('d'=>substr($member->person[0]->dob,8,2),'F'=>date('n',strtotime($member->person[0]->dob)),'Y'=>substr($member->person[0]->dob,0,4));  // Using 'n' due to a bug in Quickform
 		} else { // If date of birth was left empty originally, display default date
 			$today = getdate();
 			$current_values["dob"] = array ('d'=>$today['mday'],'F'=>$today['mon'],'Y'=>$today['year']);
-		}		
+		}	
+		*/	
 	}
 		
 	$form->setDefaults($current_values);
+	$status_label = ($member->getStatus() == "I") ? " - Inactive" : "";
+	//$p->page_title = "Member details for {$member->getAllNames()} (#{$member_id}{$status_label})";
+
+	if($_REQUEST["mode"] == "admin") {
+		$page_title = "Edit profile for " . $member->getAllNames() . " (#{$member->getMemberId()}{$status_label})";
+	} else{
+		$page_title = "Edit my profile";
+	}
+   
+   $p->page_title = $page_title;
    $p->DisplayPage($form->toHtml());  // display the form
 }
 
@@ -182,34 +196,45 @@ function process_data ($values) {
 	
 	global $p, $cUser,$cErr, $today;
 	$list = "";
+	$member = new cMember;
+	$member->ConstructMember($values);
 
+	if($_REQUEST["mode"] == "admin") {
+        $cUser->MustBeLevel(1);
+		//$member->ConstructMember($_REQUEST["member_id"], true);
+    }
+	else {
+		//$member = $cUser;
+   
+    }
+/*
 	$member = new cMember;
 	if($_REQUEST["mode"] == "admin") {
         $cUser->MustBeLevel(1);
-		$member->LoadMember($_REQUEST["member_id"]);
+		$member->LoadMember($_REQUEST["member_id"], true);
     }
 	else {
 		$member = $cUser;
    
     }
-
+*/
 	if($_REQUEST["mode"] == "admin") {
         $cUser->MustBeLevel(1);
 		
-		$member->confirm_payments = htmlspecialchars($values["confirm_payments"]);
+		$member->setConfirmPayments(htmlspecialchars($values["confirm_payments"]));
 	
 		$member->setMemberRole(htmlspecialchars($values["member_role"]));
 		$member->setAccountType(htmlspecialchars($values["account_type"]));
 		$member->setAdminNote(htmlspecialchars($values["admin_note"]));
-		$member->getPrimaryPerson()->setMotherMn(htmlspecialchars($values["mother_mn"]));
+		//$member->getPrimaryPerson()->setMotherMn(htmlspecialchars($values["mother_mn"]));
 		
 		// [chris] fixed problem with passing this ARRAY to htmlspecialchars()...
 		$date = $values['join_date'];
 		
 		// ... pass to htmlspecialchars() here instead [chris]
-		$member->join_date = htmlspecialchars($date['Y'] . '/' . $date['F'] . '/' . $date['d']);
+		$member->setJoinDate(htmlspecialchars($date['Y'] . '/' . $date['F'] . '/' . $date['d']));
 		
-		// [chris] ditto re htmlspecialchars() [see comment above]
+		/* // [chris] ditto re htmlspecialchars() [see comment above]
 		$date = $values['dob'];
 
 		$dob = $date['Y'] . '/' . $date['F'] . '/' . $date['d'];
@@ -220,8 +245,10 @@ function process_data ($values) {
 		if($dob != $today['year']."/".$today['mon']."/".$today['mday']) { 
 			$member->person[0]->dob = $dob; 
 		} // if date left as default (today's date), we don't want to set it
+		*/
 	} 
 	$member->setConfirmPayments(htmlspecialchars($values["confirm_payments"]));
+	$member->setEmailUpdates(htmlspecialchars($values["emailUpdates"]));
 	
     // TODO: Add ability to temporarily disable an account (vacation) or to
     // disable altogether (left 4th Corner).  Also add ability for user to add
@@ -230,13 +257,12 @@ function process_data ($values) {
 	$member->getPrimaryPerson()->setMidName(htmlspecialchars($values["mid_name"]));
 	$member->getPrimaryPerson()->setLastName(htmlspecialchars($values["last_name"]));
 	$member->getPrimaryPerson()->setEmail(htmlspecialchars($values["email"]));
-	$member->getPrimaryPerson()->setEmailUpdates(htmlspecialchars($values["emailUpdates"]));
 	$member->getPrimaryPerson()->setAddressStreet1(htmlspecialchars($values["address_street1"]));
 	$member->getPrimaryPerson()->setAddressStreet2(htmlspecialchars($values["address_street2"]));
-	$member->getPrimaryPerson()->setAddressStreetCity(htmlspecialchars($values["address_city"]));
+	$member->getPrimaryPerson()->setAddressCity(htmlspecialchars($values["address_city"]));
 	$member->getPrimaryPerson()->setAddressStateCode(htmlspecialchars($values["address_state_code"]));
-	$member->getPrimaryPerson()->setPostCode(htmlspecialchars($values["address_post_code"]));
-		$member->getPrimaryPerson()->setAddressCountry(htmlspecialchars($values["address_country"]));	
+	$member->getPrimaryPerson()->setAddressPostCode(htmlspecialchars($values["address_post_code"]));
+	$member->getPrimaryPerson()->setAddressCountry(htmlspecialchars($values["address_country"]));	
 
 	$phone = new cPhone_uk($values['phone1']);
 	$member->getPrimaryPerson()->setPhone1Area($phone->area);
@@ -246,10 +272,10 @@ function process_data ($values) {
 	$member->getPrimaryPerson()->setPhone2Area($phone->area);
 	$member->getPrimaryPerson()->setPhone2Number($phone->SevenDigits());
 	$member->getPrimaryPerson()->setPhone2Ext($phone->ext);
-	$phone = new cPhone_uk($values['fax']);
-	$member->getPrimaryPerson()->setFaxArea($fax->area);
-	$member->getPrimaryPerson()->setFaxNumber($fax->SevenDigits());
-	$member->getPrimaryPerson()->setFaxExt($fax->ext);
+	//$phone = new cPhone_uk($values['fax']);
+	//$member->getPrimaryPerson()->setFaxArea($fax->area);
+	//$member->getPrimaryPerson()->setFaxNumber($fax->SevenDigits());
+	//$member->getPrimaryPerson()->setFaxExt($fax->ext);
 	/*[chris]*/
 	if (SOC_NETWORK_FIELDS==true) {
 	
@@ -286,7 +312,7 @@ function verify_good_member_id ($element_name,$element_value) {
 
 function verify_role_allowed($element_name,$element_value) {
 	global $cUser;
-	if($element_value > $cUser->member_role)
+	if($element_value > $cUser->getMemberRole())
 		return false;
 	else
 		return true;
@@ -308,7 +334,7 @@ function verify_role_allowed1($element_name,$element_value) {
     }
 }
 
-
+//CT this is not used - scary data to have for GDPR
 function verify_reasonable_dob($element_name,$element_value) {
 	global $today;
 	$date = $element_value;

@@ -5,23 +5,21 @@
 	$p->site_section = EXCHANGES;
 
 	$member = new cMember;
+	$member->LoadMember($_REQUEST["member_id"]);
+	$member_id = $member->getMemberId();
 
+	$status_label = ($member->getMemberId() = "I") ? "- Inactive" : "";
 	if($_REQUEST["mode"] == "self") {
-		$member = $cUser;
-		$p->page_title .= "<a href='member_profile_all_in_one.php'>My profile</a> / ";
+		$p->page_title .= "My Trade History";
 	} else {
-		$member->LoadMember($_REQUEST["member_id"]);
-		$p->page_title = "<a href='member_directory.php'>Members</a> / <a href='member_summary.php?member_id={$member->GetMemberId()}'>{$member->AllNames()}</a> / ";
+		$p->page_title = "Trade history for {$member->getAllNames()} (#{$member_id}{$status_label})";
 	}
 
 
-
-
-
-	$p->page_title .= "Exchange History";
-
 	include("classes/class.trade.php");
-	
+	if ($cUser->getMemberRole() ){
+		$output = $p->Wrap("Quick edit: <a href=\"member_edit.php?mode=admin&member_id={$member_id}\">[Profile]</a> <a href=\"listings_found.php?type=Offer&mode=admin&member_id={$member_id}\">[Offers]</a> <a href=\"listings_found.php?type=Want&mode=admin&member_id={$member_id}\">[Wants]</a> <a href=\"member_edit.php?mode=admin&member_id={$member_id}\">[Joint Member]</a>", "div", "admin-actions");
+	}
 	
 	
 	if ($member->getBalance() > 0)
@@ -31,13 +29,14 @@
 		
 	
 	
-	$list = $p->Wrap($p->Wrap("Current Balance: ", "span", "label") . $p->Wrap($member->getBalance() . " ". UNITS, "span", "value ". $cssClass), "p", "balance");	
+	$output .= $p->Wrap($p->Wrap("Current Balance: ", "span", "label") . $p->Wrap($member->getBalance() . " ". UNITS, "span", "value ". $cssClass), "p", "large");	
 
 	$trade_group = new cTradeGroup($member->getMemberId());
 	$trade_group->LoadTradeGroup("individual");
-	$list .= $trade_group->DisplayTradeGroupUser($member->getBalance());
+	//$output .= $trade_group->DisplayTradeGroupUser($member->getBalance());
+	$output .= $trade_group->DisplayTradeGroupUser();
 	
-	$p->DisplayPage($list);
+	$p->DisplayPage($output);
 	
 
 	

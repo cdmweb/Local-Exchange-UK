@@ -253,6 +253,8 @@ class cDatabase
 			return stripslashes($text);
 	}	
 
+
+
 }
 
 

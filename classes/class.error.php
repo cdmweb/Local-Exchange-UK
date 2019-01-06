@@ -67,19 +67,15 @@ class cError
 
 	function ErrorBox()
 	{
-		$output="";
+		$msg="";
 
 		foreach($this->arrErrors as $oneErr)
 		{
-			$output.=$this->ErrorBoxError($oneErr);
+			$msg.=$this->ErrorBoxError($oneErr) . "<br />";
 		}
 
-//		$msg = "<DIV class=ErrorBoxMsg>Errors occured on this page:</DIV>";
-		$msg = "<FONT color=RED size=2>Errors occurred on this page:<BR>";
-
-		if (strlen($output)>0)
-			$output = $msg.$output."</FONT><BR>";
-//			$output = "<CENTER><DIV class=ErrorBox>".$msg.$output."</DIV></CENTER>";
+		$output = "<div class='ErrorBoxMsg'>Errors occured on this page:<br />";
+		$output .= $msg."</div>";
 
 		return $output;
 	}

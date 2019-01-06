@@ -56,7 +56,7 @@ class cPage {
 		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
 		<meta name='viewport' content='user-scalable=yes'/>
 		<title>". $title . PAGE_TITLE_HEADER ."</title>
-		<link rel='stylesheet' href='http://". HTTP_BASE ."/". SITE_STYLESHEET ."'' type='text/css'></link></head><body>";
+		<link rel='stylesheet' href='" . SITE_STYLESHEET ."' type='text/css'></link></head><body>";
 	}
 	function MakePageHeader() {
 		return $this->page_header ;
@@ -160,6 +160,8 @@ class cPage {
 		}
 		return $this->Wrap($menu, "ul");
 	}
+	//CT: new funtion for layout of text
+
 	function Wrap($string, $elementName, $cssClass=null, $link=null){
 		if(!empty($link)){
 			$string = $this->Link($string, $link);
@@ -168,6 +170,12 @@ class cPage {
 			$cText=" class='{$cssClass}'";
 		}
 		return "<{$elementName} {$cText}>{$string}</{$elementName}>";
+	}
+	public function WrapLabelValue($label, $value){
+		$separator=":";
+		$label=$this->Wrap($label . $separator . " ", "span", "label");
+		$value=$this->Wrap($value, "span", "value");
+		return $this->Wrap($label.$value, "p", "line");
 	}
 	function Link($string, $link){
 		return "<a href='{$link}'>{$string}</a>";
@@ -203,7 +211,15 @@ class cPage {
 		if($type !="hidden") $output=$this->Wrap($output, 'div', "l_".$type);
 		return $output;
 	}
-	
+	function FormatShortDate($d){
+		//localise to country
+		return date_format(date_create($d), SHORT_DATE);
+	}
+	function FormatLongDate($d){
+		//localise to country
+		return date_format(date_create($d), LONG_DATE);
+
+	}
 	
 }
 

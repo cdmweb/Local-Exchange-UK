@@ -29,7 +29,7 @@ define ("PEAR_PATH", "/Applications/MAMP/PEAR"); // no ending slash
 define ("HTTP_BASE",SERVER_DOMAIN.SERVER_PATH_URL);
 define ("CLASSES_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/classes/");
 define ("IMAGES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/images/");
-define ("STYLES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/styles/");
+define ("STYLES_PATH",SERVER_DOMAIN."/styles/");
 define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
 
 
@@ -245,7 +245,8 @@ define ("DEFAULT_PHONE_AREA", "01223");
 define ("MONTH_FIRST", false);		
 
 define ("PASSWORD_RESET_SUBJECT", "Your ". SITE_LONG_TITLE ." Account");
-define ("PASSWORD_RESET_MESSAGE", "Your password for ". SITE_LONG_TITLE ." has been reset. If you did not request this reset, it is possible your account has been compromised, and you may want to contact the site administrator at ".PHONE_ADMIN.".\n\nYour user id and new password are listed at the end of this message. You can change the automatically generated password by going to the Member Profile section after you login.");
+define ("PASSWORD_RESET_MESSAGE", "Your password for ". SITE_LONG_TITLE ." has been reset. \n\nYour new password is listed below. Please use it to log in now, but change it as soon as possible to help keep your account secure. \n\nhttps://" .HTTP_BASE . "/password_change.php");
+/* new member email */
 define ("NEW_MEMBER_SUBJECT", "Welcome to ". SITE_LONG_TITLE);
 define ("NEW_MEMBER_MESSAGE", "Hello, and welcome to the ". SITE_LONG_TITLE ." community!\n\nA member account has been created for you at:\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."/member_login.php\n\nPlease login and create your Offered and Wanted Listings.  Your new user id and password are listed at the end of this message. You can change the automatically generated password by going to the Member Profile section after you login.\n\nThank you for joining us.");
 
@@ -255,7 +256,7 @@ define ("NEW_MEMBER_MESSAGE", "Hello, and welcome to the ". SITE_LONG_TITLE ." c
 // to be changed.
 
 // What's the name and location of the stylesheet?
-define ("SITE_STYLESHEET", "styles/style.css");
+define ("SITE_STYLESHEET", "/styles/style.css");
 
 // How long should trades be listed on the "leave feedback for 
 // a recent exchange" page?  After this # of days they will be
@@ -335,15 +336,7 @@ define ("REDIRECT_URL",SERVER_PATH_URL."/redirect.php");
 //CT: put in form
 define ("MEM_LIST_DISPLAY_EMAIL", true);
 //CT NEW - used in mysql date formats - should match convention of the locale
-//UK
-define ("SHORT_DATE_FORMAT", "%e/%c/%y");
-define ("LONG_DATE_FORMAT", "%c %M %Y");	
 
-/*
-//US
-define ("SHORT_DATE_FORMAT", "%c/%e/%y"); 	
-define ("LONG_DATE_FORMAT", "%M %e %Y");	
-*/
 //CT: if you want recaptcha protection for public forms, download securimage (simple php recaptcha) 
 // from https://www.phpcaptcha.org/ to the /thirdparty directory, configure the inc.configure.
 // Set RECAPTCHA_VALIDATION to true to start using it.

@@ -35,12 +35,12 @@ function process_data ($values) {
 	$member->ChangePassword($password); // This will bomb out if the password change fails
 	$member->UnlockAccount();
 	
-	$list = "Your password has been reset.  You can change the new password after you login by going into the Member Profile section of the web site.<P>";
+	$list = "Your password has been reset. ";
 	$mailed = mail($values['email'], PASSWORD_RESET_SUBJECT, PASSWORD_RESET_MESSAGE . "\n\nNew Password: ". $password, EMAIL_FROM);
 	if($mailed)
 		$list .= "The new password has been sent to your email address.";
 	else
-		$list .= "<I>However, the attempt to email the new password failed.  This is most likely due to a technical problem.  Contact your administrator at ". PHONE_ADMIN ."</I>.";	
+		$list .= "<em>The attempt to email the new password failed.  Contact your administrator at ". EMAIL_ADMIN ."</em>.";	
 	$p->DisplayPage($list);
 }
 
@@ -54,7 +54,7 @@ function verify_email($element_name,$element_value) {
 		
 	$member->LoadMember($form->getElementValue("member_id"));
 
-	if($element_value == $member->person[0]->email)
+	if($element_value == $member->getPrimaryPerson()->getEmail())
 		return true;
 	else
 		return false;

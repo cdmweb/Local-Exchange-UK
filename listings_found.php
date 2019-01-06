@@ -2,29 +2,46 @@
 
 include_once("includes/inc.global.php");
 $p->site_section = LISTINGS;
-$p->page_title = $_REQUEST["type"] ."ed Listings";
 
 include_once("classes/class.listing.php");
+/* make slightly safer by at least having a catch - too much trust on query strings! */
+if($_REQUEST["type"] == WANT_LISTING){
+	$type = WANT_LISTING;
+}else{
+	$type = OFFER_LISTING;
+}
+if(!empty($_REQUEST["member_id"])){
+	$member_id=$_REQUEST["member_id"];
+}else{
+	$member_id = null;
+}
 
 if($_REQUEST["category"] == "0")
 	$category = "%";
 else
 	$category = $_REQUEST["category"];
 	
-if($_REQUEST["timeframe"] == "0")
+if($_REQUEST["timeframe"] == "0") {
 	$since = new cDateTime(LONG_LONG_AGO);
-else
+	$timeframe = "";
+} 
+else {
 	$since = new cDateTime("-". $_REQUEST["timeframe"] ." days");
+	$timeframe = $_REQUEST["timeframe"];
+}
 
-if ($cUser->IsLoggedOn())
+// show ids only if logged in AND on a generla listing page
+if ($cUser->IsLoggedOn() && empty($member_id)){
 	$show_ids = true;
-else
+}
+else {
 	$show_ids = false;
+}
 
 // instantiate new cOffer objects and load them
 $listings = new cListingGroup($_GET["type"]);
-			
-$listings->LoadListingGroup(null, $category, null, $since->MySQLTime());
+
+$listings->LoadListingGroup(null, $category, $member_id, $since->MySQLTime());
 
 $lID = 0;
 
@@ -80,7 +97,24 @@ if ($listings->listing && KEYWORD_SEARCH_DIR==true && strlen($_GET["keyword"])>0
 }
 
 $output = $listings->DisplayListingGroup($show_ids);
+// CT construct title
+if($type == WANT_LISTING){
+	$page_title = WANT_LISTING_HEADING;
+}else{
+	$page_title = OFFER_LISTING_HEADING;
+}
+if(!empty($member_id)){
+	$page_title .= " for member";
+	//$p->page_title = $_REQUEST["type"] ."ed Listings";
+	
+}
+if(!empty($timeframe)){
+	$page_title .= " in Last " . $timeframe . " Days";
+	//$p->page_title = $_REQUEST["type"] ."ed Listings";
+	
+}
 
+$p->page_title =$page_title;
 $p->DisplayPage($output); 
 
 include("includes/inc.events.php");

@@ -56,7 +56,34 @@ class cPerson
 		global $cDB, $cErr;
 		
 		/*[chris]*/ // Added store personal profile data
-		$update = $cDB->Query("UPDATE ". DATABASE_PERSONS ." SET member_id=". $cDB->EscTxt($this->member_id) .", primary_member=". $cDB->EscTxt($this->primary_member) .", directory_list=". $cDB->EscTxt($this->directory_list) .", first_name=". $cDB->EscTxt($this->first_name) .", last_name=". $cDB->EscTxt($this->last_name) .", mid_name=". $cDB->EscTxt($this->mid_name) .", dob=". $cDB->EscTxt($this->dob) .", mother_mn=". $cDB->EscTxt($this->mother_mn) .", email=". $cDB->EscTxt($this->email) .", phone1_area=". $cDB->EscTxt($this->phone1_area) .", phone1_number=". $cDB->EscTxt($this->phone1_number) .", phone1_ext=". $cDB->EscTxt($this->phone1_ext) .", phone2_area=". $cDB->EscTxt($this->phone2_area) .", phone2_number=". $cDB->EscTxt($this->phone2_number) .", phone2_ext=". $cDB->EscTxt($this->phone2_ext) .", fax_area=". $cDB->EscTxt($this->fax_area) .", fax_number=". $cDB->EscTxt($this->fax_number) .", fax_ext=". $cDB->EscTxt($this->fax_ext) .", address_street1=". $cDB->EscTxt($this->address_street1) .", address_street2=". $cDB->EscTxt($this->address_street2) .", address_city=". $cDB->EscTxt($this->address_city) .", address_state_code=". $cDB->EscTxt($this->address_state_code) .", address_post_code=". $cDB->EscTxt($this->address_post_code) .", address_country=". $cDB->EscTxt($this->address_country).", about_me=". $cDB->EscTxt($this->about_me) .","."age=".  $cDB->EscTxt($this->age) .",". "sex=". $cDB->EscTxt($this->sex) . " WHERE person_id=". $cDB->EscTxt($this->person_id) .";");
+        //print("stuff" .$this->getPersonId());
+		$update = $cDB->Query("UPDATE ". DATABASE_PERSONS ." SET 
+            member_id=". $cDB->EscTxt($this->getMemberId()) .", 
+            primary_member=". $cDB->EscTxt($this->getPrimaryMember()) .", 
+            directory_list=". $cDB->EscTxt($this->getDirectoryList()) .", 
+            first_name=". $cDB->EscTxt($this->getFirstName()) .", 
+            last_name=". $cDB->EscTxt($this->last_name) .", 
+            mid_name=". $cDB->EscTxt($this->mid_name) .", 
+            dob=". $cDB->EscTxt($this->dob) .", 
+            mother_mn=". $cDB->EscTxt($this->mother_mn) .", 
+            email=". $cDB->EscTxt($this->email) .", 
+            phone1_area=". $cDB->EscTxt($this->phone1_area) .", 
+            phone1_number=". $cDB->EscTxt($this->phone1_number) .", 
+            phone1_ext=". $cDB->EscTxt($this->phone1_ext) .", 
+            phone2_area=". $cDB->EscTxt($this->phone2_area) .", 
+            phone2_number=". $cDB->EscTxt($this->phone2_number) .", 
+            phone2_ext=". $cDB->EscTxt($this->phone2_ext) .", 
+            fax_area=". $cDB->EscTxt($this->fax_area) .", 
+            fax_number=". $cDB->EscTxt($this->fax_number) .", 
+            fax_ext=". $cDB->EscTxt($this->fax_ext) .", 
+            address_street1=". $cDB->EscTxt($this->address_street1) .", 
+            address_street2=". $cDB->EscTxt($this->address_street2) .", 
+            address_city=". $cDB->EscTxt($this->address_city) .", 
+            address_state_code=". $cDB->EscTxt($this->address_state_code) .", 
+            address_post_code=". $cDB->EscTxt($this->address_post_code) .", 
+            address_country=". $cDB->EscTxt($this->address_country).", 
+            about_me=". $cDB->EscTxt($this->about_me) .","."age=".  $cDB->EscTxt($this->age) .",". "
+            sex=". $cDB->EscTxt($this->sex) . " WHERE person_id=". $cDB->EscTxt($this->getPersonId()) .";");
 
 		if(!$update)
 			$cErr->Error("Could not save changes to '". $this->first_name ." ". $this->last_name ."'. Please try again later.");	
@@ -125,6 +152,7 @@ class cPerson
      */
     public function getPersonId()
     {
+        print('getPersonId' . $this->person_id);
         return $this->person_id;
     }
 
@@ -135,6 +163,7 @@ class cPerson
      */
     public function setPersonId($person_id)
     {
+        //print($person_id);
         $this->person_id = $person_id;
 
         return $this;
@@ -712,7 +741,7 @@ class cPerson
 			return false;
 		} 
 		
-		$delete = $cDB->Query("DELETE FROM ".DATABASE_PERSONS." WHERE person_id=". $cDB->EscTxt($this->person_id));
+		$delete = $cDB->Query("DELETE FROM ".DATABASE_PERSONS." WHERE person_id=". $cDB->EscTxt($this->getPersonId()));
 		
 		unset($this->person_id);
 		
@@ -726,7 +755,7 @@ class cPerson
 							
 	function ShowPerson()
 	{
-		$output = $this->person_id . ", " . $this->member_id . ", " . $this->primary_member . ", " . $this->directory_list . ", " . $this->first_name . ", " . $this->last_name . ", " . $this->mid_name . ", " . $this->dob . ", " . $this->mother_mn . ", " . $this->email . ", " . $this->phone1_area . ", " . $this->phone1_number . ", " . $this->phone1_ext . ", " . $this->phone2_area . ", " . $this->phone2_number . ", " . $this->phone2_ext . ", " . $this->fax_area . ", " . $this->fax_number . ", " . $this->fax_ext . ", " . $this->address_street1 . ", " . $this->address_street2 . ", " . $this->address_city . ", " . $this->address_state_code . ", " . $this->address_post_code . ", " . $this->address_country;
+		$output = $this->getPersonId() . ", " . $this->getMemberId() . ", " . $this->getPrimaryMember() . ", " . $this->getDirectoryList() . ", " . $this->getFirstName() . ", " . $this->getLastName() . ", " . $this->getPersonId() . ", " . $this->dob . ", " . $this->mother_mn . ", " . $this->email . ", " . $this->phone1_area . ", " . $this->phone1_number . ", " . $this->phone1_ext . ", " . $this->phone2_area . ", " . $this->phone2_number . ", " . $this->phone2_ext . ", " . $this->fax_area . ", " . $this->fax_number . ", " . $this->fax_ext . ", " . $this->address_street1 . ", " . $this->address_street2 . ", " . $this->address_city . ", " . $this->address_state_code . ", " . $this->address_post_code . ", " . $this->address_country;
 		
 		return $output;
 	}
@@ -881,8 +910,8 @@ class cSecondPerson extends cPerson {
         $this->setMemberId($array['member_id']);
         $this->setPrimaryMember('N');
         $this->setDirectoryList($array['p2_directory_list']);
-         $this->setPersonId($array['p2_person_id']);
-       $this->setFirstName($array['p2_first_name']);
+        $this->setPersonId($array['p2_person_id']);
+        $this->setFirstName($array['p2_first_name']);
         $this->setLastName($array['p2_last_name']);
         $this->setMidName($array['p2_mid_name']);
         $this->setDob($array['p2_dob']);
