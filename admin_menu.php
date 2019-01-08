@@ -42,8 +42,8 @@ if (!empty(OVRIDE_BALANCES) && $cUser->getMemberRole() > 1) {// Only display Ove
 	$menuArray[] = $p->MenuItemArray("Edit balances", "balance_to_edit.php?action=balance_to_edit");
 }
 if ($cUser->getMemberRole() > 1) { // if admin 
-	$menuArray[] = $p->MenuItemArray("Manage account restrictions", "manage_restrictions.php?action=manage_restrictions");
-	$menuArray[] = $p->MenuItemArray("Manage invoices for a member (NEW!)", "member_choose.php?action=invoices");
+	$menuArray[] = $p->MenuItemArray("Manage account restrictions", "member_choose.php?action=manage_restrictions");
+	$menuArray[] = $p->MenuItemArray("Manage invoices for a member (NEW!)", "member_choose.php?action=trades_pending");
 	$menuArray[] = $p->MenuItemArray("Record an exchange for a member", "member_choose.php?action=trade");
 	$menuArray[] = $p->MenuItemArray("Reverse an Exchange that was Made in Error", "trade_reverse.php?action=trade_reverse");
 	$menuArray[] = $p->MenuItemArray("Record Feedback for a Member", "member_choose.php?action=feedback_choose");

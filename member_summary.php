@@ -7,7 +7,7 @@ $p->site_section = PROFILE;
 $cUser->MustBeLoggedOn();
 
 $member = new cMember; 
-$member->LoadMember($_REQUEST["member_id"]);
+$member->LoadMember($_REQUEST["member_id"], 2);
 $member_id = $member->getMemberId();
 $status_label = ($member->getStatus() == "I") ? "- Inactive" : "";
 

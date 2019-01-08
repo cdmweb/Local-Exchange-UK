@@ -52,9 +52,9 @@ class cDatabase
 		//echo(gettype($ret));
 		if(gettype($ret) == "resource") {
 			//ct debug
-			$cErr->Error("Q: " . $thequery . ". R: " . mysql_num_rows($ret));
+			//$cErr->Error("Q: " . $thequery . ". R: " . mysql_num_rows($ret));
 		} else{
-			$cErr->Error("Q: " . $thequery . ". R: not a resource");
+			//$cErr->Error("Q: " . $thequery . ". R: not a resource");
 			//return false;
 		}
 

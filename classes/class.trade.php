@@ -41,7 +41,7 @@ class cTrade {
 	function ShowTrade() {
 		global $cDB;
 		
-		$content = $this->trade_id .", ". $this->trade_date .", ". $this->status .", ". $this->member_from->member_id .", ". $this->member_id_to .", ". $this->amount .", ". $this->category->id .", ". $this->description .", ". $this->type;
+		$content = $this->trade_id .", ". $this->trade_date .", ". $this->status .", ". $this->member_from->getMemberId() .", ". $this->member_id_to .", ". $this->amount .", ". $this->category->id .", ". $this->description .", ". $this->type;
 		
 		return $content;
 	}
@@ -49,7 +49,7 @@ class cTrade {
 	function SaveTrade() {  // This function should never be called directly
 		global $cDB, $cErr;
 		
-		$insert = $cDB->Query("INSERT INTO ". DATABASE_TRADES ." (trade_date, status, member_id_from, member_id_to, amount, category, description, type) VALUES (now(), ". $cDB->EscTxt($this->status) .", ". $cDB->EscTxt($this->member_from->member_id) .", ". $cDB->EscTxt($this->member_id_to) .", ". $cDB->EscTxt($this->amount) .", ". $cDB->EscTxt($this->category->id) .", ". $cDB->EscTxt($this->description) .", ". $cDB->EscTxt($this->type) .");");
+		$insert = $cDB->Query("INSERT INTO ". DATABASE_TRADES ." (trade_date, status, member_id_from, member_id_to, amount, category, description, type) VALUES (now(), ". $cDB->EscTxt($this->status) .", ". $cDB->EscTxt($this->member_from->getMemberId()) .", ". $cDB->EscTxt($this->member_id_to) .", ". $cDB->EscTxt($this->amount) .", ". $cDB->EscTxt($this->category->id) .", ". $cDB->EscTxt($this->description) .", ". $cDB->EscTxt($this->type) .");");
 
 		if(mysql_affected_rows() == 1) {
 		
@@ -105,8 +105,8 @@ class cTrade {
 			$this->member_to = new cMember;
 			$this->member_from->ConstructMember(array('member_id' => $array['member_id_to']));
 			
-			$this->member_id_from = $array['member_id_from'];
-			$this->member_id_to = $array['member_id_to'];
+			$this->member_id_from = $this->member_from->getMemberId();
+			$this->member_id_to = $this->member_to->getMemberId();
 			$this->amount = $array['amount'];
 			$this->description = $cDB->UnEscTxt($array['description']);
 			$this->category = $cDB->UnEscTxt($array['category']);
@@ -140,10 +140,10 @@ class cTrade {
 			return false;
 			
 		
-		if ($this->member_from->member_id == $this->member_id_to)
+		if ($this->member_from->getMemberId() == $this->member_id_to)
 			return false;		// don't allow trade to self
 		
-		if ($this->member_from->restriction==1) { // This member's account has been restricted - he is not allowed to make outgoing trades
+		if ($this->member_from->getRestriction()==1) { // This member's account has been restricted - he is not allowed to make outgoing trades
 			
 			return false;
 		}
@@ -164,9 +164,9 @@ class cTrade {
 				
 				case("FATAL"): // FATAL: The original method for dealing which is to abort the transaction
 					
-					$cErr->Error("The trade database is out of balance!  Please contact your administrator at ". PHONE_ADMIN .".", ERROR_SEVERITY_HIGH);  
+					$cErr->Error("The trade database is out of balance!  Please contact your administrator at ". EMAIL_ADMIN .".", ERROR_SEVERITY_HIGH);  
 
-					include("redirect.php");
+					//include("redirect.php");
 					exit;  // Probably unnecessary...
 					
 				break;

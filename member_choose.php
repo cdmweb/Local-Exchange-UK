@@ -9,7 +9,16 @@ include("includes/inc.forms.php");
 
 //$form->addElement("header", null, "For which member?");
 //$form->addElement("html", "<TR></TR>");
+$show_inactive = (!empty($_REQUEST["show_inactive"]))? true : false;
+$action = $_REQUEST["action"];
 $form->addElement("hidden", "action", $_REQUEST["action"]);
+$output = "";
+if(empty($show_inactive)){
+	$output .= $p->Wrap("<strong>Show active members</strong> | <a href='member_choose.php?action={$action}&show_inactive=true'>Show all members</a>", "p", "small");
+}else{
+	$output .= $p->Wrap("<a href='member_choose.php?action={$action}'>Show active members</a> | <strong>Show all members</strong>", "p", "small");
+}
+
 
 if(isset($_REQUEST["get1"])) {
 	$form->addElement("hidden", "get1", $_REQUEST["get1"]);
@@ -17,11 +26,8 @@ if(isset($_REQUEST["get1"])) {
 }
 
 $ids = new cMemberGroup;
-		
-if(isset($_REQUEST["inactive"]))
-	$ids->LoadMemberGroup(false, true);
-else
-	$ids->LoadMemberGroup();
+$ids->LoadMemberGroup($show_inactive,true);
+
 	
 $form->addElement("select", "member_id", "Member", $ids->MakeIDArray());
 $form->addElement("static", null, null, null);
@@ -31,7 +37,8 @@ if ($form->validate()) { // Form is validated so processes the data
    $form->freeze();
  	$form->process("process_data", false);
 } else {  // Display the form
-	$p->DisplayPage($form->toHtml());
+	$output .= $form->toHtml();
+	$p->DisplayPage($output);
 }
 
 function process_data ($values) {

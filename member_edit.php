@@ -41,6 +41,7 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is editing a member's accou
 	$update2_text="Should the member confirm any payments made to him/her?";
 } else {  // Member is editing own profile
 	$cUser->MustBeLoggedOn();
+	$member = $cUser;
 	$form->addElement("html", "<TR></TR>");
 	$form->addElement("hidden","member_id", $cUser->getMemberId());
 	$form->addElement("hidden","mode","self");

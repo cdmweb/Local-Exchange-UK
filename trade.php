@@ -21,7 +21,7 @@ if($cUser->member_id == "ADMIN") {
 if($_REQUEST["mode"] == "admin") {
 	$cUser->MustBeLevel(1);
 	$member->LoadMember($_REQUEST["member_id"]);
-	$p->page_title .= " for ". $member->AllNames();
+	$p->page_title .= " for ". $member->getAllNames();
 } else {
 	$cUser->MustBeLoggedOn();
 	$member = $cUser;
@@ -32,7 +32,8 @@ $form->addElement('hidden', 'mode', $_REQUEST["mode"]);
 $form->addElement("html", "<TR></TR>");  // TODO: Move this to the header
 
 if (MEMBERS_CAN_INVOICE==true) // Invoicing turned on in config, so let member choose
-	$form->addElement("select", "typ", "Transaction Type", array("Transfer","Invoice"));
+
+	$form->addElement("select", "typ", "Transaction Type", array('null'=>"-- Select transaction type --",'transfer'=>"Transfer",'invoice'=>"Invoice"));
 else // Invoicing turned off, this form now only functions to transfer money
 	$form->addElement('hidden', 'typ', 0);	
 	
@@ -117,14 +118,15 @@ function process_data ($values) {
 	/*
 	[chris] For transaction approval
 	*/
-	
-	if ($_REQUEST["typ"]==1 || $member_to->confirm_payments==1) { // Member wishes to confirm payments made to him OR this is an invoice
+	$type_of_transaction = $POST["typ"];
+	//CT making types of transaction explicit and via post
+	if (!empty($type_of_transaction) || $member_to->getConfirmPayments()==1) { // Member wishes to confirm payments made to him OR this is an invoice
 		
 		if (htmlspecialchars($values['units']) >= 0 && $member_to_id != $member->getMemberId()) {
 			
 			global $cDB;
 			
-			if ($_REQUEST["typ"]!=1) { // This is a payment
+			if ($type_of_transaction=='transfer') { // This is a payment
 				
 				if ($member->restriction==1) {
 					$list .= "<p>".LEECH_NOTICE;
@@ -139,7 +141,7 @@ function process_data ($values) {
 				else
 					$list .= "Trade failed!  Please try again later.";	
 			}
-			else if ($_REQUEST["typ"]==1) {
+			else if ($type_of_transaction=='invoice') {
 				
 				if (MEMBERS_CAN_INVOICE!=true) // Invoicing is turned off, user has no right to be here!
 					$list .= "Sorry, the Invoicing facility has been disabled by the site administrator.";	

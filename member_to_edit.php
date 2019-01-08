@@ -17,7 +17,7 @@ if(empty($show_inactive)){
 $ids = new cMemberGroup;
 $ids->LoadMemberGroup($show_inactive,true);
 
-$form->addElement("select", "member_id", "Member", $ids->MakeIDArray(true));
+$form->addElement("select", "member_id", "Member", $ids->MakeIDArray());
 $form->addElement("static", null, null, null);
 $form->addElement('submit', 'btnSubmit', 'Edit');
 
