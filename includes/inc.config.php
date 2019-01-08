@@ -16,14 +16,14 @@ if (file_exists("upgrade.php") && $running_upgrade_script!=true) {
 /******************* SITE LOCATIONS ***********************/
  
 // What is the domain name of the site?  
-define ("SERVER_DOMAIN","localhost:8888");	// no http://
+define ("SERVER_DOMAIN","");	// no http://
 
 // What is the path to the site? This is null for many sites.
-define ("SERVER_PATH_URL","/members");	// no ending slash
+define ("SERVER_PATH_URL","");	// no ending slash
 
 // The following only needs to be set if Pear has been
 // installed manually by downloading the files
-define ("PEAR_PATH", "/Applications/MAMP/PEAR"); // no ending slash
+define ("PEAR_PATH", ""); // no ending slash
 
 // Ok, then lets define some paths (no need to edit these)
 define ("HTTP_BASE",SERVER_DOMAIN.SERVER_PATH_URL);
@@ -36,12 +36,12 @@ define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
 /**********************************************************/
 /***************** DATABASE LOGIN  ************************/
 
-define ("DATABASE_USERNAME","clarat2_leuser");
-define ("DATABASE_PASSWORD","05dbI?uWkWBy");
+define ("DATABASE_USERNAME","");
+define ("DATABASE_PASSWORD","");
 //define ("DATABASE_NAME","clarat2_localexchange");
 // local localexchange-1.02;
-define ("DATABASE_NAME","localexchange-1.02");
-define ("DATABASE_SERVER","localhost:8889/"); // often "localhost"
+define ("DATABASE_NAME","");
+define ("DATABASE_SERVER",""); // often "localhost"
 
 /**********************************************************/
 /********************* SITE NAMES *************************/
@@ -150,10 +150,24 @@ define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"". SERVER_
 /**************** DEFINE SIDEBAR MENU *********************/
 
 $SIDEBAR = array (
+array("Information", "pages.php?id=7"), // old style info pages
+array("Learn More","info/more.php"), // old style info pages
+ // [CDM] uncomment line below to activate new style info pages         
+ //  array("Information","pages.php?id=1"),
+array("News & Events","news.php"),
+array("Offered","listings.php?type=Offer"),
+array("Wanted","listings.php?type=Want"),
+array("Update Listings","listings_menu.php"),
+array("Exchanges","exchange_menu.php"),
+array("Members List","member_directory.php"),
+array("Member Profile","member_profile.php"),
+array("Contact Us","contact.php"));
+);
+/*
+// CT new 
+$SIDEBAR = array (
 	array("Home","index.php"),
-	array("Information", "pages.php?id=7"), // old style info pages
-// [CDM] uncomment line below to activate new style info pages 	
-//  array("Information","pages.php?id=1"),
+	array("Information", "pages.php?id=7"), 
 	array("News &amp; events","pages.php?id=84"),
 	array("Offered","listings_found.php?type=Offer&keyword=&category=0&timeframe=14"),
 	array("Wanted","listings_found.php?type=Want&keyword=&category=0&timeframe=14"),
@@ -162,7 +176,7 @@ $SIDEBAR = array (
 	array("",""),
 	array("My profile","member_profile_all_in_one.php"),
 	array("My trades","exchange_menu.php"));
-
+*/
 /**********************************************************/
 /**************** DEFINE SITE SECTIONS ********************/
 
@@ -235,11 +249,12 @@ define ("EXPIRED_LISTINGS_MESSAGE", "Hello,\n\nDue to inactivity, your ".SITE_SH
 // in the Join Year menu option for accounts.
 define ("JOIN_YEAR_MINIMUM", "2005");  
 
+
 define ("DEFAULT_COUNTRY", "United Kingdom");
-define ("DEFAULT_ZIP_CODE", "CB1"); // This is the postcode.
-define ("DEFAULT_CITY", "Cambridge");
-define ("DEFAULT_STATE", "Cambridgeshire");
-define ("DEFAULT_PHONE_AREA", "01223");
+define ("DEFAULT_ZIP_CODE", ""); // This is the postcode.
+define ("DEFAULT_CITY", "London");
+define ("DEFAULT_STATE", "London");
+define ("DEFAULT_PHONE_AREA", "020");
 
 // Should short date formats display month before day (US convention)?
 define ("MONTH_FIRST", false);		
