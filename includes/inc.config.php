@@ -39,10 +39,12 @@ define ("UPLOADS_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/uploads/");
 /**********************************************************/
 /***************** DATABASE LOGIN  ************************/
 
-define ("DATABASE_USERNAME","");
-define ("DATABASE_PASSWORD","?uWkWBy");
-define ("DATABASE_NAME","");
-define ("DATABASE_SERVER",""); // often "localhost"
+define ("DATABASE_USERNAME","clarat2_leuser");
+define ("DATABASE_PASSWORD","05dbI?uWkWBy");
+//define ("DATABASE_NAME","clarat2_localexchange");
+// local localexchange-1.02;
+define ("DATABASE_NAME","localexchange-1.02");
+define ("DATABASE_SERVER","localhost:8889/"); // often "localhost"
 
 /**********************************************************/
 /********************* SITE NAMES *************************/
