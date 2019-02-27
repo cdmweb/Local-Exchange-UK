@@ -99,16 +99,16 @@ session_start();
 /* Initial session handling code ends */
 
 
-include_once(CLASSES_PATH ."class.datetime.php");
 include_once(CLASSES_PATH ."class.error.php");
 include_once(CLASSES_PATH ."class.database.php");
+include_once(CLASSES_PATH ."class.settings.php");
+include_once(CLASSES_PATH ."class.datetime.php");
 include_once(CLASSES_PATH ."class.login_history.php");
 include_once(CLASSES_PATH ."class.member.php");
 include_once(CLASSES_PATH ."class.page.php");
 include_once(CLASSES_PATH ."class.logging.php");
-include_once(CLASSES_PATH ."class.settings.php");
 
-global $site_settings;
+//global $site_settings;
 
 
 // The following is necessary because of a PHP 4.4 bug with passing references

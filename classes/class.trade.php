@@ -99,14 +99,16 @@ class cTrade {
 			$this->trade_date = $array['trade_date'];
 			$this->status = $array['status'];
 			//doesnt appear to be needed, only ids are listed.
-			$this->member_from = new cMember;
+			//$this->member_from = new cMember;
 			//CT - todo - create v small class extension to stop loading EVERYTHING for one fraking line
-			$this->member_from->ConstructMember(array('member_id' => $array['member_id_from']));
-			$this->member_to = new cMember;
-			$this->member_from->ConstructMember(array('member_id' => $array['member_id_to']));
+			//$this->member_from->ConstructMember(array('member_id' => $array['member_id_from']));
+			//$this->member_to = new cMember;
+			//$this->member_from->ConstructMember(array('member_id' => $array['member_id_to']));
 			
-			$this->member_id_from = $this->member_from->getMemberId();
-			$this->member_id_to = $this->member_to->getMemberId();
+			//$this->member_id_from = $this->member_from->getMemberId();
+			//$this->member_id_to = $this->member_to->getMemberId();
+			$this->member_id_from = $array['member_id_from'];
+			$this->member_id_to = $array['member_id_to'];
 			$this->amount = $array['amount'];
 			$this->description = $cDB->UnEscTxt($array['description']);
 			$this->category = $cDB->UnEscTxt($array['category']);
@@ -158,7 +160,7 @@ class cTrade {
 		if(!$balances->Balanced()) {
 			
 			if (OOB_EMAIL_ADMIN==true) // Admin wishes to receive an email notifying him/her when db is found to be out-of-balance
-				$mailed = mail(EMAIL_ADMIN, "Database out of balance on ".SITE_LONG_TITLE."!", "Hi admin,\n\nWe thought you should know that whilst processing a trade the system detected that your trade database is out of balance! Obviously something has gone wrong somewhere along the line and we suggest you investigate the cause of this ASAP.\n\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."", EMAIL_FROM);
+				$mailed = mail(EMAIL_ADMIN, "Database out of balance on ".SITE_LONG_TITLE."!", "Hi admin,\n\nWe thought you should know that whilst processing a trade the system detected that your trade database is out of balance! Obviously something has gone wrong somewhere along the line and we suggest you investigate the cause of this ASAP.\n\n" .  HTTP_BASE, EMAIL_FROM);
 			
 			switch(OOB_ACTION) { // How should we handle the out-of-balance event?
 				
@@ -345,8 +347,8 @@ class cTradeGroup {
 				<th>Traded with</th>
 				<th>Category</th>
 				<th>Description</th>
-				<th class='units'>Out</th>
-				<th class='units'>In</th>";
+				<th class='units'>In</th>
+				<th class='units'>Out</th>";
 		if(!empty($runningbalance)){
 			$output .= "<th class='units balance'>Balance</th>";
 		}
@@ -368,6 +370,7 @@ class cTradeGroup {
             }
 */			$hname = "t{$trade->trade_id}";			
             $currentbalance = number_format((float)$runningbalance, 2, '.', '');
+			//echo($trade->member_id_to . " > " . $this->member_id . "<br />");
 			if ($trade->member_id_to == $this->member_id)
 			{
 				if(!empty($runningbalance)){
@@ -376,8 +379,8 @@ class cTradeGroup {
 
 				$statusclass = "credit";
 				$tradewith = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_from}#{$hname}'>{$trade->member_id_from}</a>";
+				$out = "";
 				$in = "{$trade->amount}";
-				$out = "-";
 			}
 			else
 			{				
@@ -386,8 +389,8 @@ class cTradeGroup {
 				}
 				$statusclass = "debit";
 				$tradewith = "<a href='trade_history.php?mode=other&member_id={$trade->member_id_to}#{$hname}'>{$trade->member_id_to}</a>";
-				$in = "-";
 				$out = "{$trade->amount}";
+				$in = "";
 			}
 			if($trade->type == TRADE_REVERSAL or $trade->status == TRADE_REVERSAL){
 				$statusclass = "reversal";
@@ -399,7 +402,7 @@ class cTradeGroup {
 			
 			$trade_date = new cDateTime($trade->trade_date);				
 			
-			$output .= "<tr class='{$rowclass} {$statusclass}' id='{$hname}'><td>{$trade_date->ShortDate()}</td><td>{$tradewith}</td><td>{$cDB->UnEscTxt($trade->category)}</td><td>{$cDB->UnEscTxt($trade->description)}</td><td class='units'>{$out}</td><td class='units'>{$in}</td>";
+			$output .= "<tr class='{$rowclass} {$statusclass}' id='{$hname}'><td>{$trade_date->ShortDate()}</td><td>{$tradewith}</td><td>{$cDB->UnEscTxt($trade->category)}</td><td>{$cDB->UnEscTxt($trade->description)}</td><td class='units'>{$in}</td><td class='units'>{$out}</td>";
 			if(!empty($runningbalance)){
 				$output .= "<td class='units balance'>{$currentbalance}</td></tr>";
 			}

@@ -1,6 +1,7 @@
 <?php
 
 include_once("includes/inc.global.php");
+include_once("classes/class.listing.php");
 $p->site_section = PROFILE;
 
 // bugfix RF 090905 added logged in check
@@ -9,21 +10,16 @@ $cUser->MustBeLoggedOn();
 $member = new cMember; 
 $member->LoadMember($_REQUEST["member_id"], 2);
 $member_id = $member->getMemberId();
-$status_label = ($member->getStatus() == "I") ? "- Inactive" : "";
+$status_label = ($member->getStatus() == "I") ? " - Inactive" : "";
+$p->page_title = "{$member->getAllNames()} (#{$member_id}{$status_label})";
 
-$p->page_title = "Member details for {$member->getAllNames()} (#{$member_id}{$status_label})";
-
-
-include_once("classes/class.listing.php");
+$output = "<p><a href='member_summary.php?member_id={$member_id}'>Profile</a> | <a href='trade_history.php?member_id={$member_id}'>Trade history</a></p>";
 if ($cUser->getMemberRole() ){
-	$output = $p->Wrap("Quick edit: <a href=\"member_edit.php?mode=admin&member_id={$member_id}\">[Profile]</a> <a href=\"listings_found.php?type=Offer&mode=admin&member_id={$member_id}\">[Offers]</a> <a href=\"listings_found.php?type=Want&mode=admin&member_id={$member_id}\">[Wants]</a> <a href=\"member_edit.php?mode=admin&member_id={$member_id}\">[Joint Member]</a>", "div", "admin-actions");
+	$string = file_get_contents(TEMPLATES_PATH . '/menu_quick_edit.php', TRUE);
+	$output .= $p->ReplaceVarInString($string, '$member_id', $member_id);
 }
 $output .= "{$member->DisplayMember()}";
-/*
-$output = "<STRONG><I>CONTACT INFORMATION</I></STRONG><P>";
-$output .= $member->DisplayMember();
-*/
-//$output .= $p->Wrap("Offered", "h3");
+
 
 if(!empty($_REQUEST["member_id"])){
 	// CT show offers
@@ -37,12 +33,7 @@ if(!empty($_REQUEST["member_id"])){
 	$listings->LoadListingGroup(null, null, $_REQUEST["member_id"], null, null, null);
 	$output .= $listings->DisplayListingGroup();
 } 
-/*
-$output .= $p->Wrap("Wanted Listing", "h3");
-$listings = new cListingGroup(WANT_LISTING);
-$listings->LoadListingGroup(null, null, $_REQUEST["member_id"]);
-$output .= $listings->DisplayListingGroup();
-*/
+
 $p->DisplayPage($output); 
 
 ?>

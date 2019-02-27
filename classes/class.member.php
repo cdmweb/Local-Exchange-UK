@@ -12,12 +12,8 @@ include_once("Text/Password.php");
 
 class cMember
 {
-	//CT: format as public
-	private $person;  // array of cPerson objects
-	//private $secondary_person;  // secondary joint membership
 	private $member_id;
 	private $password;
-    private $all_names; // ct - bit messy but this needs to geo here
     private $member_role;
 	private $security_q;
 	private $security_a;
@@ -32,6 +28,10 @@ class cMember
 	private $balance;
 	private $confirm_payments;
 	private $restriction;
+    //CT: two non member extra properties
+    private $person;  // array of cPerson objects
+    private $all_names; // ct - bit messy but this needs to geo here
+
 
 	function cMember($values=null) {
 		if ($values) {
@@ -495,28 +495,28 @@ class cMember
 			return false;
 	}
 
-	public function Login($user, $pass, $from_cookie=false) {
-		global $cDB,$cErr;
-		
-		$login_history = new cLoginHistory();
+    public function Login($user, $pass, $from_cookie=false) {
+        global $cDB,$cErr;
+        
+        $login_history = new cLoginHistory();
 //echo "SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';";
-		$query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';");			
-		if($row = mysql_fetch_array($query)) {
-			$login_history->RecordLoginSuccess($user);
-			$this->DoLoginStuff($user, $row["password"]);	// using pass from db since it's encrypted, and $pass isn't, if it was entered in the browser.
-			return true;
-		} elseif (!$from_cookie) {
-			$query = $cDB->Query("SELECT NULL FROM ".DATABASE_USERS." WHERE status = 'L' and member_id=". $cDB->EscTxt($user) .";");
-			if($row = mysql_fetch_array($query)) {
-				$cErr->Error("Your account has been locked due to too many unsuccessful login attempts. You will need to contact us to have your account unlocked.");
-			} else {
-				$cErr->Error("Password or member id is incorrect.  Please try again, or go <A HREF=password_reset.php>here</A> to have your password reset.", ERROR_SEVERITY_INFO);
-			}
-			$login_history->RecordLoginFailure($user);
-			return false;
-		}	
-		return false;
-	}
+        $query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';");            
+        if($row = mysql_fetch_array($query)) {
+            $login_history->RecordLoginSuccess($user);
+            $this->DoLoginStuff($user, $row["password"]);   // using pass from db since it's encrypted, and $pass isn't, if it was entered in the browser.
+            return true;
+        } elseif (!$from_cookie) {
+            $query = $cDB->Query("SELECT NULL FROM ".DATABASE_USERS." WHERE status = 'L' and member_id=". $cDB->EscTxt($user) .";");
+            if($row = mysql_fetch_array($query)) {
+                $cErr->Error("Your account has been locked due to too many unsuccessful login attempts. You will need to contact us to have your account unlocked.");
+            } else {
+                $cErr->Error("Password or member id is incorrect.  Please try again, or go <A HREF=password_reset.php>here</A> to have your password reset.", ERROR_SEVERITY_INFO);
+            }
+            $login_history->RecordLoginFailure($user);
+            return false;
+        }   
+        return false;
+    }
 	
 	public function ValidatePassword($pass) {
 		global $cDB;
@@ -567,6 +567,9 @@ class cMember
 	public function ChangePassword($pass) { // TODO: Should use SaveMember and should reset $this->password
 		global $cDB, $cErr;
 		
+        
+        $update = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." SET password=sha(". $cDB->EscTxt($pass) .") WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
+
 		$update = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." SET password=sha(". $cDB->EscTxt($pass) .") WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
 		
 		if($update) {
@@ -594,41 +597,23 @@ class cMember
 
 	public function UserLoginPage() // A free-standing login page
 	{
-		global $p;
-        $output = $p->WrapFormElement('hidden', 'action', '', 'login');
-        $output .= $p->WrapFormElement('hidden', 'location', '', $_SERVER['REQUEST_URI']);
-        $output .= $p->WrapFormElement('text', 'user', 'Member ID');
-        $output .= $p->WrapFormElement('password', 'pass', 'Password');
-        $output .= $p->WrapFormElement('submit', 'submit', '', 'Log in');
-
-        $output = $p->WrapForm($output, SERVER_PATH_URL."/login.php", "post", "login");
-        $output .= $p->Wrap("If you don't have an account, please contact us to join. <a href='/members/password_reset.php'>Forgot your password?</a>", "p");
-
-        //return $output;
-        $output .= "<DIV STYLE='width=60%; padding: 5px;'><FORM ACTION=".SERVER_PATH_URL."/login.php METHOD=POST>
-                    <INPUT TYPE=HIDDEN NAME=action VALUE=login>
-                    <INPUT TYPE=HIDDEN NAME=location VALUE='".$_SERVER["REQUEST_URI"]."'>
-                    <TABLE class=NoBorder><TR><TD ALIGN=LEFT>Member ID:</TD><TD ALIGN=LEFT><INPUT TYPE=TEXT SIZE=12 NAME=user></TD></TR>
-                    <TR><TD ALIGN=LEFT>Password:</TD><TD ALIGN=LEFT><INPUT TYPE=PASSWORD SIZE=12 NAME=pass></TD></TR></TABLE>
-                    <DIV align=LEFT><INPUT TYPE=SUBMIT VALUE='Login'></DIV>
-                    </FORM></DIV>
-                    <BR>
-                    If you don't have an account, please contact us to join. <a href='/members/password_reset.php'>Forgot your password?</a>
-                    <BR>";  
-		return $output;
+		global $p, $site_settings;
+        $string = file_get_contents(TEMPLATES_PATH . '/form_login.php', TRUE);
+		return $p->ReplacePropertiesInString($string);
 	}
 
 	public function UserLoginLogout() {
+        global $p;
 		if ($this->IsLoggedOn())
 		{
 			//$output = "<FONT SIZE=1><A HREF='".SERVER_PATH_URL."/member_logout.php'>Logout</A>&nbsp;&nbsp;&nbsp;";
-			$output = "<A HREF='".SERVER_PATH_URL."/member_logout.php'>Logout</A>&nbsp;&nbsp;&nbsp;";
+			$string = "<a href='{HTTP_BASE}/member_logout.php'>Logout</a>";
 		} else {
 			//$output = "<FONT SIZE=1><A HREF='".SERVER_PATH_URL."/member_login.php'>Login</A>&nbsp;&nbsp;&nbsp;";
-			$output = "<A HREF='".SERVER_PATH_URL."/member_login.php'>Login</A>&nbsp;&nbsp;&nbsp;";
+			$string = "<a href='{HTTP_BASE}/member_login.php'>Login</a>";
 		}
 
-		return $output;		
+		return $p->ReplacePropertiesInString($string);		
 	}
 
 	public function MustBeLoggedOn()
@@ -641,7 +626,7 @@ class cMember
 		// user isn't logged on, but is in a section of the site where they should be logged on.
 		$_SESSION['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
 		$cErr->SaveErrors();
-		header("location:http://".HTTP_BASE."/login_redirect.php");
+		header("location:" . HTTP_BASE . "/login_redirect.php");
 				
 		exit;
 	}
@@ -885,28 +870,36 @@ class cMember
 		return $this->SaveMember();
 	}
 	
+// CT TODO MAKE WORK
 	public function SaveMember() {
 		global $cDB, $cErr;				
-		
 		// [chris] included 'confirm_payments' preference
-		$update = $cDB->Query("UPDATE ".DATABASE_MEMBERS." 
-            SET  
-            member_role=". $cDB->EscTxt($this->member_role) .", 
-            security_q=". $cDB->EscTxt($this->security_q) .", 
-            security_a=". $cDB->EscTxt($this->security_a) .", 
-            status=". $cDB->EscTxt($this->status) .", 
-            member_note=". $cDB->EscTxt($this->member_note) .", 
-            admin_note=". $cDB->EscTxt($this->admin_note) .", 
-            join_date=". $cDB->EscTxt($this->join_date) .", 
-            expire_date=". $cDB->EscTxt($this->expire_date) .", 
-            away_date=". $cDB->EscTxt($this->away_date) .", 
-            account_type=". $cDB->EscTxt($this->account_type) .", 
-            email_updates=". $cDB->EscTxt($this->email_updates) .", 
-            confirm_payments=".$cDB->EscTxt($this->confirm_payments).", 
-            WHERE member_id=". $cDB->EscTxt($this->member_id) .";");	
+        // CT this will be tidied later - make safe query - now that member object is only populated with the field that the function needs		
+        $fieldArray = array();
+        $fieldArray["password"] = $this->getPassword();
+        $fieldArray["member_role"] = $this->getMemberRole();
+        $fieldArray["security_q"] = $this->getSecurityQ();
+        $fieldArray["security_a"] = $this->getSecurityA();
+        $fieldArray["status"] = $this->getStatus();
+        $fieldArray["member_note"] = $this->getMemberNote();
+        $fieldArray["admin_note"] = $this->getAdminNote();
+        $fieldArray["join_date"] = $this->getJoinDate();
+        $fieldArray["expire_date"] = $this->getExpireDate();
+        $fieldArray["away_date"] = $this->getAwayDate();
+        $fieldArray["account_type"] = $this->getAccountType();
+        $fieldArray["email_updates"] = $this->getEmailUpdates();
+        $fieldArray["balance"] = $this->getBalance();
+        $fieldArray["confirm_payments"] = $this->getConfirmPayments();
+        $fieldArray["restriction"] = $this->getRestriction();
+
+        $string = $cDB->BuildUpdateQueryStringFromArray($fieldArray);
+        //print($string);
+
+
+		$update = $cDB->Query("UPDATE ".DATABASE_MEMBERS. " {$string} WHERE member_id=". $cDB->EscTxt($this->member_id) .";");	
 
 		if(!$update)
-			$cErr->Error("Could not save changes to member '". $this->member_id ."'. Please try again later.");
+			$cErr->Error("Could not save changes to member '". $this->member_id ."'.");
 
 		foreach($this->person as $person) {
 			$person->SavePerson();
@@ -939,7 +932,7 @@ class cMember
 		
 		return $address . ", " . $this->person[0]->getAddressCity();
 	}
-	/* ct marked for removal
+	/* ct marked for removal */
 	public function AllNames ($lastfirst=false) {
 		//can reverse appearance of name if lastfirst set
 		$names = "";
@@ -955,7 +948,7 @@ class cMember
 			//$names .= "{$person->getFirstName()}  {$person->getLastName()}";
 		}
 		return $names;
-	} */
+	} 
     //CT - firstnames
     public function AllFirstNames () {
         //can reverse appearance of name if lastfirst set
@@ -1070,7 +1063,7 @@ class cMember
         if ($num_results>0) {
             
             $row = mysql_fetch_array($query);
-            $imgLoc = 'http://cam.letslink.org/members/uploads/' . stripslashes($row["filename"]);
+            $imgLoc = UPLOADS_PATH . stripslashes($row["filename"]);
     
             return  "<img src='".$imgLoc."'>";    
         }
@@ -1084,7 +1077,7 @@ class cMember
             //echo("oops");
             return "";
         }
-        $imgLoc = 'http://cam.letslink.org/members/uploads/' . stripslashes($mImage);
+        $imgLoc = UPLOADS_PATH . stripslashes($mImage);
     
         return  "<img src='".$imgLoc."' width='90' style='width:90px'>";    
 
@@ -1174,8 +1167,8 @@ class cMember
         //$join_date=new cDateTime($this->getJoinDate());
         //$expire_date=new cDateTime($this->getExpireDate());
         $block = "";
-        $block .= $this->FormatLabelValue("Joined", $p->FormatLongDate($this->getJoinDate()));
-        $block .= $this->FormatLabelValue("Renewal", $p->FormatLongDate($this->getExpireDate()));
+        //$block .= $this->FormatLabelValue("Joined", $p->FormatLongDate($this->getJoinDate()));
+        //$block .= $this->FormatLabelValue("Renewal", $p->FormatLongDate($this->getExpireDate()));
         $output .= $p->Wrap($block, "div", "group metadata");
 
     return $output; 
@@ -1408,8 +1401,8 @@ class cMemberGroup {
             $period = "month";          
         
         foreach($this->members as $member) {                        
-            if($member->email_updates == $interval and $member->person[0]->email) {
-                mail($member->person[0]->email, SITE_SHORT_TITLE .": New and updated listings during the last ". $period, wordwrap($email_text, 64), "From:". EMAIL_ADMIN ."\nMIME-Version: 1.0\n" . "Content-type: text/html; charset=iso-8859-1"); 
+            if($member->getEmailUpdates() == $interval and $member->getPrimaryPerson[0]->getEmail()) {
+                mail($member->getPrimaryPerson->getEmail(), SITE_SHORT_TITLE .": New and updated listings during the last ". $period, wordwrap($email_text, 64), "From:". EMAIL_ADMIN ."\nMIME-Version: 1.0\n" . "Content-type: text/html; charset=iso-8859-1"); 
             }
         
         }

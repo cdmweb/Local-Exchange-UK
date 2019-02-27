@@ -13,10 +13,15 @@ $show_inactive = (!empty($_REQUEST["show_inactive"]))? true : false;
 $action = $_REQUEST["action"];
 $form->addElement("hidden", "action", $_REQUEST["action"]);
 $output = "";
+
+$get_string = "";
+if (isset($_REQUEST["get1"])) $get_string .= "&get1=" . $_REQUEST["get1"];
+if (isset($_REQUEST["get1val"])) $get_string .= "&get1val=" . $_REQUEST["get1val"];
+
 if(empty($show_inactive)){
-	$output .= $p->Wrap("<strong>Show active members</strong> | <a href='member_choose.php?action={$action}&show_inactive=true'>Show all members</a>", "p", "small");
+	$output .= $p->Wrap("<strong>Show active members</strong> | <a href='member_choose.php?action={$action}&show_inactive=true{$get_string}'>Show all members</a>", "p", "small");
 }else{
-	$output .= $p->Wrap("<a href='member_choose.php?action={$action}'>Show active members</a> | <strong>Show all members</strong>", "p", "small");
+	$output .= $p->Wrap("<a href='member_choose.php?action={$action}{$get_string}'>Show active members</a> | <strong>Show all members</strong>", "p", "small");
 }
 
 
@@ -49,7 +54,7 @@ function process_data ($values) {
 	else
 		$get_string = "";
 		
-	header("location:http://".HTTP_BASE."/". $_REQUEST["action"] .".php?mode=admin&member_id=".$values["member_id"] . $get_string);
+	header("location:".HTTP_BASE."/". $_REQUEST["action"] .".php?mode=admin&member_id=".$values["member_id"] . $get_string);
 	exit;	
 }
 

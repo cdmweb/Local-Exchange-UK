@@ -8,13 +8,17 @@ class cDatabase
 {
 	var $isConnected;
 	var $db_link;
-	var $dbconnectcount;			// CT: count how many times it connects. int
-	//$page_dbcall =0;
+	//CT counters for stats - to show improvements in db efficiency
+	var $count_connection;
+	var $count_query;
 
 
 	function Database()
 	{
 		$this->isConnected = false;
+		//CT init counters
+		$this->count_connection = 0;
+		$this->count_query = 0;
 	}
 
 	function Connect()
@@ -23,12 +27,14 @@ class cDatabase
 		if ($this->isConnected){
 			return;
 		}
-		$link = mysql_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD);
-		if (!$link) {
-		    die('Could not connect: ' . mysql_error());
-		}
+		$link = ($GLOBALS["___mysqli_ston"] = mysqli_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD)) or die("Problem occur in connection");  
+
+		//$db = ((bool)mysqli_query($link, "USE " . info));  
+		$this->db_link = $link;
 		$this->isConnected=true;
-		//echo "connected";
+		// CT iterate
+		$this->count_connection++;
+		//print("Connection" . $this->count_connection);
 	}
 	function Disconnect()
 	{
@@ -43,6 +49,8 @@ class cDatabase
 	{
 		//CT: 
 		global $cErr;
+		// CT iterate
+
 		if (!$this->isConnected)
 			$this->Connect();
 
@@ -52,11 +60,11 @@ class cDatabase
 		//echo(gettype($ret));
 		if(gettype($ret) == "resource") {
 			//ct debug
-			//$cErr->Error("Q: " . $thequery . ". R: " . mysql_num_rows($ret));
-		} else{
-			//$cErr->Error("Q: " . $thequery . ". R: not a resource");
-			//return false;
-		}
+			$retmessage = "| R: " . mysql_num_rows($ret);
+		} 
+
+		$this->count_query++;
+		//$cErr->Error("Q.{$this->count_query}: {$thequery} {$retmessage}");
 
 		return $ret;
 		//CT: uncomment when finishing demo
@@ -119,6 +127,23 @@ class cDatabase
 		}
 	}
 */
+   // CT make safe query - now that member object is only populated with the field that the function needs, opportunity to nullify data by accident 
+    function BuildUpdateQueryStringFromArray($array){
+        $string = "";
+        //name value pair in array creates a Update query set statement
+        foreach ($array as $name => $value) {
+            if(!is_null($value)) {
+                if(empty($string)) {
+                    $string .= "SET ";
+                }else{
+                    $string .= ", ";
+                }
+                $string .= "{$name}={$this->EscTxt($value)}";
+            }
+         }
+        //print($string);
+        return $string;
+    }
 
 	/* A HTML screening function, an optional additional security step for data being submitted for storage in MySQL */
 	function ScreenHTML($var) {

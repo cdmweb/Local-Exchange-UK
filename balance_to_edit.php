@@ -6,7 +6,7 @@ $cUser->MustBeLevel(2);
 include("includes/inc.forms.php");
 
 if (OVRIDE_BALANCES!=true) // Provision for overriding member balances has been turned off, return to the admin menu
-	header("location:http://".HTTP_BASE."/admin_menu.php");
+	header("location:" .HTTP_BASE."/admin_menu.php");
 	
 $form->addElement("header", null, "Choose Member whose Balance you wish to Edit");
 $form->addElement("html", "<TR></TR>");
@@ -27,7 +27,7 @@ if ($form->validate()) { // Form is validated so processes the data
 
 function process_data ($values) {
 	global $cUser;
-	header("location:http://".HTTP_BASE."/edit_balance.php?mode=admin&member_id=".$values["member_id"]);
+	header("location:".HTTP_BASE."/edit_balance.php?mode=admin&member_id=".$values["member_id"]);
 	exit;	
 }
 

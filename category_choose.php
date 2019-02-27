@@ -63,7 +63,7 @@ function process_data ($values) {
 				$output = "The category has been deleted.";
 		}
 	} else {
-		header("location:http://".HTTP_BASE."/category_edit.php?category_id=". $values["category"]);
+		header("location:".HTTP_BASE."/category_edit.php?category_id=". $values["category"]);
 		exit;	
 	}
 	

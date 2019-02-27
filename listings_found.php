@@ -30,6 +30,9 @@ else {
 	$timeframe = $_REQUEST["timeframe"];
 }
 
+$keyword = $_REQUEST["keyword"];
+
+
 // show ids only if logged in AND on a generla listing page
 if ($cUser->IsLoggedOn() && empty($member_id)){
 	$show_ids = true;
@@ -50,7 +53,7 @@ if ($listings->listing && KEYWORD_SEARCH_DIR==true && strlen($_GET["keyword"])>0
 		foreach($listings->listing as $l) { // Check ->title and ->description etc against Keyword
 			
 			$mem = $l->member;
-			$pers = $l->member->person[0];
+			$pers = $l->member->getPrimaryPerson();
 			
 			$match = false;
 	
@@ -66,22 +69,22 @@ if ($listings->listing && KEYWORD_SEARCH_DIR==true && strlen($_GET["keyword"])>0
 			
 			if ($cUser->IsLoggedOn()) { // Search is only performed on these params if the user is logged in
 				
-				if (strpos(strtolower($pers->first_name), strtolower($_GET["keyword"]))>-1) { // Member First Name
+				if (strpos(strtolower($pers->getFirstName()), strtolower($_GET["keyword"]))>-1) { // Member First Name
 					
 					$match = true;
 				}
 				
-				if (strpos(strtolower($pers->last_name), strtolower($_GET["keyword"]))>-1) { // Member Last Name
+				if (strpos(strtolower($pers->getLastName()), strtolower($_GET["keyword"]))>-1) { // Member Last Name
 					
 					$match = true;
 				}
 				
-				if (strpos(strtolower($mem->member_id), strtolower($_GET["keyword"]))>-1) { // Member ID
+				if (strpos(strtolower($mem->getMemberId()), strtolower($_GET["keyword"]))>-1) { // Member ID
 					
 					$match = true;
 				}
 			
-				if (strpos(strtolower($pers->address_post_code), strtolower($_GET["keyword"]))>-1) { // Postcode
+				if (strpos(strtolower($pers->getAddressPostCode()), strtolower($_GET["keyword"]))>-1) { // Postcode
 					
 					$match = true;
 				}
@@ -95,26 +98,38 @@ if ($listings->listing && KEYWORD_SEARCH_DIR==true && strlen($_GET["keyword"])>0
 			$lID += 1;
 	}
 }
-
-$output = $listings->DisplayListingGroup($show_ids);
 // CT construct title
 if($type == WANT_LISTING){
 	$page_title = WANT_LISTING_HEADING;
 }else{
 	$page_title = OFFER_LISTING_HEADING;
 }
+$matchingSearchText = "Search " . $page_title;
 if(!empty($member_id)){
-	$page_title .= " for member";
+	$matchingSearchText .= " for member";
 	//$p->page_title = $_REQUEST["type"] ."ed Listings";
 	
 }
 if(!empty($timeframe)){
-	$page_title .= " in Last " . $timeframe . " Days";
+	$matchingSearchText .= " in Last " . $timeframe . " Days";
 	//$p->page_title = $_REQUEST["type"] ."ed Listings";
-	
+}
+if(!empty($category)&&!$category=="%"){
+	$matchingSearchText .= " in category " . $category;
+	//$p->page_title = $_REQUEST["type"] ."ed Listings";
+}
+if(!empty($keyword)){
+	$matchingSearchText .= " matching keyword '" . $keyword . "'";
+	//$p->page_title = $_REQUEST["type"] ."ed Listings";
 }
 
 $p->page_title =$page_title;
+
+$output .= "<div class=''>{$matchingSearchText}</div>";
+$output .= "<div class=''><a href='listings.php?type={$type}'>Change search</a></div>";
+$output .= $listings->DisplayListingGroup($show_ids);
+
+
 $p->DisplayPage($output); 
 
 include("includes/inc.events.php");

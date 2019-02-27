@@ -56,6 +56,6 @@ function process_data ($values) {
 	}
 	
 	$p->DisplayPage($output);
-	//header("location:http://".HTTP_BASE."/do_info_edit.php?id=".$values["news_id"]);
+	//header("location:" . HTTP_BASE."/do_info_edit.php?id=".$values["news_id"]);
 	//exit;	
 }

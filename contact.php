@@ -1,4 +1,4 @@
-<?php session_start(); ?>
+<?php //session_start(); ?> 
 <?php
 include_once("includes/inc.global.php");
 if(RECAPTCHA_VALIDATION) include_once(RECAPTCHA_SRC. "securimage.php");
@@ -27,8 +27,10 @@ $form->addElement("static", null, null, null);
 //$form->addElement("select", "how_heard", "How did you hear about us?", $heard_from);
 //if($recaptchaenabled){
 //CT: include recaptcha if set
+/*
 if(RECAPTCHA_VALIDATION) $form->addElement("static", null, "<img id=\"captcha\" src=\"".RECAPTCHA_SRC."securimage_show.php\" alt=\"CAPTCHA Image\" /> <button style=\"font-size:1.2em\" onclick=\"document.getElementById('captcha').src = '".RECAPTCHA_SRC."securimage_show.php?' + Math.random(); return false\" title=\"Load another captcha image\">&#x21bb;</button><br />Enter the text you see *: <input type=\"text\" name=\"captcha_code\" id=\"captcha_code\" size=\"10\" maxlength=\"6\" />", null);
 //}
+*/
 
 //$form->addElement("static", null, null, null);
 $form->addElement("submit", "btnSubmit", "Send");
@@ -51,7 +53,7 @@ if ($form->validate()) { // Form is validated so processes the data
 	//$p->page_msg .= $_POST['captcha_code'];
 	//echo "secureimage" . $securimage->check($_POST['captcha_code'];
 	if ((RECAPTCHA_VALIDATION) && $securimage->check($_POST['captcha_code']) == false) {
-		$form->addElement("static", null, "<div class='error'>Captcha is missing or incorrect.</div>", null);
+		//$form->addElement("static", null, "<div class='error'>Captcha is missing or incorrect.</div>", null);
 		$p->DisplayPage($form->toHtml());
 		//$p->DisplayPage("something went wrong");
 	}else{	
@@ -90,7 +92,7 @@ function process_data ($values) {
 	// send mail and check for errors
 	$mailed = mail(EMAIL_ADMIN, "[" . SITE_SHORT_TITLE ."] Contact form", "From: ". $values["name"]."\n\n". wordwrap($values["message"], 64) , "From:". $values["email"]);
 	if(isset($mailed) && $mailed==true){
-		$output .= "Thank you, your message has been sent. We'll get back to you soon.";
+		$output = "Thank you, your message has been sent. We'll get back to you soon.";
 	}else{
 		$output .= "There was a problem sending the email.";	
 	}

@@ -10,11 +10,12 @@ include("includes/inc.forms.php");
 // First, we define the form
 //
 
-$form->addElement("header", null, "Add Joint Member");
-$form->addElement("html", "<TR></TR>");
-
 if($_REQUEST["mode"] == "admin") {  // Administrator is adding to a member's account
 	$cUser->MustBeLevel(1);
+	$member = new cMember;
+	$member->LoadMember($_REQUEST["member_id"],true);
+	$page_title = "Add Joint Member for " . $member->getAllNames() . " (#{$member->getMemberId()}{$status_label})";
+
 	$form->addElement("hidden","mode","admin");
 	if(isset($_REQUEST["member_id"])) {
 		$form->addElement("hidden","member_id", $_REQUEST["member_id"]);
@@ -25,36 +26,39 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is adding to a member's acc
 	}
 } else {  // Member is adding to own account
 	$cUser->MustBeLoggedOn();
+	$page_title = "Add joint member to my account";
 	$form->addElement("hidden","member_id", $cUser->member_id);
 	$form->addElement("hidden","mode","self");
 }
 
-$form->addElement("text", "first_name", "First Name", array("size" => 15, "maxlength" => 20));
-$form->addElement("text", "mid_name", "Middle Name", array("size" => 10, "maxlength" => 20));
-$form->addElement("text", "last_name", "Last Name", array("size" => 20, "maxlength" => 30));
-$form->addElement("static", null, null, null); 
+$p->page_title = $page_title;
 
-$today=getdate();
-$options = array("language"=> "en", "format" => "dFY", "maxYear"=>$today["year"], "minYear"=>"1880"); 
-$form->addElement("date", "dob", "Date of Birth", $options);
-$form->addElement("text", "mother_mn", "Mother's Maiden Name", array("size" => 20, "maxlength" => 30)); 
+$form->addElement("text", "first_name", "First Name", array("size" => 15, "maxlength" => 20));
+//$form->addElement("text", "mid_name", "Middle Name", array("size" => 10, "maxlength" => 20));
+$form->addElement("text", "last_name", "Last Name", array("size" => 20, "maxlength" => 30));
+// // $form->addElement("static", null, null, null); 
+
+// // $today=getdate();
+// $options = array("language"=> "en", "format" => "dFY", "maxYear"=>$today["year"], "minYear"=>"1880"); 
+// $form->addElement("date", "dob", "Date of Birth", $options);
+// $form->addElement("text", "mother_mn", "Mother's Maiden Name", array("size" => 20, "maxlength" => 30)); 
 $form->addElement("static", null, null, null);
 $form->addElement("select","directory_list", "List this Person's Contact Information in the Directory?", array("Y"=>"Yes", "N"=>"No"));
 $form->addElement("text", "email", "Email Address", array("size" => 25, "maxlength" => 40));
 $form->addElement("text", "phone1", "Primary Phone", array("size" => 20));
 $form->addElement("text", "phone2", "Secondary Phone", array("size" => 20));
-$form->addElement("text", "fax", "Fax Number", array("size" => 20));
+// $form->addElement("text", "fax", "Fax Number", array("size" => 20));
 $form->addElement("static", null, null, null);
-$form->addElement("text", "address_street1", ADDRESS_LINE_1, array("size" => 25, "maxlength" => 50));
-$form->addElement("text", "address_street2", ADDRESS_LINE_2, array("size" => 25, "maxlength" => 50));
-$form->addElement("text", "address_city", ADDRESS_LINE_3, array("size" => 25, "maxlength" => 50));
+// $form->addElement("text", "address_street1", ADDRESS_LINE_1, array("size" => 25, "maxlength" => 50));
+// $form->addElement("text", "address_street2", ADDRESS_LINE_2, array("size" => 25, "maxlength" => 50));
+// $form->addElement("text", "address_city", ADDRESS_LINE_3, array("size" => 25, "maxlength" => 50));
 
-// TODO: The State and Country codes should be Select Menus, and choices should be built
-// dynamically using an internet database (if such exists).
-$form->addElement("text", "address_state_code", STATE_TEXT, array("size" => 25, "maxlength" => 50));
-$form->addElement("text", "address_post_code", ZIP_TEXT, array("size" => 10, "maxlength" => 20));
-$form->addElement("text", "address_country", "Country", array("size" => 25, "maxlength" => 50));
-$form->addElement("static", null, null, null);
+// // TODO: The State and Country codes should be Select Menus, and choices should be built
+// // dynamically using an internet database (if such exists).
+// $form->addElement("text", "address_state_code", STATE_TEXT, array("size" => 25, "maxlength" => 50));
+// $form->addElement("text", "address_post_code", ZIP_TEXT, array("size" => 10, "maxlength" => 20));
+// $form->addElement("text", "address_country", "Country", array("size" => 25, "maxlength" => 50));
+// $form->addElement("static", null, null, null);
 $form->addElement('submit', 'btnSubmit', 'Create Contact');
 
 //
@@ -68,10 +72,10 @@ $form->addRule('address_state_code', 'Enter a ' . STATE_TEXT, 'required');
 $form->addRule('address_post_code', 'Enter a '.ZIP_TEXT, 'required');
 $form->addRule('address_country', 'Enter a country', 'required');
 
-$form->registerRule('verify_not_future_date','function','verify_not_future_date');
-$form->addRule('dob', 'Birth date cannot be in the future', 'verify_not_future_date');
-$form->registerRule('verify_reasonable_dob','function','verify_reasonable_dob');
-$form->addRule('dob', 'A little young, don\'t you think?', 'verify_reasonable_dob');
+// $form->registerRule('verify_not_future_date','function','verify_not_future_date');
+// $form->addRule('dob', 'Birth date cannot be in the future', 'verify_not_future_date');
+// $form->registerRule('verify_reasonable_dob','function','verify_reasonable_dob');
+// $form->addRule('dob', 'A little young, don\'t you think?', 'verify_reasonable_dob');
 $form->registerRule('verify_valid_email','function', 'verify_valid_email');
 $form->addRule('email', 'Not a valid email address', 'verify_valid_email');
 $form->registerRule('verify_phone_format','function','verify_phone_format');
@@ -87,9 +91,9 @@ if ($form->validate()) { // Form is validated so processes the data
    $form->freeze();
  	$form->process("process_data", false);
 } else {
-	$today = getdate();
-	$current_date = array("Y"=>$today["year"], "F"=>$today["mon"], "d"=>$today["mday"]);
-	$defaults = array("dob"=>$current_date, "address_state_code"=>DEFAULT_STATE, "address_country"=>DEFAULT_COUNTRY, "directory_list"=>"Y");
+	// $today = getdate();
+	// $current_date = array("Y"=>$today["year"], "F"=>$today["mon"], "d"=>$today["mday"]);
+	$defaults = array("address_state_code"=>DEFAULT_STATE, "address_country"=>DEFAULT_COUNTRY, "directory_list"=>"Y");
 	$form->setDefaults($defaults);
    $p->DisplayPage($form->toHtml());  // just display the form
 }
@@ -103,13 +107,13 @@ function process_data ($values) {
 
 	$values['primary_member'] = "N"; 
 
-	// [chris] fixed problem with passing an Array to htmlspecialchars()
-	$date = $values['dob'];
+	// // [chris] fixed problem with passing an Array to htmlspecialchars()
+	// $date = $values['dob'];
 	
-	$values['dob'] = htmlspecialchars($date['Y'] . '/' . $date['F'] . '/' . $date['d']);
+	// $values['dob'] = htmlspecialchars($date['Y'] . '/' . $date['F'] . '/' . $date['d']);
 	
-	if($values['dob'] == $today['year']."/".$today['mon']."/".$today['mday'])
-		$values['dob'] = ""; // if birthdate was left as default, set to null
+	// if($values['dob'] == $today['year']."/".$today['mon']."/".$today['mday'])
+	// 	$values['dob'] = ""; // if birthdate was left as default, set to null
 	
 	$phone = new cPhone_uk($values['phone1']);
 	$values['phone1_area'] = $phone->area;
@@ -141,9 +145,9 @@ function process_data ($values) {
 	}	
 
 	if($created) {
-		$list .= "Joint member created. Would you like to <A HREF=member_contact_create.php?mode=". $_REQUEST["mode"] ."&member_id=". $values["member_id"] .">add another</A>?<P>";
+		$list .= "<p>Joint member created. Would you like to <a href='member_contact_create.php?mode=". $_REQUEST["mode"] ."&member_id=". $values["member_id"] ."''>add another</a>?</p>";
 	} else {
-		$cErr->Error("There was an error saving the joint member. Please try again later.");
+		$cErr->Error("<p>There was an error saving the joint member. Please try again later.</p>");
 	}
    $p->DisplayPage($list);
 }

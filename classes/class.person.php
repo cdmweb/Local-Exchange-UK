@@ -57,35 +57,42 @@ class cPerson
 		
 		/*[chris]*/ // Added store personal profile data
         //print("stuff" .$this->getPersonId());
-		$update = $cDB->Query("UPDATE ". DATABASE_PERSONS ." SET 
-            member_id=". $cDB->EscTxt($this->getMemberId()) .", 
-            primary_member=". $cDB->EscTxt($this->getPrimaryMember()) .", 
-            directory_list=". $cDB->EscTxt($this->getDirectoryList()) .", 
-            first_name=". $cDB->EscTxt($this->getFirstName()) .", 
-            last_name=". $cDB->EscTxt($this->last_name) .", 
-            mid_name=". $cDB->EscTxt($this->mid_name) .", 
-            dob=". $cDB->EscTxt($this->dob) .", 
-            mother_mn=". $cDB->EscTxt($this->mother_mn) .", 
-            email=". $cDB->EscTxt($this->email) .", 
-            phone1_area=". $cDB->EscTxt($this->phone1_area) .", 
-            phone1_number=". $cDB->EscTxt($this->phone1_number) .", 
-            phone1_ext=". $cDB->EscTxt($this->phone1_ext) .", 
-            phone2_area=". $cDB->EscTxt($this->phone2_area) .", 
-            phone2_number=". $cDB->EscTxt($this->phone2_number) .", 
-            phone2_ext=". $cDB->EscTxt($this->phone2_ext) .", 
-            fax_area=". $cDB->EscTxt($this->fax_area) .", 
-            fax_number=". $cDB->EscTxt($this->fax_number) .", 
-            fax_ext=". $cDB->EscTxt($this->fax_ext) .", 
-            address_street1=". $cDB->EscTxt($this->address_street1) .", 
-            address_street2=". $cDB->EscTxt($this->address_street2) .", 
-            address_city=". $cDB->EscTxt($this->address_city) .", 
-            address_state_code=". $cDB->EscTxt($this->address_state_code) .", 
-            address_post_code=". $cDB->EscTxt($this->address_post_code) .", 
-            address_country=". $cDB->EscTxt($this->address_country).", 
-            about_me=". $cDB->EscTxt($this->about_me) .","."age=".  $cDB->EscTxt($this->age) .",". "
-            sex=". $cDB->EscTxt($this->sex) . " WHERE person_id=". $cDB->EscTxt($this->getPersonId()) .";");
+        //CT - converted to array so we dont have to set fiedls that are not present
+        $fieldArray = Array();
+        $fieldArray["member_id"] = $this->getMemberId();
+        $fieldArray["primary_member"]=$this->getPrimaryMember(); 
+        $fieldArray["directory_list"]=$this->getDirectoryList(); 
+        $fieldArray["first_name"]=$this->getFirstName(); 
+        $fieldArray["last_name"]=$this->getLastName(); 
+        $fieldArray["mid_name"]=$this->getMidName(); 
+        $fieldArray["dob"]=$this->getDob(); 
+        $fieldArray["mother_mn"]=$this->getMotherMn(); 
+        $fieldArray["email"]=$this->getEmail(); 
+        $fieldArray["phone1_area"]=$this->getPhone1Area(); 
+        $fieldArray["phone1_number"]=$this->getPhone1Number(); 
+        $fieldArray["phone1_ext"]=$this->getPhone1Ext(); 
+        $fieldArray["phone2_area"]=$this->getPhone2Area(); 
+        $fieldArray["phone2_number"]=$this->getPhone2Number(); 
+        $fieldArray["phone2_ext"]=$this->getPhone2Ext(); 
+        $fieldArray["fax_area"]=$this->getFaxArea(); 
+        $fieldArray["fax_number"]=$this->getFaxNumber(); 
+        $fieldArray["fax_ext"]=$this->getFaxExt; 
+        $fieldArray["address_street1"]=$this->getAddressStreet1; 
+        $fieldArray["address_street2"]=$this->getAddressStreet2; 
+        $fieldArray["address_city"]=$this-> getAddressCity(); 
+        $fieldArray["address_state_code"]=$this->getAddressStateCode(); 
+        $fieldArray["address_post_code"]=$this->getAddressPostcode();
+        $fieldArray["address_country"]=$this->getAddressCountry(); 
+        $fieldArray["about_me"]=$this->getAboutMe();
+        $fieldArray["age"]=$this->getAge();
+        $fieldArray["sex"]=$this->getSex();
 
-		if(!$update)
+        
+        $string = $cDB->BuildUpdateQueryStringFromArray($fieldArray);
+
+        $update = $cDB->Query("UPDATE ".DATABASE_PERSONS. " {$string} WHERE person_id=". $cDB->EscTxt($this->getPersonId()) .";");  
+
+		if(!empty($update))
 			$cErr->Error("Could not save changes to '". $this->first_name ." ". $this->last_name ."'. Please try again later.");	
 			
 		return $update;
@@ -96,7 +103,7 @@ class cPerson
 		global $cDB, $cErr;
 		
 		/*[chris]*/ // Added fetch personal profile data
-		$query = $cDB->Query("SELECT member_id, primary_member, directory_list, first_name, last_name, mid_name, dob, mother_mn, email, phone1_area, phone1_number, phone1_ext, phone2_area, phone2_number, phone2_ext, fax_area, fax_number, fax_ext, address_street1, address_street2, address_city, address_state_code, address_post_code, address_country, about_me, age, sex FROM ".DATABASE_PERSONS." WHERE person_id=". $cDB->EscTxt($who));
+		$query = $cDB->Query("SELECT person_id, member_id, primary_member, directory_list, first_name, last_name, mid_name, dob, mother_mn, email, phone1_area, phone1_number, phone1_ext, phone2_area, phone2_number, phone2_ext, fax_area, fax_number, fax_ext, address_street1, address_street2, address_city, address_state_code, address_post_code, address_country, about_me, age, sex FROM ".DATABASE_PERSONS." WHERE person_id=". $cDB->EscTxt($who));
 		
 		if($row = mysql_fetch_array($query))
 		{

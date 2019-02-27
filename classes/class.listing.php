@@ -365,7 +365,7 @@ class cListing
 	//CT todo: make work on id number, not title
 	function ListingLink($type, $title, $member_id) {
 		global $p;
-		$link = "http://".HTTP_BASE."/listing_detail.php?type={$type}&title=". urlencode($title) ."&member_id={$member_id}";
+		$link = HTTP_BASE."/listing_detail.php?type={$type}&title=". urlencode($title) ."&member_id={$member_id}";
 		//return $p->Link($text, $link);
 		return $p->Link("$title", $link);
 	}
@@ -446,55 +446,56 @@ class cListing
 
 
 
-class cTitleList  
-// This class circumvents the cListing class for performance reasons
-{
-	var $type;
-	var $type_code;  // TODO: 'type' needs to be its own class which would include 'type_code'
-	var $items_per_page;  // Not using yet...
-	var $current_page;   // Not using yet...
+class cTitleListGroup extends cListingGroup  
+// ct this is messy
+{									
+	function ListingLinkEdit($type, $title, $member_id) {
+		global $p;
+		$link = HTTP_BASE."/listing_edit.php?type={$type}&title=". urlencode($title) ."&member_id={$member_id}";
+		//return $p->Link($text, $link);
+		return $p->Link("$title", $link);
+	}
+	function TypeCode($type) {
+		if(strcasecmp($type,OFFER_LISTING) == 0){
+			return OFFER_LISTING_CODE;
+		}else {
+			return WANT_LISTING_CODE;	
+		}		
+	}
+	
+	function DisplayMemberListings($member_id, $type) {
+		global $cUser,$cDB, $p;
+		//$titles=MakeTitleArray($member_id);
+		//$query = $cDB->Query("SELECT title FROM ".DATABASE_LISTINGS." WHERE member_id=". $cDB->EscTxt($member->member_id) ." AND type=". $cDB->EscTxt($this->type_code) ." ORDER BY title;");
+		$typeCode=$this->TypeCode($type);
+		print($typeCode);
+		$this->LoadListingGroup(null, null, $member_id, null, true, null, $typeCode);
+		//print($member_id);
 
-	function cTitleList($type) {
-		$this->type = $type;
-		if($type == OFFER_LISTING)
-			$this->type_code = OFFER_LISTING_CODE;
-		else
-			$this->type_code = WANT_LISTING_CODE;
-	}	
-									
-	function MakeTitleArray($member_id="%") {
-		global $cDB, $cErr;
-
-		$query = $cDB->Query("SELECT DISTINCT title FROM ".DATABASE_LISTINGS." WHERE member_id LIKE ". $cDB->EscTxt($member_id) . " AND type=". $cDB->EscTxt($this->type_code) .";");
-
-		$i=0;		
-		while($row = mysql_fetch_array($query))
-		{
-			$titles[$i]= $cDB->UnEscTxt($row[0]);
-			$i += 1;
-		}
-		
-		if ($i == 0)
-			$titles[0]= "";
-		
-		return $titles;
-	}	
-// CT no longer needed
-	/*
-	function DisplayMemberListings($member) {
-		global $cDB;
-
-		$query = $cDB->Query("SELECT title FROM ".DATABASE_LISTINGS." WHERE member_id=". $cDB->EscTxt($member->member_id) ." AND type=". $cDB->EscTxt($this->type_code) ." ORDER BY title;");
-		
+	
 		$output = "";
 		$current_cat = "";
-		while($row = mysql_fetch_array($query)) {
-			$output .= "<A HREF=listing_edit.php?title=" . urlencode($cDB->UnEscTxt($row[0])) ."&member_id=".$member->member_id ."&type=". $this->type ."&mode=" . $_REQUEST["mode"] ."><FONT SIZE=2>". $cDB->UnEscTxt($row[0]) ."</FONT></A><BR>";
-		}
+		$i = 0;
+		//print(sizeof($this->listing));
+		if(isset($this->listing)) {
+			$output .= "<ul class='listing'>";
+			foreach($this->listing as $listing) {
+				$output .= "<li>" . $this->ListingLinkEdit($listing->type, $listing->title, $listing->member_id) . "</li>";
+				$i++;	
+			}
+			$output .= "</ul>"; // end the last unordered list
+			$output .= $p->Wrap($i . " listings found.", "p");
+	
+		} 
+
+		//foreach($titles as $title) {
+			//$output .= "<p><a href='listing_edit.php?title=" . urlencode($cDB->UnEscTxt($title) ."&member_id=".$member->getMemberId() ."&type=". $this->type ."&mode=" . $_REQUEST["mode"] .">". $cDB->UnEscTxt($title) ."</a></p>";
+		//	$output .= "<p><a href='listing_edit.php?title=" . urlencode($cDB->UnEscTxt($title)) ."&member_id=".$member->getMemberId() ."&type=". $this->type ."&mode=" . $_REQUEST["mode"] .">". $cDB->UnEscTxt($title) ."</a></p>";
+		//}
 
 		return $output;
 	}
-	*/
+	
 
 }
 

@@ -35,7 +35,7 @@ if ($form->validate()) { // Form is validated so processes the data
 function process_data ($values) {
 	global $p;
 
-	header("location:http://".HTTP_BASE."/listings_found.php?type=".$_REQUEST["type"]."&keyword=".$_REQUEST["keyword"]."&category=".$values["category"]."&timeframe=".$_REQUEST["timeframe"]);
+	header("location:".HTTP_BASE."/listings_found.php?type=".$_REQUEST["type"]."&keyword=".$_REQUEST["keyword"]."&category=".$values["category"]."&timeframe=".$_REQUEST["timeframe"]);
 	exit;
 }
 

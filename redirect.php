@@ -33,18 +33,18 @@ if (isset($redir_url))	// a specific URL was requested.  Go there regardless of 
 
 if (isset($redir_type) && isset($redir_item))
 {
-	header("location:http://".HTTP_BASE.$GLOBALS['SITE_SECTION_URL'][$redir_type]."?item=".$redir_item);
+	header("location:" . SERVER_PATH_URL . $GLOBALS['SITE_SECTION_URL'][$redir_type]."?item=".$redir_item);
 	exit;
 }
 
 if (isset($redir_type))	// $item not specified
 {
-	header("location:http://".HTTP_BASE.$GLOBALS['SITE_SECTION_URL'][$redir_type]);
+	header("location:" . SERVER_PATH_URL .$GLOBALS['SITE_SECTION_URL'][$redir_type]);
 	exit;
 }
 
 // dunno where to go.  Go home.
-header("location:http://".HTTP_BASE);
+header("location:" . SERVER_PATH_URL . "/member_profile_all_in_one.php");
 exit;
 
 

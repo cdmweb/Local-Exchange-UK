@@ -1,31 +1,37 @@
 <?php
 	include_once("includes/inc.global.php");
-	
+	include_once("classes/class.trade.php");
+
 	$cUser->MustBeLoggedOn();
 	$p->site_section = EXCHANGES;
 
-	$member = new cMember;
-	$member->LoadMember($_REQUEST["member_id"]);
-	$member_id = $member->getMemberId();
+	
 
-	$status_label = ($member->getMemberId() = "I") ? "- Inactive" : "";
-	if($_REQUEST["mode"] == "self") {
-		$p->page_title .= "My Trade History";
-	} else {
-		$p->page_title = "Trade history for {$member->getAllNames()} (#{$member_id}{$status_label})";
-	}
+	//if ($_REQUEST["mode"] == "admin" || $_REQUEST["mode"] == "other") {
+	if ($_REQUEST["member_id"] && $cUser->getMemberId() != $_REQUEST["member_id"]) {
+		$member = new cMember;
+		$member->LoadMember($_REQUEST["member_id"]);
+		$member_id = $member->getMemberId();
+
+		
+	}else {
+		$member = $cUser;
+		$member_id = $member->getMemberId();
+		$page_title .= "My Trade History";
+	} 
+	$output = "<p><a href='member_summary.php?member_id={$member_id}'>Profile</a> | <a href='trade_history.php?member_id={$member_id}'>Trade history</a></p>";
+
+	$status_label = ($member->getStatus() == "I") ? " - Inactive" : "";
+	$p->page_title = "{$member->getAllNames()} (#{$member_id}{$status_label}) Trade History";
 
 
-	include("classes/class.trade.php");
 	if ($cUser->getMemberRole() ){
-		$output = $p->Wrap("Quick edit: <a href=\"member_edit.php?mode=admin&member_id={$member_id}\">[Profile]</a> <a href=\"listings_found.php?type=Offer&mode=admin&member_id={$member_id}\">[Offers]</a> <a href=\"listings_found.php?type=Want&mode=admin&member_id={$member_id}\">[Wants]</a> <a href=\"member_edit.php?mode=admin&member_id={$member_id}\">[Joint Member]</a>", "div", "admin-actions");
-	}
+		$string = file_get_contents(TEMPLATES_PATH . '/menu_quick_edit.php', TRUE);
+		$output .= $p->ReplaceVarInString($string, '$member_id', $member_id);
+	}	
 	
 	
-	if ($member->getBalance() > 0)
-		$cssClass = "positive";
-	else
-		$cssClass = "negative";
+	$cssClass = ($member->getBalance() > 0) ? "positive" : "negative";
 		
 	
 	

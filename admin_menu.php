@@ -16,8 +16,8 @@ $list = $p->Wrap("Current balance for system is {$balance}", "p", "balance");
 // enrolment
 $menuArray = array();
 $menuArray[] = $p->MenuItemArray("Create new member account", "member_create.php");
-$menuArray[] = $p->MenuItemArray("Edit a Member Account", "member_to_edit.php");
-$menuArray[] = $p->MenuItemArray("Add a Joint Member to an Existing Account", "member_contact_create.php?mode=admin");
+$menuArray[] = $p->MenuItemArray("Edit a Member Account", "member_choose.php?action=member_edit");
+$menuArray[] = $p->MenuItemArray("Add a Joint Member to an Existing Account", "member_choose.php?action=member_contact_create");
 $menuArray[] = $p->MenuItemArray("Edit/Delete a Joint Member", "member_contact_to_edit.php");
 $menuHtml = $p->Menu($menuArray);
 $title = $p->Wrap("Enrolment", "h3");
@@ -29,7 +29,7 @@ $menuArray[] = $p->MenuItemArray("View members not logged in", "report_no_login.
 $menuArray[] = $p->MenuItemArray("Member Going on Holiday", "member_choose.php?action=holiday");
 $menuArray[] = $p->MenuItemArray("Edit a Member Photo", "photo_to_edit.php");
 if ($cUser->getMemberRole() > 1) { // if admin 
-	$menuArray[] = $p->MenuItemArray("Inactivate/Re-activate a Member Account", "member_choose.php?action=member_status_change&inactive=Y");
+	$menuArray[] = $p->MenuItemArray("Inactivate/Re-activate a Member Account", "member_choose.php?action=member_status_change");
 	$menuArray[] = $p->MenuItemArray("Unlock Account and Reset Password", "member_unlock.php");
 }
 $menuHtml = $p->Menu($menuArray);
@@ -43,7 +43,7 @@ if (!empty(OVRIDE_BALANCES) && $cUser->getMemberRole() > 1) {// Only display Ove
 }
 if ($cUser->getMemberRole() > 1) { // if admin 
 	$menuArray[] = $p->MenuItemArray("Manage account restrictions", "member_choose.php?action=manage_restrictions");
-	$menuArray[] = $p->MenuItemArray("Manage invoices for a member (NEW!)", "member_choose.php?action=trades_pending");
+	$menuArray[] = $p->MenuItemArray("Manage invoices for a member", "member_choose.php?action=trades_pending");
 	$menuArray[] = $p->MenuItemArray("Record an exchange for a member", "member_choose.php?action=trade");
 	$menuArray[] = $p->MenuItemArray("Reverse an Exchange that was Made in Error", "trade_reverse.php?action=trade_reverse");
 	$menuArray[] = $p->MenuItemArray("Record Feedback for a Member", "member_choose.php?action=feedback_choose");
@@ -54,7 +54,7 @@ $list .= $p->Wrap($title . $menuHtml, "div", "col");
 
 // offered listings
 $menuArray = array();
-$menuArray[] = $p->MenuItemArray("New Offered Listing for a Member", "listing_create.php?type=Offer&mode=admin");
+$menuArray[] = $p->MenuItemArray("New Offered Listing for a Member", "member_choose.php?action=listing_create&get1=type&get1val=Offer");
 $menuArray[] = $p->MenuItemArray("Edit a Member's Offered Listing", "member_choose.php?action=listing_to_edit&get1=type&get1val=Offer");
 $menuArray[] = $p->MenuItemArray("Delete a Member's Offered Listing", "member_choose.php?action=listing_delete&get1=type&get1val=Offer");
 $menuHtml = $p->Menu($menuArray);
@@ -64,7 +64,7 @@ $list .= $p->Wrap($title . $subtitle . $menuHtml, "div", "col");
 
 // wanted listings
 $menuArray = array();
-$menuArray[] = $p->MenuItemArray("Create a New Want Listing for a Member", "listing_create.php?type=Want&mode=admin");
+$menuArray[] = $p->MenuItemArray("New Offered Listing for a Member", "member_choose.php?action=listing_create&get1=type&get1val=Want");
 $menuArray[] = $p->MenuItemArray("Edit a Member's Wanted Listing", "member_choose.php?action=listing_to_edit&get1=type&get1val=Want");
 $menuArray[] = $p->MenuItemArray("Delete a Member's Wanted Listing", "member_choose.php?action=listing_delete&get1=type&get1val=Want");
 $menuHtml = $p->Menu($menuArray);

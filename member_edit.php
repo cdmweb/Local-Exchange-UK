@@ -336,19 +336,19 @@ function verify_role_allowed1($element_name,$element_value) {
 }
 
 //CT this is not used - scary data to have for GDPR
-function verify_reasonable_dob($element_name,$element_value) {
-	global $today;
-	$date = $element_value;
-	$date_str = $date['Y'] . '/' . $date['F'] . '/' . $date['d'];
+// function verify_reasonable_dob($element_name,$element_value) {
+// 	global $today;
+// 	$date = $element_value;
+// 	$date_str = $date['Y'] . '/' . $date['F'] . '/' . $date['d'];
 
-	if ($date_str == $today['year']."/".$today['mon']."/".$today['mday']) 
-		// date wasn't changed by user, so no need to verify it
-		return true;
-	elseif ($today['year'] - $date['Y'] < 3)  // A little young to be trading, presumably a mistake
-		return false;
-	else
-		return true;
-}
+// 	if ($date_str == $today['year']."/".$today['mon']."/".$today['mday']) 
+// 		// date wasn't changed by user, so no need to verify it
+// 		return true;
+// 	elseif ($today['year'] - $date['Y'] < 3)  // A little young to be trading, presumably a mistake
+// 		return false;
+// 	else
+// 		return true;
+// }
 
 function verify_good_password($element_name,$element_value) {
 	$i=0; $upper=false; $lower=false; $number=false; $punct=false;

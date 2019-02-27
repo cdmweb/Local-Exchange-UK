@@ -1,1 +1,1 @@
-href\=\".\ SERVER_PATH_URL\ .\"
+href\=\".\ $site_settings->getKey(SERVER_PATH_URL));\ .\"

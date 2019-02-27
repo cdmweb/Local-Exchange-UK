@@ -27,10 +27,11 @@ if ($action=="login")
 
 	if ($user=="" || $pass=="")
 	{
-		if ($user=="")
+		if (empty($user))
 		{
 			$cErr->Error("Please enter a user name to log in.");
-		} else {
+		} 
+		if (empty($pass)) {
 			$cErr->Error("Please enter a password to log on with this account.  If you've forgotten your password, you can request a new one.");
 		}
 

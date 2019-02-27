@@ -16,41 +16,43 @@ if (file_exists("upgrade.php") && $running_upgrade_script!=true) {
 /******************* SITE LOCATIONS ***********************/
  
 // What is the domain name of the site?  
-define ("SERVER_DOMAIN","");	// no http://
+define ("SERVER_DOMAIN","http://localhost:8888");	// no http://
 
 // What is the path to the site? This is null for many sites.
-define ("SERVER_PATH_URL","");	// no ending slash
+define ("SERVER_PATH_URL","/members");	// no ending slash
 
 // The following only needs to be set if Pear has been
 // installed manually by downloading the files
-define ("PEAR_PATH", ""); // no ending slash
+define ("PEAR_PATH", "/Applications/MAMP/PEAR"); // no ending slash
 
 // Ok, then lets define some paths (no need to edit these)
 define ("HTTP_BASE",SERVER_DOMAIN.SERVER_PATH_URL);
 define ("CLASSES_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/classes/");
 define ("IMAGES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/images/");
-define ("STYLES_PATH",SERVER_DOMAIN."/styles/");
-define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
+define ("STYLES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/styles/");
+define ("INCLUDES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/includes/");
+define ("TEMPLATES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/includes/templates/");
+//define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
+define ("UPLOADS_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/uploads/");
 
 
 /**********************************************************/
 /***************** DATABASE LOGIN  ************************/
 
 define ("DATABASE_USERNAME","");
-define ("DATABASE_PASSWORD","");
-//define ("DATABASE_NAME","clarat2_localexchange");
-// local localexchange-1.02;
+define ("DATABASE_PASSWORD","?uWkWBy");
 define ("DATABASE_NAME","");
 define ("DATABASE_SERVER",""); // often "localhost"
 
 /**********************************************************/
 /********************* SITE NAMES *************************/
 
-// What is the name of the site?
-define ("SITE_LONG_TITLE", "CamLETS Local Exchange and Trading Scheme");
+// these will be overwritten by your site settings (admin area) 
+define ("SITE_LONG_TITLE", "Local Exchange and Trading Scheme");
 
 // What is the short, friendly, name of the site?
-define ("SITE_SHORT_TITLE", "CamLETS");
+define ("SITE_SHORT_TITLE", "LETS");
+define ("SITE_MOTTO", "Local resilience through trade");
 
 /**********************************************************/
 /***************** FOR MAINTENANCE ************************/
@@ -120,13 +122,13 @@ define ("PHONE_ADMIN","360-321-1234"); // an email address may be substituted...
 // What should appear at the front of all pages?
 // Titles will look like "PAGE_TITLE_HEADER - PAGE_TITLE", or something 
 // like "Local Exchange - Member Directory";
-define ("PAGE_TITLE_HEADER", SITE_SHORT_TITLE);
+//define ("PAGE_TITLE_HEADER", "LETS");
 
 // What keywords should be included in all pages?
 define ("SITE_KEYWORDS", "local currency,mutual credit,lets,exchange,". SITE_LONG_TITLE ."");
 
 // Logo Graphic for Header
-define ("HEADER_LOGO", "mosaic-110.jpg");
+//define ("HEADER_LOGO", "mosaic-110.jpg");
 
 // Title Graphic for Header
 define ("HEADER_TITLE", "localx_title.png");
@@ -140,9 +142,9 @@ define ("HOME_PIC", "localx_home.png");
 // What content should be in the site header and footer?
 //CT: todo - make nice
 
-define ("PAGE_HEADER_CONTENT", "<div class=\"masthead\"><a href=\"index.php\" class=\"logo\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " \"></a><div class=\"title\"><h1><a href=\"index.php\">" .  SITE_SHORT_TITLE ."</a></h1><div class=\"motto\">Cambridge's local exchange and trading scheme</div></div></div>");
+//define ("PAGE_HEADER_CONTENT", "<div class=\"masthead\"><a href=\"index.php\" class=\"logo\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " \"></a><div class=\"title\"><h1><a href=\"index.php\">" .  SITE_SHORT_TITLE ."</a></h1><div class=\"motto\">" .  SITE_MOTTO . "</div></div></div>");
 
-define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"". SERVER_PATH_URL ."\">". SITE_LONG_TITLE ." </strong><br />Licensed under the <a href=\"http://www.gnu.org/copyleft/gpl.html\">GPL</a> &#8226; Local Exchange UK Ver. ".LOCALX_VERSION." <a href=\"http://". SERVER_DOMAIN . SERVER_PATH_URL ."/info/credits.php\">Credits</a></p>");
+//define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"" . HTTP_BASE ."\">". SITE_LONG_TITLE ." </strong><br />Licensed under the <a href=\"http://www.gnu.org/copyleft/gpl.html\">GPL</a> &#8226; Local Exchange UK Ver. ".LOCALX_VERSION." <a href=\"" . HTTP_BASE ."/info/credits.php\">Credits</a></p>");
 
 
 
@@ -150,24 +152,10 @@ define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"". SERVER_
 /**************** DEFINE SIDEBAR MENU *********************/
 
 $SIDEBAR = array (
-array("Information", "pages.php?id=7"), // old style info pages
-array("Learn More","info/more.php"), // old style info pages
- // [CDM] uncomment line below to activate new style info pages         
- //  array("Information","pages.php?id=1"),
-array("News & Events","news.php"),
-array("Offered","listings.php?type=Offer"),
-array("Wanted","listings.php?type=Want"),
-array("Update Listings","listings_menu.php"),
-array("Exchanges","exchange_menu.php"),
-array("Members List","member_directory.php"),
-array("Member Profile","member_profile.php"),
-array("Contact Us","contact.php"));
-);
-/*
-// CT new 
-$SIDEBAR = array (
 	array("Home","index.php"),
-	array("Information", "pages.php?id=7"), 
+	array("Information", "pages.php?id=7"), // old style info pages
+// [CDM] uncomment line below to activate new style info pages 	
+//  array("Information","pages.php?id=1"),
 	array("News &amp; events","pages.php?id=84"),
 	array("Offered","listings_found.php?type=Offer&keyword=&category=0&timeframe=14"),
 	array("Wanted","listings_found.php?type=Want&keyword=&category=0&timeframe=14"),
@@ -176,7 +164,7 @@ $SIDEBAR = array (
 	array("",""),
 	array("My profile","member_profile_all_in_one.php"),
 	array("My trades","exchange_menu.php"));
-*/
+
 /**********************************************************/
 /**************** DEFINE SITE SECTIONS ********************/
 
@@ -217,7 +205,7 @@ $monthly_fee_exempt_list = array("ADMIN", SYSTEM_ACCOUNT_ID);
 define ("MAX_FILE_UPLOAD","5000000"); // Maximum file size, in bytes, allowed for uploads to the server
 									 
 // The following text will appear at the beggining of the email update messages
-define ("LISTING_UPDATES_MESSAGE", "<h1>".SITE_LONG_TITLE."</h1>The following listings are new or updated.<p>Change how often you get these emails on your <a href=http://".HTTP_BASE."/member_edit.php?mode=self>Profile page</a>.");
+define ("LISTING_UPDATES_MESSAGE", "<h1>".SITE_LONG_TITLE."</h1>The following listings are new or updated.<p>Change how often you get these emails on your <a href=" . HTTP_BASE ."/member_edit.php?mode=self>Profile page</a>.");
 
 // Should inactive accounts have their listings automatically expired?
 // This can be a useful feature.  It is an attempt to deal with the 
@@ -249,12 +237,11 @@ define ("EXPIRED_LISTINGS_MESSAGE", "Hello,\n\nDue to inactivity, your ".SITE_SH
 // in the Join Year menu option for accounts.
 define ("JOIN_YEAR_MINIMUM", "2005");  
 
-
 define ("DEFAULT_COUNTRY", "United Kingdom");
-define ("DEFAULT_ZIP_CODE", ""); // This is the postcode.
-define ("DEFAULT_CITY", "London");
-define ("DEFAULT_STATE", "London");
-define ("DEFAULT_PHONE_AREA", "020");
+define ("DEFAULT_ZIP_CODE", "CB1"); // This is the postcode.
+define ("DEFAULT_CITY", "Cambridge");
+define ("DEFAULT_STATE", "Cambridgeshire");
+define ("DEFAULT_PHONE_AREA", "01223");
 
 // Should short date formats display month before day (US convention)?
 define ("MONTH_FIRST", false);		
@@ -263,15 +250,13 @@ define ("PASSWORD_RESET_SUBJECT", "Your ". SITE_LONG_TITLE ." Account");
 define ("PASSWORD_RESET_MESSAGE", "Your password for ". SITE_LONG_TITLE ." has been reset. \n\nYour new password is listed below. Please use it to log in now, but change it as soon as possible to help keep your account secure. \n\nhttps://" .HTTP_BASE . "/password_change.php");
 /* new member email */
 define ("NEW_MEMBER_SUBJECT", "Welcome to ". SITE_LONG_TITLE);
-define ("NEW_MEMBER_MESSAGE", "Hello, and welcome to the ". SITE_LONG_TITLE ." community!\n\nA member account has been created for you at:\nhttp://".SERVER_DOMAIN.SERVER_PATH_URL."/member_login.php\n\nPlease login and create your Offered and Wanted Listings.  Your new user id and password are listed at the end of this message. You can change the automatically generated password by going to the Member Profile section after you login.\n\nThank you for joining us.");
+define ("NEW_MEMBER_MESSAGE", "Hello, and welcome to the ". SITE_LONG_TITLE ." community!\n\nA member account has been created for you at:\n" . HTTP_BASE ."/member_login.php\n\nPlease login and create your Offered and Wanted Listings.  Your new user id and password are listed at the end of this message. You can change the automatically generated password by going to the Member Profile section after you login.\n\nThank you for joining us.");
 
 /********************************************************************/
 /************************* ADVANCED SETTINGS ************************/
 // Normally, the defaults for the settings that follow don't need
 // to be changed.
 
-// What's the name and location of the stylesheet?
-define ("SITE_STYLESHEET", "/styles/style.css");
 
 // How long should trades be listed on the "leave feedback for 
 // a recent exchange" page?  After this # of days they will be

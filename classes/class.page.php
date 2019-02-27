@@ -19,11 +19,17 @@ class cPage {
 	var $page_msg;			// CT: todo - show actions completed and other messages?
 
 	function cPage() {
-		global $cUser, $SIDEBAR;
+		global $cUser, $SIDEBAR, $site_settings;
 		
 		$this->keywords = SITE_KEYWORDS;
-		$this->page_header = PAGE_HEADER_CONTENT;
-		$this->page_footer = PAGE_FOOTER_CONTENT;
+		//print_r('page');
+		//print_r($site_settings);
+		//print_r($site_settings->getKey('SITE_SHORT_TITLE'));
+		$string = file_get_contents(TEMPLATES_PATH . '/header.php', TRUE);
+		$this->page_header = $this->ReplacePlaceholders($string);
+
+		$string = file_get_contents(TEMPLATES_PATH . '/footer.php', TRUE);
+		$this->page_footer = $this->ReplacePlaceholders($string);
 		
 		if ($cUser->getMemberRole() > 0)
 			$this->AddSidebarButton("Administration", "admin_menu.php");
@@ -33,7 +39,31 @@ class cPage {
 		}
 
 	}		
-									
+	//CT replaces strings {LIKE-THIS} with either settings file strings
+	// this is a temporary mesasure til we get moustache or a proper template engine
+	function ReplacePlaceholders($string){
+		global $site_settings;
+		//CT first replace the bits that are from constants
+		$string = str_replace("{HTTP_BASE}",HTTP_BASE,$string);
+		$string = str_replace("{IMAGES_PATH}",IMAGES_PATH,$string);
+		$string = str_replace("{STYLES_PATH}",STYLES_PATH,$string);
+		$string = str_replace("{LOCALX_VERSION}",STYLES_PATH,$string);
+		$string = $this->ReplacePropertiesInString($string);
+		// CT then do properly
+		return $string;
+	}			
+	function ReplaceVarInString($string, $varname, $value){
+		return str_replace("{" . $varname . "}", $value, $string);
+	}
+
+	function ReplacePropertiesInString($string){
+		global $site_settings;
+		$variables = $site_settings->getStrings();
+		foreach($variables as $key => $value){
+		    $string = str_replace("{" . $key . "}", $value, $string);
+		}
+		return $string;
+	}		
 	function AddSidebarButton ($button_text, $url) {
 		$this->sidebar_buttons[] = new cMenuItem($button_text, $url);
 	}
@@ -43,20 +73,13 @@ class cPage {
 	}
 
 	function MakeDocHeader() {
-		global $cUser;
+		global $cUser, $site_settings;
 		
-		if(isset($this->page_title)) 
-			$title = $this->page_title . ": ";
-		else
-			$title = "";
-		
-		return "<!DOCTYPE HTML>
-		<html>
-		<head>
-		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
-		<meta name='viewport' content='user-scalable=yes'/>
-		<title>". $title . PAGE_TITLE_HEADER ."</title>
-		<link rel='stylesheet' href='" . SITE_STYLESHEET ."' type='text/css'></link></head><body>";
+		$title = (isset($this->page_title)) ? $this->page_title : "";
+		$string = file_get_contents(TEMPLATES_PATH . '/doc_header.php', TRUE);
+		$string = $this->ReplacePlaceholders($string);
+		$string = $this->ReplaceVarInString($string, '$title', $title);
+		return $string;
 	}
 	function MakePageHeader() {
 		return $this->page_header ;
@@ -89,7 +112,7 @@ class cPage {
 				$this->page_title_image = $SECTIONS[$this->site_section][2];
 			return "<h2>$this->page_title</h2>";
 			//CT: style choice - removing the image mucks with alignment of text/titles	
-			//return '<H2><IMG SRC="http://'. IMAGES_PATH . $this->page_title_image .'" align=middle>'. $this->page_title .'</H2><P>';
+			//return '<H2><IMG SRC=" . IMAGES_PATH . $this->page_title_image .'" align=middle>'. $this->page_title .'</H2><P>';
 		}		
 	}
 									
@@ -212,12 +235,13 @@ class cPage {
 		return $output;
 	}
 	function FormatShortDate($d){
+		global $site_settings;
 		//localise to country
-		return date_format(date_create($d), SHORT_DATE);
+		return date_format(date_create($d), $site_settings->getKey('SHORT_DATE'));
 	}
 	function FormatLongDate($d){
 		//localise to country
-		return date_format(date_create($d), LONG_DATE);
+		return date_format(date_create($d), $site_settings->getKey('LONG_DATE'));
 
 	}
 	
@@ -236,7 +260,7 @@ class cMenuItem {
 		if ($this->url=="" || $this->button_text ==""){
 			$button = "<li><br /></li>";
 		} else{
-			$button = "<li><a href=\"http://". HTTP_BASE ."/". $this->url ."\">". $this->button_text ."</a></li>";
+			$button = "<li><a href=\"". HTTP_BASE . "/" . $this->url ."\">". $this->button_text ."</a></li>";
 
 		}
 		return $button;

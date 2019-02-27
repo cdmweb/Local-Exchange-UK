@@ -3,7 +3,7 @@ include_once("includes/inc.global.php");
 
 $cUser->MustBeLoggedOn();
 $p->site_section = LISTINGS;
-$p->page_title = "Create ". $_REQUEST["type"] ." Listing";
+$page_title = "Create a new ". $_REQUEST["type"] ." Listing";
 
 include("classes/class.listing.php");
 include("includes/inc.forms.php");
@@ -20,7 +20,9 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is creating listing for ano
 	$cUser->MustBeLevel(1);
 	$form->addElement("hidden","mode","admin");
 	if (isset($_REQUEST["member_id"])) {
-		$form->addElement("hidden","member_id", $_REQUEST["member_id"]);
+		$member_id = $_REQUEST["member_id"];
+		$form->addElement("hidden","member_id", $member_id);
+		$page_title .= " for member #{$member_id}";
 	} else {
 		$ids = new cMemberGroup;
 		$ids->LoadMemberGroup();
@@ -31,6 +33,8 @@ if($_REQUEST["mode"] == "admin") {  // Administrator is creating listing for ano
 	$form->addElement("hidden","member_id", $cUser->member_id);
 	$form->addElement("hidden","mode","self");
 }
+
+$p->page_title = $page_title;
 
 $form->addElement('hidden','type',$_REQUEST['type']);
 $title_list = new cTitleList($_REQUEST['type']);

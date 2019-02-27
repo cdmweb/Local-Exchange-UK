@@ -1,26 +1,31 @@
 <?php
 include_once("includes/inc.global.php");
 $p->site_section = LISTINGS;
-$p->page_title = "Choose the ". $_REQUEST["type"] ." Listing to Edit";
+
+
+$type = (isset($_REQUEST["type"])) ? $_REQUEST["type"] : "Offer";
+$member_id = (isset($_REQUEST["member_id"])) ? $_REQUEST["member_id"] : "%";
+
+$p->page_title = "Choose the ". $type ." listing to edit";
 
 include("classes/class.listing.php");
 
-$listings = new cTitleList($_GET['type']);
+$listings = new cTitleListGroup();
 
-$member = new cMember;
+//$member = new cMember;
 
 if($_REQUEST["mode"] == "admin") {
 	$cUser->MustBeLevel(1);
-	$member->LoadMember($_REQUEST["member_id"]);
+	//$member->LoadMember($_REQUEST["member_id"]);
 } else {
 	$cUser->MustBeLoggedOn();
-	$member = $cUser;
+	//$member = $cUser;
 }
 
-$list = $listings->DisplayMemberListings($member);
+$list = $listings->DisplayMemberListings($member_id, $type);
 
 if($list == "")
-	$list = "You don't currently have any ". $_GET['type'] ." listings.";
+	$list = "No ". $type ." listings found.";
 
 $p->DisplayPage($list);
 
