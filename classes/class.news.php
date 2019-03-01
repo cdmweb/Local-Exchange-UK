@@ -21,8 +21,8 @@ class cNews {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_NEWS ." (title, description, expire_date, sequence) VALUES (".$cDB->EscTxt($this->title) .", ". $cDB->EscTxt($this->description) .", '". $this->expire_date->MySQLDate() ."', ". $this->sequence .");");
 
-		if(mysql_affected_rows() == 1) {
-			$this->news_id = mysql_insert_id();		
+		if(mysqli_affected_rows() == 1) {
+			$this->news_id = mysqli_insert_id();		
 			return true;
 		} else {
 			$cErr->Error("Could not save news item.");
@@ -45,7 +45,7 @@ class cNews {
 				
 		$query = $cDB->Query("SELECT title, description, expire_date, sequence FROM ".DATABASE_NEWS." WHERE  news_id=". $cDB->EscTxt($news_id) .";");
 		
-		if($row = mysql_fetch_array($query)) {		
+		if($row = mysqli_fetch_array($query)) {		
 			$this->news_id = $news_id;
 			$this->title = $cDB->UnEscTxt($row[0]);
 			$this->description = $cDB->UnEscTxt($row[1]);		
@@ -78,7 +78,7 @@ class cNewsGroup {
 		$query = $cDB->Query("SELECT news_id FROM ".DATABASE_NEWS." ORDER BY sequence DESC;");
 		
 		$i = 0;				
-		while($row = mysql_fetch_array($query)) {
+		while($row = mysqli_fetch_array($query)) {
 			$this->newslist[$i] = new cNews;			
 			$this->newslist[$i]->LoadNews($row[0]);
 			$i += 1;

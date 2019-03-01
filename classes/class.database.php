@@ -21,25 +21,48 @@ class cDatabase
 		$this->count_query = 0;
 	}
 
+	// function Connect()
+	// {
+
+	// 	if ($this->isConnected){
+	// 		return;
+	// 	}
+	// 	$link = ($GLOBALS["___mysqli_ston"] = mysqli_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD)) or die("Problem occur in connection");  
+
+	// 	//$db = ((bool)mysqli_query($link, "USE " . info));  
+	// 	$this->db_link = $link;
+	// 	$this->isConnected=true;
+	// 	// CT iterate
+	// 	$this->count_connection++;
+	// 	//print("Connection" . $this->count_connection);
+	// }
+
 	function Connect()
 	{
-
-		if ($this->isConnected){
-			return;
+		if(!empty(DATABASE_PORT)){
+			$db_link = mysqli_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD, DATABASE_NAME, DATABASE_PORT);
+		} else{
+			$db_link = mysqli_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD, DATABASE_NAME);
 		}
-		$link = ($GLOBALS["___mysqli_ston"] = mysqli_connect(DATABASE_SERVER,DATABASE_USERNAME,DATABASE_PASSWORD)) or die("Problem occur in connection");  
+		// Check connection
+		if (mysqli_connect_errno())
+		{
+			echo "Failed to connect to MySQL: " . mysqli_connect_error();
+		} else{
+	//$db = ((bool)mysqli_query($link, "USE " . info));  
+			$this->db_link = $db_link;
+			$this->isConnected=true;
+			// CT iterate
+			$this->count_connection++;
+			//print("Connection" . $this->count_connection);
 
-		//$db = ((bool)mysqli_query($link, "USE " . info));  
-		$this->db_link = $link;
-		$this->isConnected=true;
-		// CT iterate
-		$this->count_connection++;
-		//print("Connection" . $this->count_connection);
+		}
+		
 	}
 	function Disconnect()
 	{
 		if ($this->isConnected){
-			mysql_close($link);
+			mysqli_close($db_link);
 			$this->isConnected=false;
 			//echo "disconnected";
 		}
@@ -54,25 +77,35 @@ class cDatabase
 		if (!$this->isConnected)
 			$this->Connect();
 
-		$ret = mysql_query($thequery);
+		$ret = mysqli_query($this->db_link, $thequery);
 
 		//CT: why is this not a resource?
 		//echo(gettype($ret));
 		if(gettype($ret) == "resource") {
 			//ct debug
-			$retmessage = "| R: " . mysql_num_rows($ret);
+			$retmessage = "| R: " . mysqli_num_rows($ret);
 		} 
 
 		$this->count_query++;
-		//$cErr->Error("Q.{$this->count_query}: {$thequery} {$retmessage}");
+		$cErr->Error("Q.{$this->count_query}: {$thequery} {$retmessage}");
 
 		return $ret;
 		//CT: uncomment when finishing demo
 
-//		       or die ("Query failed: ".mysql_errno() . ": " . mysql_error()); // TODO: fix error messages
+//		       or die ("Query failed: ".mysqli_errno() . ": " . mysqli_error()); // TODO: fix error messages
 		//$this->Disconnect();
 		//showMessage($this->NumRows($ret));
 		
+	}
+
+	function FetchArray($thequery)
+	{
+		return mysqli_fetch_array($this->$db_link, $thequery);
+	}
+
+	function FetchObject($thequery)
+	{
+		return mysqli_fetch_object($this->$db_link, $thequery);
 	}
 
 	function NumRows($thequery)
@@ -80,9 +113,9 @@ class cDatabase
 		if (!$this->isConnected)
 			$this->Connect();
 
-		$result = mysql_query($thequery);
+		$result = mysqli_query($thequery);
 
-		return mysql_num_rows($result);
+		return mysqli_num_rows($result);
 	}
 
 	function MakeSimpleTable($theQuery)
@@ -91,7 +124,7 @@ class cDatabase
 
 		/* Printing results in HTML */
 		$table = "<TABLE>\n";
-		while ($line = mysql_fetch_array($query, MYSQL_ASSOC)) {
+		while ($line = mysqli_fetch_array($query, mysqli_ASSOC)) {
 			$table .= "\t<TR>\n";
 			foreach ($line as $col_value)
 			{
@@ -222,17 +255,17 @@ class cDatabase
 	}
 	
 /*
- * Warning on mysql_escape_string()
+ * Warning on mysqli_escape_string()
  *
  * This function will escape the unescaped_string, so that it is safe to place
- * it in a mysql_query(). This function is deprecated.
+ * it in a mysqli_query(). This function is deprecated.
  *
- * This function is identical to mysql_real_escape_string() except that
- * mysql_real_escape_string() takes a connection handler and escapes the string 
- * according to the current character set. mysql_escape_string() does not take a
+ * This function is identical to mysqli_real_escape_string() except that
+ * mysqli_real_escape_string() takes a connection handler and escapes the string 
+ * according to the current character set. mysqli_escape_string() does not take a
  * connection argument and does not respect the current charset setting. 
  *
- * Despite this warning, mysql_real_escape_string() was not used becuase it
+ * Despite this warning, mysqli_real_escape_string() was not used becuase it
  * requires a database connection which is not always present when EscTxt() or
  * EscTxt2() is called.
  */
@@ -247,7 +280,7 @@ class cDatabase
                 $text = stripslashes($text);
             }
 
-            return "'" . mysql_real_escape_string($text) . "'";
+            return "'" . mysqli_real_escape_string($this->db_link, $text) . "'";
         } else if(is_numeric($text)) {
             return "'$text'";
         } else {
@@ -262,7 +295,7 @@ class cDatabase
                 $text = stripslashes($text);
             }
 
-            return "='" . mysql_real_escape_string($text) . "'";
+            return "='" . mysqli_real_escape_string($this->db_link, $text) . "'";
         } else if(is_numeric($text)) {
             return "='$text'";
         } else {

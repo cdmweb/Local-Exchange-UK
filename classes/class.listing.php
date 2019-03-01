@@ -81,7 +81,7 @@ class cListing
 		
 		$query = $cDB->Query("DELETE FROM ". DATABASE_LISTINGS ." WHERE title=".$cDB->EscTxt($title)." AND member_id=". $cDB->EscTxt($member_id) ." AND type=".  $cDB->EscTxt($type_code) .";");
 
-		return mysql_affected_rows();
+		return mysqli_affected_rows();
 	}
 							
 	function LoadListing($title,$member_id,$type)
@@ -120,7 +120,7 @@ class cListing
 		$query = $cDB->Query($queryString . " ORDER BY l.type, c.description, l.title, l.member_id;");
 		// CT: todo - consolidate query with 
 	
-		if($values = mysql_fetch_array($query))
+		if($values = mysqli_fetch_array($query))
 		{		
 
 			$this->ConstructListing($values);
@@ -343,7 +343,7 @@ class cListing
 		$i = 0;
 		$this->num_listings = 0;
 				
-		while($row = mysql_fetch_array($queryList))
+		while($row = mysqli_fetch_array($queryList))
 		{
 			$this->listing[$i] = new cListing;			
 			//$this->listing[$i]->LoadListing($row[1],$row[0],$this->type_code);

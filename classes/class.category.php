@@ -25,8 +25,8 @@ class cCategory
 
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_CATEGORIES ."(parent_id, description) VALUES (". $cDB->EscTxt($this->parent) .", ". $cDB->EscTxt($this->description) .");");
 		
-		if(mysql_affected_rows() == 1) {
-			$this->id = mysql_insert_id();
+		if(mysqli_affected_rows() == 1) {
+			$this->id = mysqli_insert_id();
 			return true;
 		} else {
 			return false;
@@ -47,7 +47,7 @@ class cCategory
 		// select description for this code
 		$query = $cDB->Query("SELECT parent_id, description FROM ".DATABASE_CATEGORIES." WHERE category_id=". $cDB->EscTxt($id) .";");
 		
-		if($row = mysql_fetch_array($query)) {		
+		if($row = mysqli_fetch_array($query)) {		
 			$this->id = $id;
 			$this->parent = $row[0];
 			$this->description = $row[1];
@@ -62,8 +62,8 @@ class cCategory
 	
 		$delete = $cDB->Query("DELETE FROM ".DATABASE_CATEGORIES." WHERE category_id=". $cDB->EscTxt($this->id));
 		
-		if(mysql_affected_rows() == 1) {
-			unset($this);	
+		if(mysqli_affected_rows() == 1) {
+			//unset($this);	
 			return true;
 		} else {
 			$cErr->Error("There was an error deleting category code '".$id."'.  Please try again later.");
@@ -103,7 +103,7 @@ class cCategoryList {
 		}
 		
 		$i = 0;
-		while($row = mysql_fetch_array($query))
+		while($row = mysqli_fetch_array($query))
 		{
 			$this->category[$i] = new cCategory;
 			$this->category[$i]->LoadCategory($row[0]);

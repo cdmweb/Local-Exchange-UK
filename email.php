@@ -85,7 +85,7 @@ function known_email_addressp($email) {
     $sql = "SELECT person_id FROM " . DATABASE_PERSONS .
                                                  " WHERE email = $email";
     $r = $cDB->Query($sql);
-    if($row = mysql_fetch_array($r)) {
+    if($row = mysqli_fetch_array($r)) {
         return true;
     }
     else {

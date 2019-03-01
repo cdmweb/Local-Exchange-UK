@@ -47,7 +47,7 @@ class cPage {
 		$string = str_replace("{HTTP_BASE}",HTTP_BASE,$string);
 		$string = str_replace("{IMAGES_PATH}",IMAGES_PATH,$string);
 		$string = str_replace("{STYLES_PATH}",STYLES_PATH,$string);
-		$string = str_replace("{LOCALX_VERSION}",STYLES_PATH,$string);
+		$string = str_replace("{LOCALX_VERSION}",LOCALX_VERSION,$string);
 		$string = $this->ReplacePropertiesInString($string);
 		// CT then do properly
 		return $string;

@@ -16,7 +16,7 @@ class cCategories
 	function LoadCategories() {
 		global $cDB, $cErr, $cCategory;
 		$query = $cDB->Query("SELECT * FROM ".DATABASE_CATEGORIES." order by description;");
-		while($row=mysql_fetch_array($query)) {
+		while($row=mysqli_fetch_array($query)) {
 			$this->categories = new cCategory($row);
 		}
 

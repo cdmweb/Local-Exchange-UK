@@ -51,11 +51,11 @@ class cTrade {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_TRADES ." (trade_date, status, member_id_from, member_id_to, amount, category, description, type) VALUES (now(), ". $cDB->EscTxt($this->status) .", ". $cDB->EscTxt($this->member_from->getMemberId()) .", ". $cDB->EscTxt($this->member_id_to) .", ". $cDB->EscTxt($this->amount) .", ". $cDB->EscTxt($this->category->id) .", ". $cDB->EscTxt($this->description) .", ". $cDB->EscTxt($this->type) .");");
 
-		if(mysql_affected_rows() == 1) {
+		if(mysqli_affected_rows() == 1) {
 		
-			$this->trade_id = mysql_insert_id();	
+			$this->trade_id = mysqli_insert_id();	
 			$query = $cDB->Query("SELECT trade_date from ". DATABASE_TRADES ." WHERE trade_id=". $this->trade_id .";");
-			$row = mysql_fetch_array($query);
+			$row = mysqli_fetch_array($query);
 			$this->trade_date = $row[0];	
 			return true;
 		} else {
@@ -68,7 +68,7 @@ class cTrade {
 		//CT - efficiency - combine db calls. categories, feedback comes free!
 		$query = $cDB->Query("SELECT date_format(trade_date,'%Y-%m-%d'), status, trade_id, member_id_from, member_id_to, amount, t.description as description, type, c.description as category FROM ".DATABASE_TRADES." t left join t.category on t.category = c.category_id WHERE trade_id=". $cDB->EscTxt($trade_id) .";");
 		
-		if($row = mysql_fetch_array($query)) {		
+		if($row = mysqli_fetch_array($query)) {		
 			$this->ConstructTrade($row);
 /*
 			$feedback = new cFeedback;
@@ -94,7 +94,7 @@ class cTrade {
 		
 		//$query = $cDB->Query("SELECT date_format(trade_date,'%Y-%m-%d'), status, member_id_from, member_id_to, amount, description, type, category FROM ".DATABASE_TRADES." WHERE trade_id=". $cDB->EscTxt($trade_id) .";");
 		
-		//if($row = mysql_fetch_array($query)) {		
+		//if($row = mysqli_fetch_array($query)) {		
 			$this->trade_id = $array['trade_id'];
 			$this->trade_date = $array['trade_date'];
 			$this->status = $array['status'];
@@ -271,7 +271,7 @@ class cTradeGroup {
 
 		$i=0;
 
-		while($row = mysql_fetch_array($query)) // Each of our SQL results
+		while($row = mysqli_fetch_array($query)) // Each of our SQL results
 		{
 			//echo $row['balance'];
 			$this->trade[$i] = new cTrade;	
@@ -464,10 +464,10 @@ class cTradeStatsCT{
 	function cTradeStatsCT ($member_id, $from_date=LONG_LONG_AGO, $to_date=FAR_FAR_AWAY) {
 		global $cDB;
 		$query = $cDB->Query("SELECT COUNT(trade_date), SUM(amount), DATE_FORMAT(trade_date, '".SHORT_DATE_FORMAT."') FROM (SELECT trade_date, amount FROM ".DATABASE_TRADES." WHERE (member_id_from LIKE ". $cDB->EscTxt($member_id) ." OR member_id_to LIKE ". $cDB->EscTxt($member_id) .") AND trade_date > ". $cDB->EscTxt($from_date) ." AND trade_date < ". $cDB->EscTxt($to_date) ." AND NOT type='R' AND NOT status='R' ORDER BY trade_date DESC) as t1;");
-		if (!$query || mysql_num_rows($query)<1) // None found = none pending!
+		if (!$query || mysqli_num_rows($query)<1) // None found = none pending!
 			return;
 		// loop - should just be once
-		while($row = mysql_fetch_array($query)) {
+		while($row = mysqli_fetch_array($query)) {
 			$this->total_trades = $row[0];
 			$this->total_units = $row[1];
 			$this->most_recent = $row[2];
@@ -497,14 +497,14 @@ class cTradesPending {
 		$query = $cDB->query("SELECT * from trades_pending where (member_id_to=".$cDB->EscTxt($memberID)." or
 			member_id_from=".$cDB->EscTxt($memberID).") and status='O';");
 			
-		if (!$query || mysql_num_rows($query)<1) // None found = none pending!
+		if (!$query || mysqli_num_rows($query)<1) // None found = none pending!
 			return;
 			
-		$num_results = mysql_num_rows($query);
+		$num_results = mysqli_num_rows($query);
 		
 		for ($i=0;$i<$num_results;$i++) {
 			
-			$row = mysql_fetch_array($query);
+			$row = mysqli_fetch_array($query);
 		
 			// Is this - An Invoice TO memberID that hasn't yet been acted on?
 			if ($row["typ"]=="I" && $row["member_id_to"]==$memberID && $row["member_to_decision"]==1) {

@@ -59,7 +59,7 @@ function select_time()
     $result = $cDB->Query($sql);
 
     $selection_list = "";
-    while ($row = mysql_fetch_object($result))
+    while ($row = mysqli_fetch_object($result))
     {
         $selection_list .=
             "<option value=\"$row->trade_date\">$row->trade_date</option>";
@@ -173,7 +173,7 @@ function transfer_fee($tid, $trade_time)
     // batch of transfer later.
     $ts = time();
 
-    while ($row = mysql_fetch_object($result0))
+    while ($row = mysqli_fetch_object($result0))
     {
     		
     		if ( !in_array($row->member_id, $monthly_fee_exempt_list)) {

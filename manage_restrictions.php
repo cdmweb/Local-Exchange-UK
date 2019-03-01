@@ -19,7 +19,7 @@ $members  = array();
 		
 $i=0;
 
-while($row = mysql_fetch_array($query))
+while($row = mysqli_fetch_array($query))
 {
 			$members[$i] =$row;
 			
@@ -64,7 +64,7 @@ if ($_REQUEST["process"]) {
 			$query = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." set restriction=1 WHERE member_id=".$cDB->EscTxt($_REQUEST["ok"])."");
 			
 			if (!$query)
-				$output .= "Error: could not impose restrictions on this account.<p>MySQL Said: ".mysql_error();
+				$output .= "Error: could not impose restrictions on this account.<p>MySQL Said: ".mysqli_error();
 			else {
 				$output .= "Restrictions have been imposed 
 				on member id '".$_REQUEST["ok"]."'";
@@ -90,7 +90,7 @@ if ($_REQUEST["process"]) {
 			$query = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." set restriction=0 WHERE member_id=".$cDB->EscTxt($_REQUEST["restricted"])."");
 			
 			if (!$query)
-				$output .= "Error: could not lift restrictions on this account.<p>MySQL Said: ".mysql_error();
+				$output .= "Error: could not lift restrictions on this account.<p>MySQL Said: ".mysqli_error();
 			else {
 				$output .= "Restrictions have been lifted 
 				on member id '".$_REQUEST["restricted"]."'";

@@ -8,19 +8,19 @@ class cPerson
 	private $directory_list;
 	private $first_name;
 	private $last_name;
-	private $mid_name;
-	private $dob;
-	private $mother_mn;
+	//private $mid_name;
+	//private $dob;
+	//private $mother_mn;
 	private $email;
-	private $phone1_area;
+	//private $phone1_area;
 	private $phone1_number;
-	private $phone1_ext;
-	private $phone2_area;
-	private $phone2_number;
-	private $phone2_ext;
-	private $fax_area;
-	private $fax_number;
-	private $fax_ext;
+	//private $phone1_ext;
+	//private $phone2_area;
+	//private $phone2_number;
+	//private $phone2_ext;
+	//private $fax_area;
+	//private $fax_number;
+	//private $fax_ext;
 	private $address_street1;
 	private $address_street2;
 	private $address_city;
@@ -42,7 +42,7 @@ class cPerson
 
 		$duplicate_exists = $cDB->Query("SELECT NULL FROM ".DATABASE_PERSONS." WHERE member_id=". $cDB->EscTxt($this->member_id) ." AND first_name". $cDB->EscTxt2($this->first_name) ." AND last_name". $cDB->EscTxt2($this->last_name) ." AND mother_mn". $cDB->EscTxt2($this->mother_mn) ." AND mid_name". $cDB->EscTxt2($this->mid_name) ." AND dob". $cDB->EscTxt2($this->dob) .";");
 		
-		if($row = mysql_fetch_array($duplicate_exists)) {
+		if($row = mysqli_fetch_array($duplicate_exists)) {
 			$cErr->Error("Could not save new person. There is already a person in your account with the same name, date of birth, and mother's maiden name. If you received this error after pressing the Back button, try going back to the menu and starting again.");
 			include("redirect.php");
 		}
@@ -105,7 +105,7 @@ class cPerson
 		/*[chris]*/ // Added fetch personal profile data
 		$query = $cDB->Query("SELECT person_id, member_id, primary_member, directory_list, first_name, last_name, mid_name, dob, mother_mn, email, phone1_area, phone1_number, phone1_ext, phone2_area, phone2_number, phone2_ext, fax_area, fax_number, fax_ext, address_street1, address_street2, address_city, address_state_code, address_post_code, address_country, about_me, age, sex FROM ".DATABASE_PERSONS." WHERE person_id=". $cDB->EscTxt($who));
 		
-		if($row = mysql_fetch_array($query))
+		if($row = mysqli_fetch_array($query))
 		{
 			//pass it on
 			$this->ConstructPerson($row);		
@@ -127,19 +127,19 @@ class cPerson
         $this->setDirectoryList($array['directory_list']);
         $this->setFirstName($array['first_name']);
         $this->setLastName($array['last_name']);
-        $this->setMidName($array['mid_name']);
-        $this->setDob($array['dob']);
+        //$this->setMidName($array['mid_name']);
+        //$this->setDob($array['dob']);
         $this->setEmail($array['email']);
-        $this->setMotherMn($array['mother_mn']);
-        $this->setPhone1Area($array['phone1_area']);
+        //$this->setMotherMn($array['mother_mn']);
+        //$this->setPhone1Area($array['phone1_area']);
         $this->setPhone1Number($array['phone1_number']);
-        $this->setPhone1Ext($array['phone1_ext']);
-        $this->setPhone2Area($array['phone2_area']);
-        $this->setPhone2Number($array['phone2_number']);
-        $this->setPhone2Ext($array['phone2_ext']);
-        $this->setFaxArea($array['fax_area']);
-        $this->setFaxNumber($array['fax_number']);
-        $this->setPhone2Ext($array['fax_ext']);
+        //$this->setPhone1Ext($array['phone1_ext']);
+        //$this->setPhone2Area($array['phone2_area']);
+        //$this->setPhone2Number($array['phone2_number']);
+        //$this->setPhone2Ext($array['phone2_ext']);
+        //$this->setFaxArea($array['fax_area']);
+        //$this->setFaxNumber($array['fax_number']);
+        //$this->setFaxExt($array['fax_ext']);
         $this->setAddressStreet1($array['address_street1']);
         $this->setAddressStreet2($array['address_street2']);
         $this->setAddressCity($array['address_city']);
@@ -752,7 +752,7 @@ class cPerson
 		
 		unset($this->person_id);
 		
-		if (mysql_affected_rows() == 1) {
+		if (mysqli_affected_rows() == 1) {
 			return true;
 		} else {
 			$cErr->Error("Error deleting joint member.");

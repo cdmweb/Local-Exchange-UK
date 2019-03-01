@@ -147,7 +147,7 @@
 	
 	*income_ties.php
 	
-	*mysql_backup.php
+	*mysqli_backup.php
 	
 	*settings.php
 	

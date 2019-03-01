@@ -62,10 +62,10 @@ class cFeedback {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_FEEDBACK ."(feedback_date, status, member_id_author, member_id_about, trade_id, rating, comment) VALUES (now(), ". $cDB->EscTxt($this->status) .", ". $cDB->EscTxt($this->member_author->member_id) .", ". $cDB->EscTxt($this->member_about->member_id) .", ". $cDB->EscTxt($this->trade_id) .", ". $cDB->EscTxt($this->rating) .", ". $cDB->EscTxt($this->comment) .");");
 
-		if(mysql_affected_rows() == 1) {
-			$this->feedback_id = mysql_insert_id();	
+		if(mysqli_affected_rows() == 1) {
+			$this->feedback_id = mysqli_insert_id();	
 			$query = $cDB->Query("SELECT feedback_date from ". DATABASE_FEEDBACK ." WHERE feedback_id=". $this->feedback_id .";");
-			$row = mysql_fetch_array($query);
+			$row = mysqli_fetch_array($query);
 			$this->feedback_date = $row[0];	
 			return true;
 		} else {
@@ -78,7 +78,7 @@ class cFeedback {
 		
 		$query = $cDB->Query("SELECT feedback_date, ".DATABASE_FEEDBACK.".status, member_id_author, member_id_about, ".DATABASE_FEEDBACK.".trade_id, rating, comment, member_id_from, category FROM ".DATABASE_FEEDBACK.",". DATABASE_TRADES ." WHERE ".DATABASE_FEEDBACK.".trade_id=". DATABASE_TRADES .".trade_id AND feedback_id=". $cDB->EscTxt($feedback_id) .";");
 		
-		if($row = mysql_fetch_array($query)) {		
+		if($row = mysqli_fetch_array($query)) {		
 			$this->feedback_id = $feedback_id;		
 			$this->feedback_date = new cDateTime($row[0]);
 			$this->status = $row[1];
@@ -111,7 +111,7 @@ class cFeedback {
 		
 		$query = $cDB->Query("SELECT feedback_id FROM ". DATABASE_FEEDBACK ." WHERE trade_id=". $cDB->EscTxt($trade_id) ." AND member_id_author=". $cDB->EscTxt($member_id) .";");
 		
-		if($row = mysql_fetch_array($query))
+		if($row = mysqli_fetch_array($query))
 			return $row[0];
 		else
 			return false;
@@ -171,7 +171,7 @@ class cFeedbackGroup {
 		$query = $cDB->Query($query);
 		
 		$i=0;
-		while($row = mysql_fetch_array($query))
+		while($row = mysqli_fetch_array($query))
 		{
 			$this->feedback[$i] = new cFeedback;			
 			$this->feedback[$i]->LoadFeedback($row[0]);
@@ -277,9 +277,9 @@ class cFeedbackGroupCT extends cFeedbackGroup {
 		//echo $query;
 		
 		$query = $cDB->Query($query);
-		if(mysql_num_rows($query) < 1) return false;
+		if(mysqli_num_rows($query) < 1) return false;
 
-		while($row = mysql_fetch_array($query))
+		while($row = mysqli_fetch_array($query))
 		{
 			switch ($row['rating']) {
 				case POSITIVE:
@@ -324,10 +324,10 @@ class cFeedbackRebuttal {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_REBUTTAL ."(rebuttal_date, member_id, feedback_id, comment) VALUES (now(), ". $cDB->EscTxt($this->member_author->member_id) .", ". $cDB->EscTxt($this->feedback_id) .", ". $cDB->EscTxt($this->comment) .");");
 
-		if(mysql_affected_rows() == 1) {
-			$this->rebuttal_id = mysql_insert_id();	
+		if(mysqli_affected_rows() == 1) {
+			$this->rebuttal_id = mysqli_insert_id();	
 			$query = $cDB->Query("SELECT rebuttal_date from ". DATABASE_REBUTTAL ." WHERE rebuttal_id=". $cDB->EscTxt($this->rebuttal_id) .";");
-			$row = mysql_fetch_array($query);
+			$row = mysqli_fetch_array($query);
 			$this->rebuttal_date = $row[0];	
 			return true;
 		} else {
@@ -340,7 +340,7 @@ class cFeedbackRebuttal {
 		
 		$query = $cDB->Query("SELECT rebuttal_date, feedback_id, member_id, comment FROM ".DATABASE_REBUTTAL." WHERE rebuttal_id=". $cDB->EscTxt($rebuttal_id) .";");
 		
-		if($row = mysql_fetch_array($query)) {		
+		if($row = mysqli_fetch_array($query)) {		
 			$this->rebuttal_id = $rebuttal_id;		
 			$this->rebuttal_date = new cDateTime($row[0]);
 			$this->feedback_id = $row[1];
@@ -367,7 +367,7 @@ class cFeedbackRebuttalGroup {
 		$query = $cDB->Query("SELECT rebuttal_id FROM ".DATABASE_REBUTTAL." WHERE feedback_id=". $cDB->EscTxt($feedback_id) ." ORDER by rebuttal_date;");		
 	
 		$i=0;
-		while($row = mysql_fetch_array($query))
+		while($row = mysqli_fetch_array($query))
 		{
 			$this->rebuttals[$i] = new cFeedbackRebuttal;			
 			$this->rebuttals[$i]->LoadRebuttal($row[0]);

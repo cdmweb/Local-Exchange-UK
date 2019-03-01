@@ -178,9 +178,9 @@ switch($_REQUEST["action"]) {
 	
 		$result = $cDB->Query($q);
 		
-		if ($result && mysql_num_rows($result)>0) { // Trade Exists
+		if ($result && mysqli_num_rows($result)>0) { // Trade Exists
 			
-			$row = mysql_fetch_array($result);
+			$row = mysqli_fetch_array($result);
 			
 			// Do we have permission to act on this trade?
 			if ($row["member_id_from"]!=$member_id) {
@@ -221,9 +221,9 @@ switch($_REQUEST["action"]) {
 	
 		$result = $cDB->Query($q);
 		
-		if ($result && mysql_num_rows($result)>0) { // Trade Exists
+		if ($result && mysqli_num_rows($result)>0) { // Trade Exists
 			
-			$row = mysql_fetch_array($result);
+			$row = mysqli_fetch_array($result);
 			
 			// Do we have permission to act on this trade?
 			if ($row["member_id_from"]!=$member_id) {
@@ -264,9 +264,9 @@ switch($_REQUEST["action"]) {
 	
 		$result = $cDB->Query($q);
 		
-		if ($result && mysql_num_rows($result)>0) { // Trade Exists
+		if ($result && mysqli_num_rows($result)>0) { // Trade Exists
 			
-			$row = mysql_fetch_array($result);
+			$row = mysqli_fetch_array($result);
 			
 			// Do we have permission to act on this trade?
 			if ($row["member_id_to"]!=$member_id) {
@@ -309,9 +309,9 @@ switch($_REQUEST["action"]) {
 	
 		$result = $cDB->Query($q);
 		
-		if ($result && mysql_num_rows($result)>0) { // Trade Exists
+		if ($result && mysqli_num_rows($result)>0) { // Trade Exists
 			
-			$row = mysql_fetch_array($result);
+			$row = mysqli_fetch_array($result);
 			
 			// Do we have permission to act on this trade?
 			if ($row["member_id_from"]!=$member_id && $row["member_id_to"]!=$member_id) {
@@ -361,9 +361,9 @@ switch($_REQUEST["action"]) {
 	
 		$result = $cDB->Query($q);
 		
-		if ($result && mysql_num_rows($result)>0) { // Trade Exists
+		if ($result && mysqli_num_rows($result)>0) { // Trade Exists
 			
-			$row = mysql_fetch_array($result);
+			$row = mysqli_fetch_array($result);
 			
 			if ($row["status"]!='O') {
 				
@@ -447,9 +447,9 @@ switch($_REQUEST["action"]) {
 			
 			$list .= initTradeTable();
 			
-			for($i=0;$i<mysql_num_rows($result);$i++) {
+			for($i=0;$i<mysqli_num_rows($result);$i++) {
 				
-				$row = mysql_fetch_array($result);
+				$row = mysqli_fetch_array($result);
 				$list .= displayTrade($row,'P');
 			}
 			
@@ -472,9 +472,9 @@ switch($_REQUEST["action"]) {
 			
 			$list .= initTradeTable();
 			
-			for($i=0;$i<mysql_num_rows($result);$i++) {
+			for($i=0;$i<mysqli_num_rows($result);$i++) {
 				
-				$row = mysql_fetch_array($result);
+				$row = mysqli_fetch_array($result);
 				$list .= displayTrade($row,'I');
 			}
 			
@@ -503,9 +503,9 @@ switch($_REQUEST["action"]) {
 			
 			$list .= initTradeTable();
 			
-			for($i=0;$i<mysql_num_rows($result);$i++) {
+			for($i=0;$i<mysqli_num_rows($result);$i++) {
 				
-				$row = mysql_fetch_array($result);
+				$row = mysqli_fetch_array($result);
 				
 				$list .= displayTrade($row,'TBC');
 			}
@@ -534,9 +534,9 @@ switch($_REQUEST["action"]) {
 			
 			$list .= initTradeTable();
 			
-			for($i=0;$i<mysql_num_rows($result);$i++) {
+			for($i=0;$i<mysqli_num_rows($result);$i++) {
 				
-				$row = mysql_fetch_array($result);
+				$row = mysqli_fetch_array($result);
 				
 				$list .= displayTrade($row,'TBP');
 			}

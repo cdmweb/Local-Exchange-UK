@@ -121,7 +121,7 @@ function transfer_fee($tid)
     // This causes probs, results in trade_date = 0000000; because trade_date is set to auto in SQL?
     $ts = time();
 	
-    while ($row = mysql_fetch_object($result0))
+    while ($row = mysqli_fetch_object($result0))
     {
         if ( !in_array($row->member_id, $monthly_fee_exempt_list))
         {

@@ -14,7 +14,7 @@ $running_upgrade_script = true;
 include_once("includes/inc.global.php");
 
 //$query = $cDB->Query("SHOW VARIABLES LIKE 'have_innodb';");
-//$row = mysql_fetch_array($query);
+//$row = mysqli_fetch_array($query);
 //if($row[1] != "YES")	die("Your database does not have InnoDB support. See the installation instructions for more information about InnoDB. Installation aborted.");
 
 if($cDB->Query("SELECT * FROM " . DATABASE_MEMBERS))	die("Error - database already exists! If you want to create a new database delete the old one first. You may also get this error if you are trying to install the program and your database userid or password in inc.config.php is incorrect.");

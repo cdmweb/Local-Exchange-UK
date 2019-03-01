@@ -47,7 +47,7 @@ function select_time()
     $result = $cDB->Query($sql);
 
     $selection_list = "";
-    while ($row = mysql_fetch_object($result))
+    while ($row = mysqli_fetch_object($result))
     {
         $selection_list .=
             "<option value=\"$row->trade_date\">$row->trade_date</option>";
@@ -144,7 +144,7 @@ function transfer_fee($tid, $trade_time) {
    
     $result = $cDB->Query($sql);
 		
-		$row = mysql_fetch_array($result);
+		$row = mysqli_fetch_array($result);
 
     $monthly_fee = $row["amount"];
     $system_account_id = SYSTEM_ACCOUNT_ID;
@@ -170,7 +170,7 @@ function transfer_fee($tid, $trade_time) {
     // this transaction.  This is for the ease of identification of this
     // batch of transfer later.
  
-    while ($row = mysql_fetch_object($result0))
+    while ($row = mysqli_fetch_object($result0))
     {
     		
     		if ( !in_array($row->member_id, $monthly_fee_exempt_list)) {

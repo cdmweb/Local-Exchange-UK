@@ -107,12 +107,12 @@ class cSettings {
 		if (!$result)
 			return false;
 		
-		$num_results = mysql_num_rows($result);
-		//foreach $row = mysql_fetch_object($result)
+		$num_results = mysqli_num_rows($result);
+		//foreach $row = mysqli_fetch_object($result)
 		if ($num_results>0) {
 			
 			for ($i=0;$i<$num_results;$i++) {
-				$row = mysql_fetch_object($result);
+				$row = mysqli_fetch_object($result);
 				
 				//CT would like to get the strings vars typed - like boolean, string, etc
 				$this->strings[$row->name] = (!empty($row->current_value)) ? $row->current_value :  $row->default_value;
@@ -151,9 +151,9 @@ class cSettings {
 			$result = $cDB->Query("update settings set current_value=".$cDB->EscTxt($value)." where name=".$cDB->EscTxt($column)."");
 			
 			if (!$result)
-				$cErr->Error("Update failed ".mysql_error());
+				$cErr->Error("Update failed ".mysqli_error());
 
-				return "<font color=red>Update failed!</font>".mysql_error();
+				return "<font color=red>Update failed!</font>".mysqli_error();
 		}
 		
 		$this->getCurrent(); // Refresh settings in current memory with new updated settings

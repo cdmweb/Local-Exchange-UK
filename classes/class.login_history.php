@@ -21,7 +21,7 @@ class cLoginHistory {
                      last_failed_date, last_success_date FROM ".DATABASE_LOGINS.
                      " WHERE member_id=" . $cDB->EscTxt($member_id) . ";");
 		
-		if($row = mysql_fetch_array($query)) {	
+		if($row = mysqli_fetch_array($query)) {	
 			$this->member_id = $member_id;	
 			$this->total_failed = $row[0];
 			$this->consecutive_failures = $row[1];
@@ -52,7 +52,7 @@ class cLoginHistory {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_LOGINS ." (member_id, total_failed, consecutive_failures, last_failed_date, last_success_date) VALUES (". $cDB->EscTxt($this->member_id) .", ". $this->total_failed .", ". $this->consecutive_failures .", ". $cDB->EscTxt($this->last_failed_date) .", ". $cDB->EscTxt($this->last_success_date) .");");
 
-		if(mysql_affected_rows() == 1) {	
+		if(mysqli_affected_rows() == 1) {	
 			return true;
 		} else {
 			return false;  // Don't display error because it may just be the userid was wrong
@@ -90,7 +90,7 @@ class cLoginHistory {
 			return $this->SaveLoginHistory();
 		} else {
 			//$query = $cDB->Query("SELECT NULL FROM ". DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member_id) .";");
-			//if (!$row = mysql_fetch_array($query))
+			//if (!$row = mysqli_fetch_array($query))
 			//	return false;	// Userid must have been misspelled or didn't exist.
 			
 			$this->member_id = $member_id;
@@ -105,7 +105,12 @@ class cLoginHistory {
 	function CurrentTimestamp () { // TODO: Move to a new class (maybe "class.time_date.php")...
 											 // Also probably shouldn't depend on the default string format.
 		$date = getdate();
-		$now = $date["year"] . str_pad($date["mon"],2,"0","STR_PAD_LEFT") . str_pad($date["mday"],2,"0","STR_PAD_LEFT") . str_pad($date["hours"],2,"0","STR_PAD_LEFT") . str_pad($date["minutes"],2,"0","STR_PAD_LEFT") . str_pad($date["seconds"],2,"0","STR_PAD_LEFT");
+		$now = $date["year"] . 
+		str_pad($date["mon"], 2,"0",STR_PAD_LEFT) .
+		str_pad($date["mday"], 2,"0",STR_PAD_LEFT) . 
+		str_pad($date["hours"], 2,"0",STR_PAD_LEFT) . 
+		str_pad($date["minutes"], 2,"0",STR_PAD_LEFT) . 
+		str_pad($date["seconds"], 2,"0",STR_PAD_LEFT);
 		return $now;		
 	}
 	

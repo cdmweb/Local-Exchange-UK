@@ -9,7 +9,7 @@ class cInfo {
 			$query = $cDB->Query("SELECT * FROM cdm_pages where id=".$cDB->EscTxt($id)." limit 0,1");
 	
 			if ($query)
-				$row = mysql_fetch_array($query);
+				$row = mysqli_fetch_array($query);
 	
 			if ($row)
 				return $row;
@@ -27,11 +27,11 @@ class cInfo {
 			
 			$pgs = array();
 			
-			$num_results = mysql_num_rows($query);
+			$num_results = mysqli_num_rows($query);
 			
 			for ($i=0;$i<$num_results;$i++) {
 					
-					$row = mysql_fetch_array($query);	
+					$row = mysqli_fetch_array($query);	
 					$pgs[$i] = $row;
 			}
 			

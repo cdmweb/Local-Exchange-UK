@@ -7,7 +7,7 @@ $cUser->MustBeLevel(1);
 
 $query = $cDB->Query("SELECT sum(balance) from ". DATABASE_MEMBERS .";");
 		
-if($row = mysql_fetch_array($query)) {
+if($row = mysqli_fetch_array($query)) {
 		$balance = $row[0];
 }			
 			
@@ -121,7 +121,7 @@ if ($cUser->getMemberRole() > 1) { // if admin
 	$menuArray = array();
 	$menuArray[] = $p->MenuItemArray("Site settings", "settings.php");
 	$menuArray[] = $p->MenuItemArray("Edit or delete listing category", "category_choose.php");
-	$menuArray[] = $p->MenuItemArray("MySQL Backup", "mysql_backup.php");
+	$menuArray[] = $p->MenuItemArray("MySQL Backup", "mysqli_backup.php");
 	$menuHtml = $p->Menu($menuArray);
 	$title = $p->Wrap("System &amp; Reporting", "h3");
 	$list .= $p->Wrap($title . $menuHtml, "div", "col");

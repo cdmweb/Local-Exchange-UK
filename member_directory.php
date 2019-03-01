@@ -169,7 +169,7 @@ $query = $cDB->Query("SELECT
 //$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.mid_name as p2_mid_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.phone2_number as phone2_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number,p2.phone2_number as p2_phone2_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, m.member_id as member_id, m.account_type as account_type, m.account_type as account_type FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' order by m.member_id");
 $i=0;
 
-while($row = mysql_fetch_array($query)) // Each of our SQL results
+while($row = mysqli_fetch_array($query)) // Each of our SQL results
 {
 	//echo $row['balance'];
 	$member_list->members[$i] = new cMember;	

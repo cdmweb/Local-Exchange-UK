@@ -30,7 +30,7 @@ if($_REQUEST["mode"] == "admin") {
 
 $query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$member->getMemberId())." limit 0,1;");
 		
-$num_results = mysql_num_rows($query);
+$num_results = mysqli_num_rows($query);
 $mIMG = cMember::DisplayMemberImg($member->getMemberId());
 
 if ($mIMG!=false) {
@@ -70,11 +70,11 @@ function process_data ($values) {
 	$query = $cDB->Query("SELECT upload_date, type, title, filename, note FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt($name)." limit 0,1;");
 	
 	if ($query)
-		$num_results = mysql_num_rows($query);
+		$num_results = mysqli_num_rows($query);
 
 	if($num_results>0) { // Member already has a pic		
 	
-		$row = mysql_fetch_array($query);
+		$row = mysqli_fetch_array($query);
 		
 		$fileLoc = UPLOADS_PATH . stripslashes($row["filename"]);
 		

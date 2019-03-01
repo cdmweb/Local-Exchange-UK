@@ -501,13 +501,13 @@ class cMember
         $login_history = new cLoginHistory();
 //echo "SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';";
         $query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';");            
-        if($row = mysql_fetch_array($query)) {
+        if($row = mysqli_fetch_array($query)) {
             $login_history->RecordLoginSuccess($user);
             $this->DoLoginStuff($user, $row["password"]);   // using pass from db since it's encrypted, and $pass isn't, if it was entered in the browser.
             return true;
         } elseif (!$from_cookie) {
             $query = $cDB->Query("SELECT NULL FROM ".DATABASE_USERS." WHERE status = 'L' and member_id=". $cDB->EscTxt($user) .";");
-            if($row = mysql_fetch_array($query)) {
+            if($row = mysqli_fetch_array($query)) {
                 $cErr->Error("Your account has been locked due to too many unsuccessful login attempts. You will need to contact us to have your account unlocked.");
             } else {
                 $cErr->Error("Password or member id is incorrect.  Please try again, or go <A HREF=password_reset.php>here</A> to have your password reset.", ERROR_SEVERITY_INFO);
@@ -523,7 +523,7 @@ class cMember
 
 		$query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = ". $cDB->EscTxt($this->member_id) ." AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .");");	
 		
-		if($row = mysql_fetch_array($query))
+		if($row = mysqli_fetch_array($query))
 			return true;
 		else
 			return false;
@@ -696,6 +696,8 @@ class cMember
                 m.expire_date as expire_date, 
                 m.email_updates as email_updates, 
                 m.restriction as restriction, 
+                m.member_note as member_note, 
+                m.away_date as away_date, 
                 concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
                 p1.email as email, 
                 p2.email as p2_email, 
@@ -717,10 +719,10 @@ class cMember
                 p1.sex as sex, 
                 p1.about_me as about_me" . $extended_querystring . " FROM member m 
                 left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+                left JOIN (select * from person where person.primary_member = 'N' and directory_list= 'Y' Descending 1) p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
 
 
-		if($row = mysql_fetch_array($query))
+		if($row = $cDB->FetchArray($query))
 		{	
             //$cErr->Error(print_r($row, true));
 			$this->ConstructMember($row);
@@ -743,7 +745,7 @@ class cMember
 		$query = $cDB->Query("SELECT person_id FROM ".DATABASE_PERSONS." WHERE member_id=". $cDB->EscTxt($member) ." ORDER BY primary_member DESC, last_name, first_name");
 		$i = 0;
 		
-		while($row = mysql_fetch_array($query))
+		while($row = mysqli_fetch_array($query))
 		{
 			$this->person[$i] = new cPerson;			// instantiate new cPerson objects and load them
 			$this->person[$i]->LoadPerson($row[0]);
@@ -802,7 +804,7 @@ class cMember
                 left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
 
 
-        if($row = mysql_fetch_array($query))
+        if($row = mysqli_fetch_array($query))
         {   
             //$cErr->Error(print_r($row, true));
             $this->ConstructMember($row);
@@ -1022,7 +1024,7 @@ class cMember
 	
 		$query = $cDB->Query("SELECT NULL FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member_id));
 		
-		if($row = mysql_fetch_array($query))
+		if($row = $cDB->FetchArray($query))
 			return true;
 		else
 			return false;
@@ -1058,11 +1060,11 @@ class cMember
         $query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID)." limit 0,1;");
         //$query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID));
         
-        $num_results = mysql_num_rows($query);
+        $num_results = mysqli_num_rows($query);
         
         if ($num_results>0) {
             
-            $row = mysql_fetch_array($query);
+            $row = mysqli_fetch_array($query);
             $imgLoc = UPLOADS_PATH . stripslashes($row["filename"]);
     
             return  "<img src='".$imgLoc."'>";    
@@ -1229,7 +1231,7 @@ class cMember
 	
 		$query = $cDB->Query("SELECT max(trade_date) FROM ". DATABASE_TRADES ." WHERE member_id_to=". $cDB->EscTxt($this->member_id) ." OR member_id_from=". $cDB->EscTxt($this->member_id) .";");
 		
-		$row = mysql_fetch_array($query);
+		$row = $cDB->FetchArray($query);
 		
 		if($row[0] != "")
 			$last_trade = new cDateTime($row[0]);
@@ -1244,7 +1246,7 @@ class cMember
 	
 		$query = $cDB->Query("SELECT max(posting_date) FROM ". DATABASE_LISTINGS ." WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
 		
-		$row = mysql_fetch_array($query);
+		$row = $cDB->FetchArray($query);
 		
 		if($row[0] != "")
 			$last_update = new cDateTime($row[0]);
@@ -1298,7 +1300,7 @@ class cMemberGroup {
             ORDER BY all_names");
         
         $i=0;
-        while($row = mysql_fetch_array($query))
+        while($row = $cDB->FetchArray($query))
         {
             $this->members[$i] = new cMember;           
             $this->members[$i]->ConstructMember($row);
@@ -1484,7 +1486,7 @@ class cBalancesTotal {
 		
 		$query = $cDB->Query("SELECT sum(balance) from ". DATABASE_MEMBERS .";");
 		
-		if($row = mysql_fetch_array($query)) {
+		if($row = $cDB->FetchArray($query)) {
 			$this->balance = $row[0];
 			
 			if($row[0] == 0)
@@ -1510,7 +1512,7 @@ class cIncomeTies extends cMember {
 		if (!$result)
 			return false;
 		
-		$row = mysql_fetch_object($result);
+		$row = mysqli_fetch_object($result);
 		
 		return $row;
 	}
@@ -1597,7 +1599,7 @@ class cIncomeTies extends cMember {
 //         //$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, p1.age as age, p1.about_me as about_me, m.member_id as member_id, m.account_type as account_type, DATE_FORMAT(join_date, '".SHORT_DATE_FORMAT."') as join_date, DATE_FORMAT(expire_date, '".SHORT_DATE_FORMAT."') as expire_date FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' and m.member_id = '{$member}' ");
 //         //$query = $cDB->Query("SELECT member_id, join_date, expire_date, away_date, account_type, email_updates, balance, confirm_payments, restriction FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member));
         
-//         if($row = mysql_fetch_array($query))
+//         if($row = mysqli_fetch_array($query))
 //         {       
 //             //$cErr->Error(print_r($row, true));
 //             $this->ConstructMember($row);
@@ -1682,7 +1684,7 @@ class cMemberUser extends cMember {
                 FROM member m 
                 where m.member_id=". $cDB->EscTxt($member));
     */
-        if($row = mysql_fetch_array($query))
+        if($row = mysqli_fetch_array($query))
         {       
             $this->ConstructMember($row);
             return true;

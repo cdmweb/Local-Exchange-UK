@@ -29,10 +29,10 @@ class cLogEntry {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_LOGGING ." (admin_id, category, action, ref_id, log_date, note) VALUES (". $cDB->EscTxt($this->admin_id) .", ". $cDB->EscTxt($this->category) .", ". $cDB->EscTxt($this->action) .", ". $cDB->EscTxt($this->ref_id) .", now(), ". $cDB->EscTxt($this->note) .");");
 
-		if(mysql_affected_rows() == 1) {
-			$this->log_id = mysql_insert_id();	
+		if(mysqli_affected_rows() == 1) {
+			$this->log_id = mysqli_insert_id();	
 			$query = $cDB->Query("SELECT log_date from ". DATABASE_LOGGING ." WHERE log_id=". $this->log_id .";");
-			$row = mysql_fetch_array($query);
+			$row = mysqli_fetch_array($query);
 			$this->log_date = $row[0];	
 			return true;
 		} else {
@@ -52,7 +52,7 @@ class cLogStatistics {
 	
 		$query = $cDB->Query("SELECT max(log_date) FROM ". DATABASE_LOGGING ." WHERE category=". $cDB->EscTxt($category) . $exclusions .";");
 		
-		if($row = mysql_fetch_array($query))	
+		if($row = mysqli_fetch_array($query))	
 			return new cDateTime($row[0]);
 		else
 			return false;

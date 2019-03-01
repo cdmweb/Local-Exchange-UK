@@ -30,7 +30,7 @@ class cUpload {
 		
 		$query = $cDB->Query("SELECT null from ". DATABASE_UPLOADS ." WHERE filename ='".$_FILES['userfile']['name']."';");
 		
-		if($row = mysql_fetch_array($query)) {
+		if($row = mysqli_fetch_array($query)) {
 			$cErr->Error("A file with this name already exists on the server.");
 			return false;
 		}		
@@ -38,10 +38,10 @@ class cUpload {
 		if(move_uploaded_file($_FILES['userfile']['tmp_name'], UPLOADS_PATH . $this->filename)) {
 			$insert = $cDB->Query("INSERT INTO ". DATABASE_UPLOADS ." (type, title, filename, note) VALUES (". $cDB->EscTxt($this->type) .", ". $cDB->EscTxt($this->title) .", ". $cDB->EscTxt($this->filename) .", ". $cDB->EscTxt($this->note) .");");
 						
-			if(mysql_affected_rows() == 1) {
-				$this->upload_id = mysql_insert_id();	
+			if(mysqli_affected_rows() == 1) {
+				$this->upload_id = mysqli_insert_id();	
 				$query = $cDB->Query("SELECT upload_date FROM ".DATABASE_UPLOADS." WHERE  upload_id=". $this->upload_id.";");
-				if($row = mysql_fetch_array($query))
+				if($row = mysqli_fetch_array($query))
 					$this->upload_date = $row[0];					
 				return true;
 			} else {
@@ -59,7 +59,7 @@ class cUpload {
 			
 		$query = $cDB->Query("SELECT upload_date, type, title, filename, note FROM ".DATABASE_UPLOADS." WHERE upload_id=". $upload_id.";");
 		
-		if($row = mysql_fetch_array($query)) {		
+		if($row = mysqli_fetch_array($query)) {		
 			$this->upload_id = $upload_id;
 			$this->upload_date = new cDateTime($row[0]);
 			$this->type = $row[1];		
@@ -95,7 +95,7 @@ class cUpload {
 		
 		if(unlink(UPLOADS_PATH . $this->filename)) {
 			$delete = $cDB->Query("DELETE FROM ". DATABASE_UPLOADS ." WHERE upload_id = ". $this->upload_id .";");
-			if(mysql_affected_rows() == 1) {
+			if(mysqli_affected_rows() == 1) {
 				return true;
 			} else {
 				$cErr->Error("File was deleted but could not delete row from database.  The row will have to removed manually.  Please contact your systems administrator.");
@@ -129,7 +129,7 @@ class cUploadGroup {
 		$query = $cDB->Query("SELECT upload_id FROM ".DATABASE_UPLOADS." WHERE type=". $cDB->EscTxt($this->type) ." ORDER BY upload_date DESC;");
 		
 		$i = 0;				
-		while($row = mysql_fetch_array($query)) {
+		while($row = mysqli_fetch_array($query)) {
 			$this->uploads[$i] = new cUpload;			
 			$this->uploads[$i]->LoadUpload($row[0]);
 			$i += 1;
@@ -174,7 +174,7 @@ class cUploadGroupCT extends cUploadGroup {
 		
 		
 		$i = 0;				
-		while($row = mysql_fetch_array($query)) {
+		while($row = mysqli_fetch_array($query)) {
 			$this->uploads[$i] = new cUpload;			
 			$this->uploads[$i]->ConstructUpload ($row);
 			$i += 1;
