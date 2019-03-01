@@ -44,7 +44,8 @@ define ("DATABASE_PASSWORD","05dbI?uWkWBy");
 //define ("DATABASE_NAME","clarat2_localexchange");
 // local localexchange-1.02;
 define ("DATABASE_NAME","localexchange-1.02");
-define ("DATABASE_SERVER","localhost:8889/"); // often "localhost"
+define ("DATABASE_SERVER","localhost"); // often "localhost"
+define ("DATABASE_PORT","8889"); 
 
 /**********************************************************/
 /********************* SITE NAMES *************************/
@@ -121,11 +122,6 @@ define ("EMAIL_ADMIN","admin@camlets.org.uk");
 
 define ("PHONE_ADMIN","360-321-1234"); // an email address may be substituted...
 
-// What should appear at the front of all pages?
-// Titles will look like "PAGE_TITLE_HEADER - PAGE_TITLE", or something 
-// like "Local Exchange - Member Directory";
-//define ("PAGE_TITLE_HEADER", "LETS");
-
 // What keywords should be included in all pages?
 define ("SITE_KEYWORDS", "local currency,mutual credit,lets,exchange,". SITE_LONG_TITLE ."");
 
@@ -141,18 +137,9 @@ define ("HOME_LOGO", "localx_black.png");
 // Picture appearing left of logo on Home Page
 define ("HOME_PIC", "localx_home.png");
 
-// What content should be in the site header and footer?
-//CT: todo - make nice
-
-//define ("PAGE_HEADER_CONTENT", "<div class=\"masthead\"><a href=\"index.php\" class=\"logo\"><img src=\"http://".HTTP_BASE."/images/". HEADER_LOGO ."\" alt=\"". SITE_SHORT_TITLE . " \"></a><div class=\"title\"><h1><a href=\"index.php\">" .  SITE_SHORT_TITLE ."</a></h1><div class=\"motto\">" .  SITE_MOTTO . "</div></div></div>");
-
-//define ("PAGE_FOOTER_CONTENT", "<p align=\"center\"><strong><a href=\"" . HTTP_BASE ."\">". SITE_LONG_TITLE ." </strong><br />Licensed under the <a href=\"http://www.gnu.org/copyleft/gpl.html\">GPL</a> &#8226; Local Exchange UK Ver. ".LOCALX_VERSION." <a href=\"" . HTTP_BASE ."/info/credits.php\">Credits</a></p>");
-
-
-
 /**********************************************************/
 /**************** DEFINE SIDEBAR MENU *********************/
-
+//CT move to template
 $SIDEBAR = array (
 	array("Home","index.php"),
 	array("Information", "pages.php?id=7"), // old style info pages
@@ -280,7 +267,7 @@ define ("FAILED_LOGIN_LIMIT", 10);
 // Are magic quotes on?  Site has not been tested with magic_quotes_runtime on, 
 // so if you feel inclined to change this setting, let us know how it goes :-)
 define ("MAGIC_QUOTES_ON",false);
-set_magic_quotes_runtime (0);
+//set_magic_quotes_runtime (0);
 
 // CSS-related settings.  If you'r looking to change colors, 
 // best to edit the CSS rather than add to this...

@@ -57,7 +57,7 @@ define("WEEKLY_LISTING_UPDATES","W"); // Logging event category - System Event
 define("MONTHLY_LISTING_UPDATES","M"); // Logging event category - System Event
 
 /*********************************************************/
-define("LOCALX_VERSION", "1.01.fork-claratee-1");
+define("LOCALX_VERSION", "2.0.alpha-claratee-1");
 
 /**********************************************************/
 /***************** DATABASE VARIABLES *********************/
@@ -93,7 +93,8 @@ $global = ""; 	// $global lets other includes know that
 include_once("inc.config.php");
 
 /* Initial session handling code starts */
-require_once("session_handler.php");
+//CT not writing to db - doesnt
+//require_once("session_handler.php");
 session_name("LOCAL_EXCHANGE");
 session_start();
 /* Initial session handling code ends */
