@@ -7,7 +7,7 @@ $cUser->MustBeLevel(1);
 
 $query = $cDB->Query("SELECT sum(balance) from ". DATABASE_MEMBERS .";");
 		
-if($row = mysqli_fetch_array($query)) {
+if($row = $cDB->FetchArray($query)) {
 		$balance = $row[0];
 }			
 			

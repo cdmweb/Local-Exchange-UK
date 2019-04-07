@@ -1,10 +1,9 @@
 <?php
 include_once("includes/inc.global.php");
-
-if (isset($_GET["action"]))
+if (!empty($_GET["action"]))
 	$action = $_GET["action"];
 
-if (isset($_POST["action"]))
+if (!empty($_POST["action"]))
 	$action = $_POST["action"];
 
 if ($action=="logout")
@@ -14,15 +13,15 @@ if ($action=="logout")
 
 if ($action=="login")
 {
-	if (isset($_POST["location"]))
+	if (!empty($_POST["location"]))
 		$redir_url = $_POST["location"];
 
-	$user="";
-	$pass="";
-	if (isset($_POST["user"]))
+	if (!empty($_POST["user"])) {
 		$user = $_POST["user"];
-
-	if (isset($_POST["pass"]))
+	} else{
+		$cErr->Error("Please enter a user name to log in.");
+	}
+	if (!empty($_POST["pass"]))
 		$pass = $_POST["pass"];
 
 	if ($user=="" || $pass=="")
@@ -32,10 +31,11 @@ if ($action=="login")
 			$cErr->Error("Please enter a user name to log in.");
 		} 
 		if (empty($pass)) {
-			$cErr->Error("Please enter a password to log on with this account.  If you've forgotten your password, you can request a new one.");
+			$cErr->Error("Please enter a password to log on with this account.");
 		}
 
 	} else {
+		//
 		$cUser->Login($user,$pass);
 	}
 

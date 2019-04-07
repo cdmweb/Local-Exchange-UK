@@ -12,9 +12,7 @@ class cDatabase
 	var $count_connection;
 	var $count_query;
 
-
-	function Database()
-	{
+	function Database() {
 		$this->isConnected = false;
 		//CT init counters
 		$this->count_connection = 0;
@@ -81,9 +79,10 @@ class cDatabase
 
 		//CT: why is this not a resource?
 		//echo(gettype($ret));
+		$retmessage ="";
 		if(gettype($ret) == "resource") {
 			//ct debug
-			$retmessage = "| R: " . mysqli_num_rows($ret);
+			$retmessage = "| R: " . mysqli_num_rows($this->db_link);
 		} 
 
 		$this->count_query++;
@@ -100,12 +99,20 @@ class cDatabase
 
 	function FetchArray($thequery)
 	{
-		return mysqli_fetch_array($this->$db_link, $thequery);
+		if(empty($thequery)) return false;
+		//potential backward compatibility 
+		return mysqli_fetch_array($thequery);
 	}
 
 	function FetchObject($thequery)
 	{
+		if(empty($thequery)) return false;
 		return mysqli_fetch_object($this->$db_link, $thequery);
+	}
+
+	function AffectedRows()
+	{
+		return mysqli_affected_rows($this->$db_link);
 	}
 
 	function NumRows($thequery)
@@ -113,9 +120,9 @@ class cDatabase
 		if (!$this->isConnected)
 			$this->Connect();
 
-		$result = mysqli_query($thequery);
+		$result = $this->Query($thequery);
 
-		return mysqli_num_rows($result);
+		return mysqli_num_rows($this->$db_link);
 	}
 
 	function MakeSimpleTable($theQuery)
@@ -183,33 +190,15 @@ class cDatabase
 		
 		global $cUser,$allowedHTML;
 		
-		if (STRIP_JSCRIPT==true) { // Strip any obvious JavaScript
-		
-			$var = str_replace(array('javascript:','<script>','< script','</script'),' ',$var);
-		}
-		
-		if ($cUser->getMemberRole()>=HTML_PERMISSION_LEVEL) // User has free reign to submit any and all HTML
-			return $var;
-
-		// This next bit is messy but ProcessHTMLTag works on the assumption of a 2-dimensional array so we have to convert our existing 1-dimensional array
-		// Would be tidier to rewrite ProcessHTMLTag to work with 1-dimensional arrays but for now this will do
-		$allow = array();
-		
-		if ($allowedHTML) {
-			
-			foreach($allowedHTML as $tag) {
-				
-				$allow[$tag] = $tag;
-			}
-		}
+		// ct using the htmlpurifier library
+		$config = HTMLPurifier_Config::createDefault();
+		$purifier = new HTMLPurifier($config);
+		$clean_html = $purifier->purify($var);
 	
-		// Screen all the tags in this $var
-		//CT: need to replace - not sure how yet
-		$var = preg_replace("/<(.*?)>/e","cDatabase::ProcessHTMLTag(StripSlashes('\\1'), \$allow)",$var);
-		//$var = preg_replace_callback("/<(.*?)>/e","cDatabase::ProcessHTMLTag(StripSlashes('\\1'), \$allow)",$var);
-			
 		return $var;
 	}
+
+	
 	
 	/* Takes an individual HTML tag and checks it
 			$allowed - an Array containing exceptions (e.g. em, i) */
@@ -254,38 +243,10 @@ class cDatabase
 		}
 	}
 	
-/*
- * Warning on mysqli_escape_string()
- *
- * This function will escape the unescaped_string, so that it is safe to place
- * it in a mysqli_query(). This function is deprecated.
- *
- * This function is identical to mysqli_real_escape_string() except that
- * mysqli_real_escape_string() takes a connection handler and escapes the string 
- * according to the current character set. mysqli_escape_string() does not take a
- * connection argument and does not respect the current charset setting. 
- *
- * Despite this warning, mysqli_real_escape_string() was not used becuase it
- * requires a database connection which is not always present when EscTxt() or
- * EscTxt2() is called.
- */
-
+// CT cleanup - just use mysqli_real_escape_string  
+	
     function EscTxt($text) {
-    		
-    		// An optional security step in case someone tries to put something 'evil' in our SQL
-    		$text = cDatabase::ScreenHTML($text);
-    		
-        if( !empty($text)) {
-            if(get_magic_quotes_gpc()) {
-                $text = stripslashes($text);
-            }
-
-            return "'" . mysqli_real_escape_string($this->db_link, $text) . "'";
-        } else if(is_numeric($text)) {
-            return "'$text'";
-        } else {
-            return "NULL";
-        }
+    	return mysqli_real_escape_string($this->db_link, $text);
     }
 
 
@@ -305,10 +266,7 @@ class cDatabase
 
 
 	function UnEscTxt($text) {
-		if(MAGIC_QUOTES_ON)
-			return $text;
-		else
-			return stripslashes($text);
+		return stripslashes($text);
 	}	
 
 

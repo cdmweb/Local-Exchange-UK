@@ -1,6 +1,6 @@
 <?php
 
-if (!isset($global))
+if (empty($global))
 {
 	die(__FILE__." was included without inc.global.php being included first.  Include() that file first, then you can include ".__FILE__);
 }
@@ -11,7 +11,7 @@ class cBackup {
 	var $all_tables; // an array of all table names
 	var $workbook; // an object of class Spreadsheet_Excel_Writer;
 	
-	function cBackup() {
+	function  __construct() {
 		global $cUser, $cDB;
 		
 		$this->workbook = new Spreadsheet_Excel_Writer();
@@ -27,7 +27,7 @@ class cBackup {
 	
 		$query = $cDB->Query("DESC ". $table_name);
 		$i=0;
-		while($row = mysqli_fetch_array($query)) {
+		while($row = $cDB->FetchArray($query)) {
 			$worksheet->write(0, $i, $row[0]);			
 			$field_names[$i] = $row[0];
 			$i += 1;
@@ -46,7 +46,7 @@ class cBackup {
 			$query = $cDB->Query("SELECT * FROM ". $table_name .";");
 			
 			$row_num=1;
-			while($row = mysqli_fetch_array($query)) {
+			while($row = $cDB->FetchArray($query)) {
 				$col_num=0;
 				foreach ($field_names as $field) {
 					$worksheet->write($row_num, $col_num, $row[$field]);

@@ -21,7 +21,7 @@ class cLoginHistory {
                      last_failed_date, last_success_date FROM ".DATABASE_LOGINS.
                      " WHERE member_id=" . $cDB->EscTxt($member_id) . ";");
 		
-		if($row = mysqli_fetch_array($query)) {	
+		if($row = $cDB->FetchArray($query)) {	
 			$this->member_id = $member_id;	
 			$this->total_failed = $row[0];
 			$this->consecutive_failures = $row[1];
@@ -52,7 +52,7 @@ class cLoginHistory {
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_LOGINS ." (member_id, total_failed, consecutive_failures, last_failed_date, last_success_date) VALUES (". $cDB->EscTxt($this->member_id) .", ". $this->total_failed .", ". $this->consecutive_failures .", ". $cDB->EscTxt($this->last_failed_date) .", ". $cDB->EscTxt($this->last_success_date) .");");
 
-		if(mysqli_affected_rows() == 1) {	
+		if($cDB->AffectedRows() == 1) {	
 			return true;
 		} else {
 			return false;  // Don't display error because it may just be the userid was wrong

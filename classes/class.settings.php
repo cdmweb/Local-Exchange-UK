@@ -46,6 +46,11 @@ class cSettings {
         $this->strings = $array;
     } 
 
+    public function setString($name, $value)
+    {
+        $this->strings[$name]=$value;
+    } 
+
 
 	// Get and store current site settings
 	public function getCurrent() {
@@ -120,7 +125,11 @@ class cSettings {
 			}
 		
 		}
-		
+		//add other settings
+		$this->setString("HTTP_BASE", HTTP_BASE);
+		$this->setString("IMAGES_PATH", IMAGES_PATH);
+		$this->setString("STYLES_PATH", STYLES_PATH);
+		$this->setString("LOCALX_VERSION", LOCALX_VERSION);	
 	}
 	
 	public function split_options($wh) {

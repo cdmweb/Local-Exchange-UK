@@ -11,7 +11,7 @@ include("includes/inc.forms.validation.php");
 //
 // Define form elements
 //
-$member = new cMember;
+$member = new cMemberConcise;
 
 if($cUser->member_id == "ADMIN") {
 	$p->DisplayPage("I'm sorry, you cannot record exchanges while logged in as the ADMIN account.  This is a special account for administration purposes only.<p>To create member accounts go to the <a href=admin_menu.php>Administration menu</a>.");	
@@ -21,7 +21,7 @@ if($cUser->member_id == "ADMIN") {
 if($_REQUEST["mode"] == "admin") {
 	$cUser->MustBeLevel(1);
 	$member->LoadMember($_REQUEST["member_id"]);
-	$p->page_title .= " for ". $member->getAllNames();
+	$p->page_title .= " for ". $member->getDisplayName();
 } else {
 	$cUser->MustBeLoggedOn();
 	$member = $cUser;

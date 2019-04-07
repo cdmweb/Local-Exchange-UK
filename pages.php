@@ -16,7 +16,7 @@ if ($_GET["destroySess"]==1) {
 	exit;
 }
 
-$pg = cInfo::LoadOne($_REQUEST["id"]);
+$pg = (new cInfo)->LoadOne($_REQUEST["id"]);
 
 if ($pg["permission"]==3) // Admin
 	$cUser->MustBeLevel(2);

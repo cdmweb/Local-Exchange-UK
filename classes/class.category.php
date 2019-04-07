@@ -13,7 +13,7 @@ class cCategory
 	var $parent;
 	var $description;
 	
-	function cCategory($description=null, $parent=null) {
+	function  __construct($description=null, $parent=null) {
 		if($description) {
 			$this->description = $description;
 			$this->parent = $parent;
@@ -47,12 +47,12 @@ class cCategory
 		// select description for this code
 		$query = $cDB->Query("SELECT parent_id, description FROM ".DATABASE_CATEGORIES." WHERE category_id=". $cDB->EscTxt($id) .";");
 		
-		if($row = mysqli_fetch_array($query)) {		
+		if($row = $cDB->FetchArray($query)) {		
 			$this->id = $id;
 			$this->parent = $row[0];
 			$this->description = $row[1];
 		} else {
-			$cErr->Error("There was an error accessing category code '".$id."'.  Please try again later.");
+			$cErr->Error("There was an error accessing category code '".$id."'.");
 			include("redirect.php");
 		}			
 	}
@@ -103,7 +103,7 @@ class cCategoryList {
 		}
 		
 		$i = 0;
-		while($row = mysqli_fetch_array($query))
+		while($row = $cDB->FetchArray($query))
 		{
 			$this->category[$i] = new cCategory;
 			$this->category[$i]->LoadCategory($row[0]);

@@ -11,24 +11,21 @@ $newsletters = new cUploadGroup("N");
 $newsletters->LoadUploadGroup();
 
 $i=0;
-
-foreach($newsletters->uploads as $newsletter) {
-	if($i == 0) {
-		$i = 1;
-		$output .= '<B>Latest Newsletter:</B> '. $newsletter->DisplayURL();
-	} else {
-		if($i == 1) {
-			 $output .= '<P><BR><B>Archives:</B><BR><UL>';
-			 $i = 2;
-		}
-		$output .= '<LI>'. $newsletter->DisplayURL() .'</LI>';
-	}
+$cErr->Error(print_r($newsletters, true));
+while($newsletter = $newsletters->uploads){
+	
+	// if($i == 0) {
+	// 	$i++;
+	// 	$output .= "<p><strong>Latest Newsletter:</strong> {$newsletter->DisplayURL()}</p>
+	// 				<h3>Archives</h3>
+	// 				<ul>
+	// 				";
+	// } 
+	// else {
+	// 	$output .= "<li>{$newsletter->DisplayURL()}</li>";
+	// }
 }
-
-if ($i == 0)
-	$output .= "No newsletters have yet been posted.";
-else
-	$output .= "</UL>";
+$output .= ($i == 0) ? "<p>No newsletters found.</p>" : "</ul>";
 
 $p->DisplayPage($output);
 

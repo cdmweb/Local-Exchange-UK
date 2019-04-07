@@ -28,7 +28,7 @@ class cError
 	{
 		$this->arrErrors = array();
 
-		if (isset($_SESSION["errors_saved"]))
+		if (!empty($_SESSION["errors_saved"]))
 		{
 			$this->arrErrors = $_SESSION["errors_saved"];
 			unset ($_SESSION["errors_saved"]);	// don't want the errors to keep appearing...

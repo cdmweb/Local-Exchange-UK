@@ -138,23 +138,6 @@ define ("HOME_LOGO", "localx_black.png");
 define ("HOME_PIC", "localx_home.png");
 
 /**********************************************************/
-/**************** DEFINE SIDEBAR MENU *********************/
-//CT move to template
-$SIDEBAR = array (
-	array("Home","index.php"),
-	array("Information", "pages.php?id=7"), // old style info pages
-// [CDM] uncomment line below to activate new style info pages 	
-//  array("Information","pages.php?id=1"),
-	array("News &amp; events","pages.php?id=84"),
-	array("Offered","listings_found.php?type=Offer&keyword=&category=0&timeframe=14"),
-	array("Wanted","listings_found.php?type=Want&keyword=&category=0&timeframe=14"),
-	array("Member directory","member_directory.php"),
-	array("Contact us","contact.php"),
-	array("",""),
-	array("My profile","member_profile_all_in_one.php"),
-	array("My trades","exchange_menu.php"));
-
-/**********************************************************/
 /**************** DEFINE SITE SECTIONS ********************/
 
 define ("EXCHANGES",0);

@@ -92,6 +92,12 @@ $global = ""; 	// $global lets other includes know that
 
 include_once("inc.config.php");
 
+/* ct third party cleaner for html - prevent xss atttack. */
+require_once $_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL . '/vendor/htmlpurifier/library/HTMLPurifier.auto.php';
+
+
+
+
 /* Initial session handling code starts */
 //CT not writing to db - doesnt
 //require_once("session_handler.php");

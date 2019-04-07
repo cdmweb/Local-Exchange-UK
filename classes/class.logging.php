@@ -14,7 +14,7 @@ class cLogEntry {
 	var $ref_id; // usually refences a trade_id, feedback_id, or similar
 	var $note;
 	
-	function cLogEntry ($category, $action, $ref_id, $note=null) {
+	function __construct ($category, $action, $ref_id, $note=null) {
 		global $cUser;
 	
 		$this->category = $category;
@@ -28,16 +28,17 @@ class cLogEntry {
 		global $cDB, $cErr;
 		
 		$insert = $cDB->Query("INSERT INTO ". DATABASE_LOGGING ." (admin_id, category, action, ref_id, log_date, note) VALUES (". $cDB->EscTxt($this->admin_id) .", ". $cDB->EscTxt($this->category) .", ". $cDB->EscTxt($this->action) .", ". $cDB->EscTxt($this->ref_id) .", now(), ". $cDB->EscTxt($this->note) .");");
-
-		if(mysqli_affected_rows() == 1) {
+		/*
+		if(!empty(mysqli_affected_rows($cDB->db_link))) {
 			$this->log_id = mysqli_insert_id();	
 			$query = $cDB->Query("SELECT log_date from ". DATABASE_LOGGING ." WHERE log_id=". $this->log_id .";");
-			$row = mysqli_fetch_array($query);
+			$row = $cDB->FetchArray($query);
 			$this->log_date = $row[0];	
 			return true;
 		} else {
 			return false;
-		}		
+		}	
+		*/	
 	}
 }
 
@@ -52,7 +53,7 @@ class cLogStatistics {
 	
 		$query = $cDB->Query("SELECT max(log_date) FROM ". DATABASE_LOGGING ." WHERE category=". $cDB->EscTxt($category) . $exclusions .";");
 		
-		if($row = mysqli_fetch_array($query))	
+		if($row = $cDB->FetchArray($query))	
 			return new cDateTime($row[0]);
 		else
 			return false;
@@ -68,7 +69,7 @@ class cSystemEvent {
 	var $event_type; // See inc.global.php for constants used in this field
 	var $event_interval; // See inc.config.php for interval settings
 	
-	function cSystemEvent ($event_type, $event_interval=null) {
+	function __construct ($event_type, $event_interval=null) {
 		global $SYSTEM_EVENTS;
 		$this->event_type = $event_type;
 		
@@ -81,9 +82,8 @@ class cSystemEvent {
 	function TimeForEvent () {
 		$logs = new cLogStatistics;
 		$last_event = $logs->MostRecentLog($this->event_type);
-		if($last_event->MinutesAgo() >= $this->event_interval)
-			return true;
-		elseif ($last_event == "") // Never run before, so now's as good a time as any
+	
+		if(empty($last_event) or ($last_event->MinutesAgo() >= $this->event_interval))
 			return true;
 		else
 			return false;

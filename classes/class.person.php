@@ -8,19 +8,19 @@ class cPerson
 	private $directory_list;
 	private $first_name;
 	private $last_name;
-	//private $mid_name;
-	//private $dob;
-	//private $mother_mn;
+	private $mid_name;
+	private $dob;
+	private $mother_mn;
 	private $email;
-	//private $phone1_area;
+	private $phone1_area;
 	private $phone1_number;
-	//private $phone1_ext;
-	//private $phone2_area;
-	//private $phone2_number;
-	//private $phone2_ext;
-	//private $fax_area;
-	//private $fax_number;
-	//private $fax_ext;
+	private $phone1_ext;
+	private $phone2_area;
+	private $phone2_number;
+	private $phone2_ext;
+	private $fax_area;
+	private $fax_number;
+	private $fax_ext;
 	private $address_street1;
 	private $address_street2;
 	private $address_city;
@@ -28,9 +28,9 @@ class cPerson
     private $address_post_code;
     private $safe_post_code;
 	private $address_country;
-	private $age;
-	private $sex;
 	private $about_me;
+    private $age;
+    private $sex;
 
     public function cPerson($values=null) {
         if ($values) {
@@ -117,40 +117,41 @@ class cPerson
 		}		
 	}
 	//CT: todo - fixit! should be __Construct
-	private function ConstructPerson($array=null) 
+	public function ConstructPerson($array=null) 
     {
-    	//CT grabs values directly out of full result array passed to it. you can pass a partial set
-
-        $this->setPersonId($array['person_id']);
-        $this->setMemberId($array['member_id']);
-        $this->setPrimaryMember($array['primary_member']);
-        $this->setDirectoryList($array['directory_list']);
-        $this->setFirstName($array['first_name']);
-        $this->setLastName($array['last_name']);
-        //$this->setMidName($array['mid_name']);
-        //$this->setDob($array['dob']);
-        $this->setEmail($array['email']);
-        //$this->setMotherMn($array['mother_mn']);
-        //$this->setPhone1Area($array['phone1_area']);
-        $this->setPhone1Number($array['phone1_number']);
-        //$this->setPhone1Ext($array['phone1_ext']);
-        //$this->setPhone2Area($array['phone2_area']);
-        //$this->setPhone2Number($array['phone2_number']);
-        //$this->setPhone2Ext($array['phone2_ext']);
-        //$this->setFaxArea($array['fax_area']);
-        //$this->setFaxNumber($array['fax_number']);
-        //$this->setFaxExt($array['fax_ext']);
-        $this->setAddressStreet1($array['address_street1']);
-        $this->setAddressStreet2($array['address_street2']);
-        $this->setAddressCity($array['address_city']);
-        $this->setAddressStateCode($array['address_state_code']);
-        $this->setAddressPostCode($array['address_post_code']);
-        $this->setSafePostCode($array['address_post_code']);
-        $this->setAddressCountry($array['address_country']);
+        if (!empty($array['person_id']))  $this->setPersonId($array['person_id']);
+        if (!empty($array['member_id']))  $this->setMemberId($array['member_id']);
+        if (!empty($array['primary_member']))  $this->setPrimaryMember($array['primary_member']);
+        if (!empty($array['directory_list']))  $this->setDirectoryList($array['directory_list']);
+        if (!empty($array['first_name']))  $this->setFirstName($array['first_name']);
+        if (!empty($array['last_name']))  $this->setLastName($array['last_name']);
+        if (!empty($array['mid_name']))  $this->setMidName($array['mid_name']);
+        if (!empty($array['dob']))  $this->setDob($array['dob']);
+        if (!empty($array['email']))  $this->setEmail($array['email']);
+        if (!empty($array['mother_mn']))  $this->setMotherMn($array['mother_mn']);
+        if (!empty($array['phone1_area']))  $this->setPhone1Area($array['phone1_area']);
+        if (!empty($array['phone1_number']))  $this->setPhone1Number($array['phone1_number']);
+        if (!empty($array['phone1_ext']))  $this->setPhone1Ext($array['phone1_ext']);
+        if (!empty($array['phone2_area']))  $this->setPhone2Area($array['phone2_area']);
+        if (!empty($array['phone2_number']))  $this->setPhone2Number($array['phone2_number']);
+        if (!empty($array['phone1_ext']))  $this->setPhone2Ext($array['phone2_ext']);
+        if (!empty($array['fax_area']))  $this->setFaxArea($array['fax_area']);
+        if (!empty($array['fax_number']))  $this->setFaxNumber($array['fax_number']);
+        if (!empty($array['fax_ext']))  $this->setFaxExt($array['fax_ext']);
+        if (!empty($array['address_street1']))  $this->setAddressStreet1($array['address_street1']);
+        if (!empty($array['address_street2']))  $this->setAddressStreet2($array['address_street2']);
+        if (!empty($array['address_city']))  $this->setAddressCity($array['address_city']);
+        if (!empty($array['address_state_code']))  $this->setAddressStateCode($array['address_state_code']);
+        if (!empty($array['address_post_code'])){
+            $this->setAddressPostCode($array['address_post_code']);
+            //CT pulbic version of postcode - less revealing
+            $this->setSafePostCode($array['address_post_code']);
+        }
+        if (!empty($array['address_country']))  $this->setAddressCountry($array['address_country']);
         // CT Chris's social vars
-        $this->setAge($array['age']);
-        $this->setSex($array['sex']);
-        $this->setAboutMe($array['about_me']);
+        if (!empty($array['age']))  $this->setAge($array['age']);
+        if (!empty($array['sex']))  $this->setSex($array['sex']);
+        if (!empty($array['about_me']))  $this->setAboutMe($array['about_me']);
 
     }
 
@@ -801,6 +802,22 @@ class cPerson
 		
 		return $phone_number;
 	}
+    // just lists out all phone numbers and fax numbers set for the person
+    function getAllPhones(){
+        $phones = array();
+        if(!empty($this->getPhone1Number())) $phones[] = "{$this->getPhone1Number()}";
+        if(!empty($this->getPhone2Number())) $phones[] = "{$this->getPhone2Number()}";
+        //CT no one has faxes anymore! right?
+        if(!empty($this->getFaxNumber())) $phones[] = "{$this->getFaxNumber()} (FAX)";
+        $i=0;
+        $string = "";
+        foreach($phones as $phone){
+            if($i>0) $string .= ", ";
+            $string .= $phone;
+            $i++;
+        }
+        return $string;
+    }
 }
 
 // TODO: cPerson should use this class instead of a text field
@@ -904,6 +921,7 @@ class cPhone_uk {
 
     
 }
+
 class cSecondPerson extends cPerson {
     public function cSecondPerson($values=null) {
         if ($values) {
@@ -914,32 +932,33 @@ class cSecondPerson extends cPerson {
     private function ConstructSecondPerson($array=null) 
     {
         //CT grabs values directly out of full result array passed to it. you can pass a partial set
-        $this->setMemberId($array['member_id']);
+        if(!empty($array['member_id'])) $this->setMemberId($array['member_id']);
         $this->setPrimaryMember('N');
-        $this->setDirectoryList($array['p2_directory_list']);
-        $this->setPersonId($array['p2_person_id']);
-        $this->setFirstName($array['p2_first_name']);
-        $this->setLastName($array['p2_last_name']);
-        $this->setMidName($array['p2_mid_name']);
-        $this->setDob($array['p2_dob']);
-        $this->setEmail($array['p2_email']);
-        $this->setMotherMn($array['p2_mother_mn']);
-        $this->setPhone1Area($array['p2_phone1_area']);
-        $this->setPhone1Number($array['p2_phone1_number']);
-        $this->setPhone1Ext($array['p2_phone1_ext']);
-        $this->setPhone2Area($array['p2_phone2_area']);
-        $this->setPhone2Number($array['p2_phone2_number']);
-        $this->setPhone2Ext($array['p2_phone2_ext']);
-        $this->setFaxArea($array['p2_fax_area']);
-        $this->setFaxNumber($array['p2_fax_number']);
-        $this->setPhone2Ext($array['p2_fax_ext']);
-        $this->setDirectoryList($array['p2_directory_list']);
+        if(!empty($array['p2_directory_list']))$this->setDirectoryList($array['p2_directory_list']);
+        if(!empty($array['p2_person_id']))$this->setPersonId($array['p2_person_id']);
+        if(!empty($array['p2_first_name']))$this->setFirstName($array['p2_first_name']);
+        if(!empty($array['p2_last_name']))$this->setLastName($array['p2_last_name']);
+        if(!empty($array['p2_mid_name']))$this->setMidName($array['p2_mid_name']);
+        if(!empty($array['p2_dob']))$this->setDob($array['p2_dob']);
+        if(!empty($array['p2_email']))$this->setEmail($array['p2_email']);
+        if(!empty($array['p2_mother_mn']))$this->setMotherMn($array['p2_mother_mn']);
+        if(!empty($array['p2_phone1_area']))$this->setPhone1Area($array['p2_phone1_area']);
+        if(!empty($array['p2_phone1_number']))$this->setPhone1Number($array['p2_phone1_number']);
+        if(!empty($array['p2_phone1_ext']))$this->setPhone1Ext($array['p2_phone1_ext']);
+        if(!empty($array['p2_phone2_area']))$this->setPhone2Area($array['p2_phone2_area']);
+        if(!empty($array['p2_phone2_number']))$this->setPhone2Number($array['p2_phone2_number']);
+        if(!empty($array['p2_phone2_ext']))$this->setPhone2Ext($array['p2_phone2_ext']);
+        if(!empty($array['p2_fax_area']))$this->setFaxArea($array['p2_fax_area']);
+        if(!empty($array['p2_fax_number']))$this->setFaxNumber($array['p2_fax_number']);
+        if(!empty($array['p2_fax_ext']))$this->setPhone2Ext($array['p2_fax_ext']);
+        if(!empty($array['p2_directory_list']))$this->setDirectoryList($array['p2_directory_list']);
         // CT Chris's social vars
-        $this->setAge($array['p2_age']);
-        $this->setSex($array['p2_sex']);
-        $this->setAboutMe($array['p2_about_me']);
+        if(!empty($array['p2_age']))$this->setAge($array['p2_age']);
+        if(!empty($array['p2_sex']))$this->setSex($array['p2_sex']);
+        if(!empty($array['p2_about_me']))$this->setAboutMe($array['p2_about_me']);
 
     }
 }
+
 
 ?>

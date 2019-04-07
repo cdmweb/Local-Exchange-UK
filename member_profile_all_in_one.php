@@ -5,66 +5,61 @@ $p->site_section = SITE_SECTION_OFFER_LIST;
 $cUser->MustBeLoggedOn();
 
 $p->page_title = "My dashboard";
-$list = $p->Wrap("Hola, ". $cUser->AllFirstNames() . "!", "h3");
+$list = $p->Wrap("Hola, ". $cUser->getDisplayName() . "!", "h3");
 
 //todo: message for restricted?
 if ($cUser->AccountIsRestricted()) $list .= LEECH_NOTICE;
 
-$menuArray = array();
+$string = '
+<!--START include allinone_menu -->
+<div class="col">
+	<h3>Member settings</h3>
+	<ul>
+		<li><a href="member_summary.php?member_id={{member_id}}">View my profile</a></li>
+		<li><a href="member_edit.php?member_id={{member_id}}">Edit my personal information</a></li>
+		<li><a href="member_contact_create.php?member_id={{member_id}}">Add a joint member to my account</a></li>
+		<li><a href="member_contact_choose.php?member_id={{member_id}}">Edit a joint member</a></li>
+		<li><a href="password_change.php">Change my password</a></li>
+	</ul>
+</div>
 
-$menuArray[] = $p->MenuItemArray("View my profile", "member_summary.php?member_id=" . $cUser->getMemberId());
-$menuArray[] = $p->MenuItemArray("Edit my personal information", "member_edit.php?mode=self");
-$menuArray[] = $p->MenuItemArray("Add a joint member to my account", "member_contact_create.php?mode=self");
-$menuArray[] = $p->MenuItemArray("Edit a joint member", "member_contact_choose.php");
-$menuArray[] = $p->MenuItemArray("Change my password", "password_change.php");
-$menuHtml = $p->Menu($menuArray);
-//CT - rewrote page so that its easier to read and manage, plus modern html
-$title = $p->Wrap("Member Settings", "h3");
-$list .= $p->Wrap($title . $menuHtml, "div", "col");
+<div class="col">
+	<h3>Offered listings</h3>
+	<ul>
+		<li><a href="listings_found.php?type=Offer&member_id={{member_id}}">View offered listings</a></li>
+		<li><a href="listing_create.php?type=Offer&member_id={{member_id}}">Create new offer listing</a></li>
+		<li><a href="listing_to_edit.php?type=Offer&member_id={{member_id}}">Edit offered listings</a></li>
+		<li><a href="listing_delete.php?type=Offer&member_id={{member_id}}">Delete offered listings</a></li>
+	</ul>
+</div>
 
-/*
-//core and above
-if ($cUser->getMemberRole() > 0) {
-	$menuArray = array();
-	$menuArray[] = $p->MenuItemArray("Create a new member account", "member_create.php");
-	$menuArray[] = $p->MenuItemArray("Edit a member account", "member_to_edit.php");
-	$menuArray[] = $p->MenuItemArray("Add a joint member to an existing account", "member_contact_create.php?mode=admin");
-	$menuArray[] = $p->MenuItemArray("Edit a joint member", "member_contact_to_edit.php");
-	//admin
-	if ($cUser->getMemberRole() > 1) {
-		$menuArray[] = $p->MenuItemArray("Reverse an exchange that was made in error", "trade_reverse.php");
-	}
-	$menuHtml = $p->Menu($menuArray);
-	$title = $p->Wrap("Administration", "h3");
-	$list .= $p->Wrap($title . $menuHtml, "div", "col");
-}
-*/
-$menuArray = array();
-$menuArray[] = $p->MenuItemArray("View offered listings", "listings_found.php?type=Offer&member_id=" . $cUser->getMemberId());
-$menuArray[] = $p->MenuItemArray("Create new offer listing", "listing_create.php?type=Offer");
-$menuArray[] = $p->MenuItemArray("Edit offered listings", "listing_to_edit.php?type=Offer");
-$menuArray[] = $p->MenuItemArray("Delete offered listings", "listing_delete.php?type=Offer");
-$menuHtml = $p->Menu($menuArray);
-$title = $p->Wrap("Offered listings", "h3");
-$list .= $p->Wrap($title . $menuHtml, "div", "col");
+<div class="col">
+	<h3>Wanted listings</h3>
+	<ul>
+		<li><a href="listings_found.php?type=Want&member_id={{member_id}}">View wanted listings</a></li>
+		<li><a href="listing_create.php?type=Want&member_id={{member_id}}">Create new wanted listing</a></li>
+		<li><a href="listing_to_edit.php?type=Want&member_id={{member_id}}">Edit wanted listings</a></li>
+		<li><a href="listing_delete.php?type=Want&member_id={{member_id}}">Delete wanted listings</a></li>
+	</ul>
+</div>
+<div class="col">
+	<h3>Exchanges</h3>
+	<ul>
+		<li><a href="trade.php">Record an exchange</a></li>
+		<li><a href="trade_history.php?member_id={{member_id}}">View my balance and exchange history</a></li>
+		<li><a href="trades_to_view.php">View another member\'s exchange history</a></li>
+	</ul>
+</div>
+<!--END include allinone_menu -->
+';
+$variables = new stdClass();
+$variables = (object) [
+    'member_id' => $cUser->getMemberId()
+];
 
 
-$menuArray = array();
-$menuArray[] = $p->MenuItemArray("View wanted listings", "listings.php?type=Want");
-$menuArray[] = $p->MenuItemArray("Create new wanted listing", "listing_create.php?type=Want");
-$menuArray[] = $p->MenuItemArray("Edit wanted listings", "listing_to_edit.php?type=Want");
-$menuArray[] = $p->MenuItemArray("Delete wanted listings", "listing_delete.php?type=Want");
-$menuHtml = $p->Menu($menuArray);
-$title = $p->Wrap("Wanted listings", "h3");
-$list .= $p->Wrap($title . $menuHtml, "div", "col");
+$list .= $p->ReplacePlaceholders($string, $variables);
 
-$menuArray = array();
-$menuArray[] = $p->MenuItemArray("Record an exchange", "trade.php");
-$menuArray[] = $p->MenuItemArray("View my balance and exchange history", "trade_history.php?mode=self");
-$menuArray[] = $p->MenuItemArray("View another member's exchange history", "trades_to_view.php");
-$menuHtml = $p->Menu($menuArray);
-$title = $p->Wrap("Exchanges", "h3");
-$list .= $p->Wrap($title . $menuHtml, "div", "col");
 
 $p->DisplayPage($list);
 

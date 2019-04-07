@@ -7,13 +7,16 @@ if (!isset($global))
 
 include_once("class.person.php");
 include_once("class.site.php");
+include_once("class.queries.php");
+
 include_once("Text/Password.php");
 
 
 class cMember
 {
-	private $member_id;
-	private $password;
+    private $member_id;
+    private $is_nested; //if set to true, don't cross ref other classes - prevent circuclar logic ;
+	//private $password;
     private $member_role;
 	private $security_q;
 	private $security_a;
@@ -28,16 +31,18 @@ class cMember
 	private $balance;
 	private $confirm_payments;
 	private $restriction;
-    //CT: two non member extra properties
+   //CT: extra properties
     private $person;  // array of cPerson objects
-    private $all_names; // ct - bit messy but this needs to geo here
 
 
-	function cMember($values=null) {
-		if ($values) {
-			$this->ConstructMember($values);
-		}
-	}
+    // function __construct($values=null) {
+    //     if ($values) {
+    //         $this->Build($values);
+    //     }
+    // }
+    function __construct($is_nested=false) {
+        $this->setIsNested($is_nested);
+    }
 	/* CT getters and setters
 
     /**
@@ -90,25 +95,6 @@ class cMember
     public function setMemberId($member_id)
     {
         $this->member_id = $member_id;
-
-        return $this;
-    }
-    /**
-     * @return mixed
-     */
-    public function getAllNames()
-    {
-        return $this->all_names;
-    }
-
-    /**
-     * @param mixed $all_names
-     *
-     * @return self
-     */
-    public function setAllNames($all_names)
-    {
-        $this->all_names = $all_names;
 
         return $this;
     }
@@ -423,6 +409,25 @@ class cMember
 
         return $this;
     }
+    /**
+     * @return mixed
+     */
+    public function getIsNested()
+    {
+        return $this->is_nested;
+    }
+
+    /**
+     * @param mixed $is_nested
+     *
+     * @return self
+     */
+    public function setIsNested($is_nested)
+    {
+        $this->is_nested = $is_nested;
+
+        return $this;
+    }
 
 
 
@@ -439,9 +444,8 @@ class cMember
 
         $hash = password_hash($plainTextPassword, PASSWORD_DEFAULT);
 		$insert = $cDB->Query("INSERT INTO ".DATABASE_MEMBERS." (member_id, password, member_role, security_q, security_a, status, member_note, admin_note, join_date, expire_date, away_date, account_type, email_updates, confirm_payments, balance) VALUES (
-                {$this->getMemberRole()},
+                {$this->getMemberId()},
                 {$hash},
-                {$this->getAllNames()},
                 {$this->getSecurityQ()},
                 {$this->getSecurityA()},
                 {$this->getStatus()},
@@ -461,10 +465,12 @@ class cMember
 
 	public function RegisterWebUser()
 	{	
+        //print_r($_SESSION["user_login"]);
 //		if (isset($_SESSION["user_login"]) and $_SESSION["user_login"] != LOGGED_OUT) {
 		if (isset($_SESSION["user_login"])) {
-			$this->setMemberId($_SESSION["user_login"]);
-			$this->LoadMember($_SESSION["user_login"]);
+            $member_id = $_SESSION["user_login"];
+			$this->setMemberId($member_id);
+			$this->Load($member_id);
 
             // Session regeneration added to boost server-side security.
             session_regenerate_id();
@@ -495,39 +501,6 @@ class cMember
 			return false;
 	}
 
-    public function Login($user, $pass, $from_cookie=false) {
-        global $cDB,$cErr;
-        
-        $login_history = new cLoginHistory();
-//echo "SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';";
-        $query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($user) . " AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .") and status = 'A';");            
-        if($row = mysqli_fetch_array($query)) {
-            $login_history->RecordLoginSuccess($user);
-            $this->DoLoginStuff($user, $row["password"]);   // using pass from db since it's encrypted, and $pass isn't, if it was entered in the browser.
-            return true;
-        } elseif (!$from_cookie) {
-            $query = $cDB->Query("SELECT NULL FROM ".DATABASE_USERS." WHERE status = 'L' and member_id=". $cDB->EscTxt($user) .";");
-            if($row = mysqli_fetch_array($query)) {
-                $cErr->Error("Your account has been locked due to too many unsuccessful login attempts. You will need to contact us to have your account unlocked.");
-            } else {
-                $cErr->Error("Password or member id is incorrect.  Please try again, or go <A HREF=password_reset.php>here</A> to have your password reset.", ERROR_SEVERITY_INFO);
-            }
-            $login_history->RecordLoginFailure($user);
-            return false;
-        }   
-        return false;
-    }
-	
-	public function ValidatePassword($pass) {
-		global $cDB;
-
-		$query = $cDB->Query("SELECT member_id, password, member_role FROM ".DATABASE_USERS." WHERE member_id = ". $cDB->EscTxt($this->member_id) ." AND (password=sha(". $cDB->EscTxt($pass) .") OR password=". $cDB->EscTxt($pass) .");");	
-		
-		if($row = mysqli_fetch_array($query))
-			return true;
-		else
-			return false;
-	}
 	public function UnlockAccount() {
 		$history = new cLoginHistory;
 		$has_logged_on = $history->LoadLoginHistory($this->member_id);
@@ -564,93 +537,6 @@ class cMember
 		}
 	}
 	
-	public function ChangePassword($pass) { // TODO: Should use SaveMember and should reset $this->password
-		global $cDB, $cErr;
-		
-        
-        $update = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." SET password=sha(". $cDB->EscTxt($pass) .") WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
-
-		$update = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." SET password=sha(". $cDB->EscTxt($pass) .") WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
-		
-		if($update) {
-			return true;
-		} else {
-			$cErr->Error("There was an error updating the password. Please try again later.");
-			include("redirect.php");
-		}
-	}
-	
-	public function GeneratePassword() {  
-		return Text_Password::create(8) . chr(rand(50,57));
-	}
-
-	public function DoLoginStuff($user, $pass)
-	{
-		global $cDB;
-		
-		//setcookie("login",$user,time()+60*60*24*1,"/");
-		//setcookie("pass",$pass,time()+60*60*24*1,"/");
-
-		$this->LoadMember($user);
-		$_SESSION["user_login"] = $user;
-	}
-
-	public function UserLoginPage() // A free-standing login page
-	{
-		global $p, $site_settings;
-        $string = file_get_contents(TEMPLATES_PATH . '/form_login.php', TRUE);
-		return $p->ReplacePropertiesInString($string);
-	}
-
-	public function UserLoginLogout() {
-        global $p;
-		if ($this->IsLoggedOn())
-		{
-			//$output = "<FONT SIZE=1><A HREF='".SERVER_PATH_URL."/member_logout.php'>Logout</A>&nbsp;&nbsp;&nbsp;";
-			$string = "<a href='{HTTP_BASE}/member_logout.php'>Logout</a>";
-		} else {
-			//$output = "<FONT SIZE=1><A HREF='".SERVER_PATH_URL."/member_login.php'>Login</A>&nbsp;&nbsp;&nbsp;";
-			$string = "<a href='{HTTP_BASE}/member_login.php'>Login</a>";
-		}
-
-		return $p->ReplacePropertiesInString($string);		
-	}
-
-	public function MustBeLoggedOn()
-	{
-		global $p, $cErr;
-		
-		if ($this->IsLoggedOn())
-			return true;
-		
-		// user isn't logged on, but is in a section of the site where they should be logged on.
-		$_SESSION['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
-		$cErr->SaveErrors();
-		header("location:" . HTTP_BASE . "/login_redirect.php");
-				
-		exit;
-	}
-
-
-	public function Logout() {
-        setcookie(session_name(), session_id(), time() - 42000, '/');
-		$_SESSION = array();
-        session_destroy();
-	}
-
-	public function MustBeLevel($level) {
-		global $p;
-		$this->MustBeLoggedOn(); // seems prudent to check first.
-
-		if ($this->getMemberRole()<$level)
-		{
-			$page = "<p class='AccessDenied'>You don't have permissions for this action.  <a href='mailto:".EMAIL_ADMIN."'>Contact the admin</a> to raise your permissions</p>";
-			$p->DisplayPage($page);
-			exit;
-
-		}
-
-	}
 	
 	public function AccountIsRestricted() {
 		
@@ -661,194 +547,62 @@ class cMember
 	}
     //CT this is a really dangerous function that was at the heart of most member objects - 
     //why load and pass around password and all the other stuff if you don't need to? Defer to LoadQuickMember for most things
-	public function LoadMember($member, $is_full=true, $redirect=false) {
+    public function Load($member_id) {
 		global $cDB, $cErr;
+        //ct clean?
+        $member_id = $cDB->EscTxt($member_id);
+		// populate
 
-        if($is_full==false){
-            $extended_querystring = "";
-        }else{
-            $extended_querystring = ", m.confirm_payments as confirm_payments, 
-                p2.phone1_number as p2_phone1_number, 
-                p1.address_street1 as address_street1, 
-                m.password as password,
-                m.admin_note as admin_note, 
-                m.security_q as security_q, 
-                m.security_a as security_a, 
-                p1.first_name as first_name,
-                m.member_role as member_role,
-                p1.directory_list as directory_list, 
-                p2.directory_list as p2_directory_list,  
-                p1.last_name as last_name ";
+        $condition = "p1.primary_member = 'N' and m.member_id='{$member_id}'";
         
-        }
-            
-        
-		//
-		// select all Member data and populate the properties
-		//
-		/*[chris] adjusted to retrieve 'confirm_payments' */
-		//CT efficiency full object - remove all the dupes argh
-        $query = $cDB->Query("SELECT 
-                m.balance as balance,                 
-                m.status as status, 
-                m.admin_note as admin_note, 
-                m.join_date as join_date, 
-                m.expire_date as expire_date, 
-                m.email_updates as email_updates, 
-                m.restriction as restriction, 
-                m.member_note as member_note, 
-                m.away_date as away_date, 
-                concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
-                p1.email as email, 
-                p2.email as p2_email, 
-                p2.first_name as p2_first_name, 
-                p2.mid_name as p2_mid_name, 
-                p2.last_name as p2_last_name, 
-                p1.phone1_number as phone1_number, 
-                p1.primary_member as primary_member, 
-                p2.primary_member as p2_primary_member, 
-                p2.phone1_number as p2_phone1_number, 
-                p1.address_street2 as address_street2, 
-                p1.address_city as address_city, 
-                p1.address_state_code as address_state_code, 
-                p1.address_post_code as address_post_code, 
-                p1.address_country as address_country, 
-                m.member_id as member_id, 
-                m.account_type as account_type, 
-                p1.age as age, 
-                p1.sex as sex, 
-                p1.about_me as about_me" . $extended_querystring . " FROM member m 
-                left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = 'N' and directory_list= 'Y' Descending 1) p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
-
+        $query = $cDB->Query("{$cQueries->getMySqlMemberSummary()} WHERE {$condition}");
+    
 
 		if($row = $cDB->FetchArray($query))
 		{	
             //$cErr->Error(print_r($row, true));
-			$this->ConstructMember($row);
+			$this->Build($row);
 		}
 		else
 		{
             //CT - moved error message out of the redirect - don't you wnat to see errors even if not redirected?
-            $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+            $cErr->Error("Error accessing member (".$member_id.").");
 
 			if ($redirect) {
 				include("redirect.php");
 			}
 			return false;
 		}	
-		//CT efficiency - wrap up the 'person' in complex join in 1 call, not 3, above. TODO: remove this
-		//
-		// Select associated person records and load into person object array
-		//
-        /*
-		$query = $cDB->Query("SELECT person_id FROM ".DATABASE_PERSONS." WHERE member_id=". $cDB->EscTxt($member) ." ORDER BY primary_member DESC, last_name, first_name");
-		$i = 0;
-		
-		while($row = mysqli_fetch_array($query))
-		{
-			$this->person[$i] = new cPerson;			// instantiate new cPerson objects and load them
-			$this->person[$i]->LoadPerson($row[0]);
-			$i += 1;
-		}
-
-		if($i == 0)
-		{
-			if ($redirect) {
-				$cErr->Error("There was an error accessing a person record for (".$member.").  Please try again later.");
-				include("redirect.php");			
-			}
-			return false;
-		}*/
-
 		return true;
 	}
-/* CT marked for deletion
-    public function LoadQuickMember($member, $redirect=false) {
-        global $cDB, $cErr;
-
-        //
-        // select some Member data and populate the properties
-        //
-        //CT efficiency full object 
-        $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.status as status, 
-                m.join_date as join_date, 
-                m.expire_date as expire_date, 
-                m.email_updates as email_updates, 
-                m.restriction as restriction, 
-                p1.first_name as first_name, 
-                p1.last_name as last_name, 
-                p1.email as email, 
-                p1.person_id as person_id, 
-                p2.person_id as p2_person_id, 
-                p2.email as p2_email, 
-                p2.first_name as p2_first_name, 
-                p2.mid_name as p2_mid_name, 
-                p2.last_name as p2_last_name, 
-                p1.phone1_number as phone1_number, 
-                p1.primary_member as primary_member, 
-                p2.primary_member as p2_primary_member, 
-                p2.phone1_number as p2_phone1_number, 
-                p1.directory_list as directory_list, 
-                p2.directory_list as p2_directory_list, 
-                m.member_id as member_id, 
-                m.account_type as account_type, 
-                m.confirm_payments as confirm_payments, 
-                p1.age as age, 
-                p1.sex as sex, 
-                p1.about_me as about_me 
-                FROM member m 
-                left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
 
 
-        if($row = mysqli_fetch_array($query))
-        {   
-            //$cErr->Error(print_r($row, true));
-            $this->ConstructMember($row);
-        }
-        else
-        {
-            //CT - moved error message out of the redirect - don't you wnat to see errors even if not redirected?
-            $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
 
-            if ($redirect) {
-                include("redirect.php");
-            }
-            return false;
-        }   
-        return true;
-    }*/
+	public function Build($array){
+		if (!empty($array['member_id']))  $this->setMemberId($array['member_id']);  
+		if (!empty($array['password']))   $this->setPassword($array['password']);  
+        if (!empty($array['member_role']))$this->setMemberRole($array['member_role']);  
+		if (!empty($array['security_q'])) $this->setSecurityQ($array['security_q']);  
+		if (!empty($array['security_q'])) $this->setSecurityA($array['security_a']);  
+		if (!empty($array['status']))     $this->setStatus($array['status']);  
+		if (!empty($array['member_note']))$this->setMemberNote($array['member_note']);  
+		if (!empty($array['admin_note'])) $this->setAdminNote($array['admin_note']);  
+		if (!empty($array['join_date']))  $this->setJoinDate($array['join_date']);  
+		if (!empty($array['expire_date']))$this->setExpireDate($array['expire_date']);  
+		if (!empty($array['away_date']))  $this->setAwayDate($array['away_date']);  
+		if (!empty($array['account_type']))$this->setAccountType($array['account_type']);  
+		if (!empty($array['email_updates']))$this->setEmailUpdates($array['email_updates']);  
+		if (!empty($array['balance']))    $this->setBalance($array['balance']);  
+        if (!empty($array['confirm_payments']))$this->setConfirmPayments($array['confirm_payments']);  
+        if (!empty($array['restriction']))$this->setRestriction($array['restriction']); 
+        //CT extra bits - just pass the whole thing in to get sorted
+        $this->setTradeStats = new cTradeStatsCT();
 
-
-	public function ConstructMember($array){
-		//print_r($array);
-
-		$this->setPrimaryPerson($array);  // this will be an array of cPerson class objects
-        if($array['account_type']=='J'){
+        $this->setPrimaryPerson($array);  // this will be an array of cPerson class objects
+        if(!empty($array['account_type']) and $array['account_type']=='J'){
             $this->setSecondaryPerson($array);  // this will be an array of cPerson class objects
         }
-		$this->setMemberId($array['member_id']);  
-		$this->setPassword($array['password']);  
-        $this->setMemberRole($array['member_role']);  
-        $this->setAllNames($array['all_names']);  
-		$this->setSecurityQ($array['security_q']);  
-		$this->setSecurityA($array['security_a']);  
-		$this->setStatus($array['status']);  
-		$this->setMemberId($array['member_id']);  
-		$this->setMemberNote($array['member_note']);  
-		$this->setAdminNote($array['admin_note']);  
-		$this->setJoinDate($array['join_date']);  
-		$this->setExpireDate($array['expire_date']);  
-		$this->setAwayDate($array['away_date']);  
-		$this->setAccountType($array['account_type']);  
-		$this->setEmailUpdates($array['email_updates']);  
-		$this->setBalance($array['balance']);  
-        $this->setRestriction($array['restriction']);  
-        //$this->setDirectoryList($array['directory_list']);  
-        //$this->setAge($array['age']);  
+
 	}
 
 	public function ShowMember()
@@ -909,10 +663,7 @@ class cMember
 				
 		return $update;	
 	}
-	
-	public function PrimaryName () {
-		return $this->getPrimaryPerson()->getFirstName() . " " . $this->getPrimaryPerson()->getLastName();
-	}
+
 	
 	public function VerifyPersonInAccount($person_id) { // Make sure hacker didn't manually change URL
 		global $cErr;
@@ -923,81 +674,7 @@ class cMember
 		$cErr->Error("Invalid person id in URL.  This break-in attempt has been reported.",ERROR_SEVERITY_HIGH);
 		include("redirect.php");
 	}
-	
-	public function PrimaryAddress () {
-        $address="";
-		if(!empty($this->person[0]->getAddressStreet1())) {
-			$address = $this->person[0]->getAddressStreet1();
-			if(!empty($this->person[0]->getAddressStreet2()))
-				$address .=   ", " . $this->person[0]->getAddressStreet2();
-		} 
-		
-		return $address . ", " . $this->person[0]->getAddressCity();
-	}
-	/* ct marked for removal */
-	public function AllNames ($lastfirst=false) {
-		//can reverse appearance of name if lastfirst set
-		$names = "";
-		foreach ($this->person as $person) {
-			if ($person->getPrimaryMember() != "Y" && !empty($person->getFirstName())) $names .= " &amp; ";
-			if($lastfirst) {
-				$n = "{$person->getLastName()}, {$person->getFirstName()}";
-			} else{
-				$n = "{$person->getFirstName()} {$person->getLastName()}";
-			}
-            //$names .= "<span class='name'>{$n}</span>";
-            $names .= "{$n}";
-			//$names .= "{$person->getFirstName()}  {$person->getLastName()}";
-		}
-		return $names;
-	} 
-    //CT - firstnames
-    public function AllFirstNames () {
-        //can reverse appearance of name if lastfirst set
-        $names = "";
-        foreach ($this->person as $person) {
-            if ($person->getPrimaryMember() != "Y" && !empty($person->getFirstName())) $names .= " and ";
-            
-            //$n = "{$person->getFirstName()}";
-            $n = "{$person->getFirstName()}";
-            //$names .= "<span class='name'>{$n}</span>";
-            $names .= "{$n}";
-            //$names .= "{$person->getFirstName()}  {$person->getLastName()}";
-        }
-
-        return $names;
-    }
-    public function AllPhones () {
-		$phones = "";
-		foreach ($this->person as $person) {
-            //$isSecondary = ($p->getPrimaryMember() != "Y"); 
-			if(!empty($person->getPhone1Number())) {
-				if ($person->getPrimaryMember() == "Y"){
-                    //$phones .= "<span class='phone'>{$person->getPhone1Number()}</span>";
-                    $phones .= "{$person->getPhone1Number()}";
-				} else{
-                    //$phones .=", <span class='phone'>{$person->getPhone1Number()} ({$person->getFirstName()})</span>";
-                    $phones .=", {$person->getPhone1Number()} ({$person->getFirstName()})";
-				}
-			}
-			if(!empty($person->getPhone2Number())) {
-				$phones .= ", ". $person->getPhone2Number();
-                if ($person->getPrimaryMember() != "Y") $phones .= " ({$person->getFirstName()})";              
-				//$reg_phones[] = $person->getPhone2Number();
-			}
-			if(!empty($person->getFaxNumber())) {
-				$phones .= ", ". $person->getFaxNumber();
-                if ($person->getPrimaryMember() != "Y") {
-                    $phones .= " ({$person->getFirstName()}'s fax')";
-                } else{
-                    $phones .= "(fax)";
-                }
-				//$fax_phones[] = $person->getFaxNumber();
-			}
-		
-		}
-		return $phones;		
-	}
+/*
 	public function makeLinkEmailForm($email){
         //return "<a href='mailto:{$email}' class='normal'>{$email}</a>";
         return "<a href='mailto:{$email}' class='normal'>{$email}</a>";
@@ -1019,6 +696,7 @@ class cMember
 		return $emails;	
 	}
 	
+*/
 	public function VerifyMemberExists($member_id) {
 		global $cDB;
 	
@@ -1037,40 +715,22 @@ class cMember
 		return $p->Link($text, $link);
 	}
 	
-	/*[chris] this function looks up the image for member ($mID) and places it in a HTML img tag */
-	public function DisplayMemberImg($mID,$typ=false) {
+	public function getMemberImage() {
         
         if (ALLOW_IMAGES!=true) // Images are turned off in config
-            return " ";
+            return null;
             
         global $cDB;
         
-        // note: the 'typ' param has been deprecated since new method introduced for resizing imgs
-        /*
-        if ($typ=='thumb') {
-            $pH = MEMBER_PHOTO_HEIGHT_THUMB;
-            $pW = MEMBER_PHOTO_WIDTH_THUMB;
-        }
-        else {
-            
-            $pH = MEMBER_PHOTO_HEIGHT;
-            $pW = MEMBER_PHOTO_WIDTH;
-        }
-        */
-        $query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID)." limit 0,1;");
+        $query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title="."\"mphoto_".$this->getMemberId()."\" limit 0,1;");
         //$query = $cDB->Query("SELECT filename FROM ".DATABASE_UPLOADS." WHERE title=".$cDB->EscTxt("mphoto_".$mID));
-        
-        $num_results = mysqli_num_rows($query);
-        
-        if ($num_results>0) {
-            
-            $row = mysqli_fetch_array($query);
-            $imgLoc = UPLOADS_PATH . stripslashes($row["filename"]);
-    
-            return  "<img src='".$imgLoc."'>";    
+            //CT TODO makes work
+        while($values = $cDB->FetchArray($query)) // Each of our SQL results
+        {
+            return UPLOADS_PATH . stripslashes($values["filename"]);         
         }
-        else
-            return  " ";
+        //none found
+        return IMAGES_PATH . "user-placeholder.svg"; 
     }
     // CT pass in image title. todo - fix the filetype??
     public function DisplayMemberImgFromTitle($mImage) {
@@ -1090,128 +750,7 @@ class cMember
 	}
 
 
-    public function DisplayMember () {
-        
-        /*[CDM] Added in image, placed all this in 2 column table, looks tidier */
-        
-        global $cDB, $agesArr, $sexArr, $p;
-
-        $stats = new cTradeStatsCT($this->getMemberId());
-        $jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
-        
-        $statsText = (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent;
-        $locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " . $this->getPrimaryPerson()->getAddressCity() . ", " .$this->getPrimaryPerson()->getSafePostCode();
-
-        $feedbackgrp = new cFeedbackGroupCT;
-        $feedbackgrp->LoadFeedbackGroup($this->member_id);
-        $feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
-        
-        $output .= cMember::DisplayMemberImg($this->member_id);
-        $block = $this->FormatLabelValue("Location", $locationText);
-        
-        //activity;
-        $block = $this->FormatLabelValue("Balance", "{$this->balance} " . strtolower(UNITS));
-        $block .= $this->FormatLabelValue("Activity", "{$statsText}");
-        $block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
-        $output .= $p->Wrap($block, "div", "group activity");
-
-        if (SOC_NETWORK_FIELDS==true) {
-            $pAge = (empty($this->getPrimaryPerson()->getAge())) ? 'Unspecified' : $agesArr[$this->getPrimaryPerson()->getAge()];
-            $pSex = (empty($this->getPrimaryPerson()->getSex())) ? 'Unspecified' : $sexArr[$this->getPrimaryPerson()->getSex()];
-            $pAbout = (empty($this->getPrimaryPerson()->getAboutMe())) ? '<em>No description supplied.</em>' : stripslashes($this->getPrimaryPerson()->getAboutMe());
-            $block = "";
-            $block .= $this->FormatLabelValue("Age", $pAge);
-            $block .= $this->FormatLabelValue("Gender", $pSex);
-            $block .= $this->FormatLabelValue("About me", $pAbout);
-            $output .= $p->Wrap($block, "div", "group social");
-            
-     //       $output .= "<STRONG>Sex:</STRONG> ".$pSex."<p>";
-            
-     //       $output .= "<STRONG>About Me:</STRONG><p> ".$pAbout."<br>";
-        }
-        //contact
-        $block = "";
-        if(!empty($this->getPrimaryPerson()->getEmail())){
-            $block .= $this->FormatLabelValue("Email", $this->makeLinkEmailForm($this->getPrimaryPerson()->getEmail()));
-        }
-        if(!empty($this->getPrimaryPerson()->DisplayPhone("1"))){
-            $block .= $this->FormatLabelValue("Phone", $this->getPrimaryPerson()->DisplayPhone("1"));
-        }
-        if(!empty($this->getPrimaryPerson()->DisplayPhone("2"))){
-            $block .= $this->FormatLabelValue("Secondary Phone", $this->getPrimaryPerson()->DisplayPhone("2"));
-        }
-        if(!empty($this->getPrimaryPerson()->DisplayPhone("fax"))){
-            $block .= $this->FormatLabelValue("Fax", $this->getPrimaryPerson()->DisplayPhone("fax"));
-        }
-        $output .= $p->Wrap($block, "div", "group contact");
-        //secondary
-        //TODO - directory list - is it really a choice?
-        $block = "";
-        //echo $this->getSecondaryPerson()->getDirectoryList();
-        if(!empty($this->getSecondaryPerson())){
-            $block .= $this->FormatLabelValue("Joint member", "{$this->getSecondaryPerson()->getFirstName()} {$this->getSecondaryPerson()->getLastName()}");
-
-            if(!empty($this->getSecondaryPerson()->getEmail())){
-                $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s email", $this->makeLinkEmailForm($this->getSecondaryPerson()->getEmail()));
-            }
-            if(!empty($this->getSecondaryPerson()->DisplayPhone("1"))){
-                $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s phone", $this->getSecondaryPerson()->DisplayPhone("1"));
-            }
-            if(!empty($this->getSecondaryPerson()->DisplayPhone("2"))){
-                $block .= $this->getSecondaryPerson("{$this->getSecondaryPerson()->getFirstName()}'s secondary phone", $this->getSecondaryPerson()->DisplayPhone("2"));
-            }
-            if(!empty($this->getPrimaryPerson()->DisplayPhone("fax"))){
-                $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s fax", $this->getPrimaryPerson()->DisplayPhone("fax"));
-            }
-            $output .= $p->Wrap($block, "div", "group joint");
-        }
-        //metadata
-        //$join_date=new cDateTime($this->getJoinDate());
-        //$expire_date=new cDateTime($this->getExpireDate());
-        $block = "";
-        //$block .= $this->FormatLabelValue("Joined", $p->FormatLongDate($this->getJoinDate()));
-        //$block .= $this->FormatLabelValue("Renewal", $p->FormatLongDate($this->getExpireDate()));
-        $output .= $p->Wrap($block, "div", "group metadata");
-
-    return $output; 
-    }
-    public function DisplaySummaryMember () {
-        
-        /*[CDM] Added in image, placed all this in 2 column table, looks tidier */
-        
-        global $cDB, $agesArr, $sexArr, $p;
-
-        $link = $this->MemberLink();
-        $block = $p->Wrap($this->getAllNames() . " " . $link, "h4");
-        $contact = "";
-        $contact .= $p->Wrap("Email " . $this->AllEmails() . " or phone " . $this->AllPhones(), "p");
-        //$contact .= $p->WrapLabelValue("Phone",$this->AllPhones());
-        //$contact .= $p->WrapLabelValue("Email",$this->AllEmails());
-        
-        //$contact .= $p->Wrap($contact, "div", "group contact");
-        //secondary
-        //TODO - directory list - is it really a choice?
  
-        $stats = new cTradeStatsCT($this->getMemberId());
-        $jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
-        
-        $statsText = (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent;
-        $locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " .$this->getPrimaryPerson()->getSafePostCode();
-
-        $feedbackgrp = new cFeedbackGroupCT;
-        $feedbackgrp->LoadFeedbackGroup($this->member_id);
-        $feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
-        
-        $block .= $this->FormatLabelValue("Location", $locationText);
-        
-        //activity;
-        $block .= $this->FormatLabelValue("Balance", "{$this->balance} " . strtolower(UNITS));
-        $block .= $this->FormatLabelValue("Activity", "{$statsText}");
-        $block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
-        $output .= $p->Wrap($block, "div", "summary");
-
-    return $output; 
-    }
 	
 	public function MakeJointMemberArray() {
 		global $cDB;
@@ -1259,8 +798,15 @@ class cMember
 
 class cMemberGroup {
     //CT this should be private 
-    var $members;
-    
+    public $members;
+    // public function __construct($values=null)
+    // {
+    //     if(!empty($values)) {
+    //         $this->Build($values);
+    //     }
+
+    //     return $this;
+    // }
     public function getMembers()
     {
         return $this->members;
@@ -1277,40 +823,45 @@ class cMemberGroup {
         return $this;
     }
 
+    public function addMember($member)
+    {
+        $members = $this->getMembers();
+        //add another
+        $members[] = $member;
+        $this->setMembers($members);
+        return $this;
+    }
+    
+
+    public function Build($members){
+
+        //CT 
+        $this->setmembers($members);  // this will be an array of cmembers
 
 
-    function LoadMemberGroup ($show_inactive=false, $show_non_members=false) {
-        global $cDB;
-        $condition = "";
-        if(!$show_inactive){
-            $condition .= " AND status in ('A','L')";
-        }
-            
-        if($show_non_members){
-            $condition .= " AND member_role != '9'";
+    }
+
+    function Load ($condition=null, $order=null) {
+        global $cDB, $cErr, $cQueries;
+
+        // CT by default exclude non-active and fund accounts
+        if(empty($condition)){
+            $condition = " p1.primary_member = 'Y' and m.status = 'A' and m.account_type != 'F'";
         }
         
-        $query = $cDB->Query("SELECT m.member_id as member_id, 
-            concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,            
-            m.status as status 
-            FROM member m 
-            left JOIN person p1 ON m.member_id=p1.member_id 
-            left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id 
-            where p1.primary_member = 'Y' {$condition} 
-            ORDER BY all_names");
+        $query = $cDB->Query("SELECT {$cQueries->getMySqlMemberConcise()} WHERE {$condition} ORDER BY " . order($order));
         
         $i=0;
-        while($row = $cDB->FetchArray($query))
+        //CT TODO makes work
+        while($row = $cDB->FetchArray($query)) // Each of our SQL results
         {
-            $this->members[$i] = new cMember;           
-            $this->members[$i]->ConstructMember($row);
-            $i += 1;
+            $member = new cMemberConcise($row);
+            //$cErr->Error($i);
+            $this->addMember($member);    
+            $i++;
         }
-        
-        if($i == 0)
-            return false;
-        else
-            return true;        
+
+        return ($i == 0) ? false : true;     
     }   
     
     public function MakeIDArray() {
@@ -1324,7 +875,7 @@ class cMemberGroup {
             $labeltext = ($member->getStatus() != "A") ? " - INACTIVE" : "";
 
             
-          $ids[$member->getMemberId()] = $member->getAllNames() . " (#" . $member->getMemberId() . $labeltext . ")";
+          $ids[$member->getMemberId()] = $member->getDisplayName() . " (#" . $member->getMemberId() . $labeltext . ")";
         }       
         
         return $ids;    
@@ -1373,7 +924,7 @@ class cMemberGroup {
     // Use of this function requires the inclusion of class.listing.php
     public function EmailListingUpdates($interval) {
         if(empty($this->getMembers())) {
-            if(!$this->LoadMemberGroup())
+            if(!$this->Load())
                 return false;
         }
 
@@ -1414,7 +965,7 @@ class cMemberGroup {
     // Use of this function requires the inclusion of class.listing.php
     public function ExpireListings4InactiveMembers() {
         if(!isset($this->members)) {
-            if(!$this->LoadMemberGroup())
+            if(!$this->Load())
                 return false;
         }
         
@@ -1507,12 +1058,12 @@ class cIncomeTies extends cMember {
 		global $cDB;
 		
 		$q = "select * from income_ties where member_id=".$cDB->EscTxt($member_id)." limit 0,1";
-		$result = $cDB->query($q);
+		$result = $cDB->Query($q);
 		
 		if (!$result)
 			return false;
 		
-		$row = mysqli_fetch_object($result);
+		$row = $cDB->FetchObject($result);
 		
 		return $row;
 	}
@@ -1560,145 +1111,566 @@ class cIncomeTies extends cMember {
 	}
 	
 }
-// //CT adjusted 
-// class cMemberSummaryView extends cMember {
-//     public function cMemberSummaryView($values=null) {
-//         if(!empty($values)){
-//             $this->ConstructMember();
-//         }
-//     }
-//     public function LoadMember($member, $redirect=true) {
-//         global $cDB, $cErr;
-// //CT efficiency 
-//         $query = $cDB->Query("SELECT 
-//                 m.balance as balance, 
-//                 m.status as status, 
-//                 m.join_date as join_date, 
-//                 m.expire_date as expire_date, 
-//                 concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" + \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
-//                 p2.email as p2_email, 
-//                 p1.phone1_number as phone1_number, 
-//                 p1.primary_member as primary_member, 
-//                 p2.primary_member as p2_primary_member, 
-//                 p1.phone1_number as p1_phone1_number, 
-//                 p2.phone1_number as p2_phone1_number, 
-//                 p1.address_street2 as address_street2, 
-//                 p1.address_city as address_city, 
-//                 p1.address_state_code as address_state_code, 
-//                 p1.address_post_code as address_post_code, 
-//                 p1.directory_list as directory_list, 
-//                 p2.directory_list as p2_directory_list, 
-//                 m.member_id as member_id, 
-//                 p1.age as age, 
-//                 p1.sex as sex, 
-//                 p1.about_me as about_me 
-//                 FROM member m 
-//                 left JOIN person p1 ON m.member_id=p1.member_id 
-//                 left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.member_id=". $cDB->EscTxt($member));
+//CT this is the most complicated version of the cMember - 
+// for the public detail page for member. Images, feedback, activity etc
+class cMemberSummary extends cMember {
+    //extra properties
+    private $display_name; // ct for display only
+    private $display_location; // ct for display only
+    private $stats; // ct activity summary object
+    
+    // public function __construct($values=null) {
+    //     global $cErr;
+    //     if(!empty($values)){
+    //         //refers to standard parent
+    //         $this->Build($values);
+    //         $this->setDisplayName($values['display_name']);          
+    //         //$this->setDisplayLocation($values['display_location']);          
+    //     }
+    // }
+    /**
+     * @return mixed
+     */
+    public function getDisplayName()
+    {
+        return $this->display_name;
+    }    
+    /**
+     * @param mixed $display_name
+     *
+     * @return self
+     */
+    public function setDisplayName($display_name)
+    {
+        $this->display_name = $display_name;
 
-//         //$query = $cDB->Query("SELECT m.balance as balance, p1.first_name as first_name, p1.last_name as last_name, p1.email as email, p2.email as p2_email, p2.first_name as p2_first_name, p2.last_name as p2_last_name, p1.phone1_number as phone1_number, p1.primary_member as primary_member, p2.primary_member as p2_primary_member, p2.phone1_number as p2_phone1_number, p1.address_street2 as address_street2, p1.address_city as address_city,p1.address_post_code as address_post_code, p1.age as age, p1.about_me as about_me, m.member_id as member_id, m.account_type as account_type, DATE_FORMAT(join_date, '".SHORT_DATE_FORMAT."') as join_date, DATE_FORMAT(expire_date, '".SHORT_DATE_FORMAT."') as expire_date FROM member m left JOIN person p1 ON m.member_id=p1.member_id left JOIN (select * from person where  person.primary_member = 'N') p2 on p1.member_id=p2.member_id where p1.primary_member = 'Y' and m.status = 'A' and m.member_id = '{$member}' ");
-//         //$query = $cDB->Query("SELECT member_id, join_date, expire_date, away_date, account_type, email_updates, balance, confirm_payments, restriction FROM ".DATABASE_MEMBERS." WHERE member_id=". $cDB->EscTxt($member));
-        
-//         if($row = mysqli_fetch_array($query))
-//         {       
-//             //$cErr->Error(print_r($row, true));
-//             $this->ConstructMember($row);
-//         }
-//         else
-//         {
-//             if ($redirect) {
-//                 $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
-//                 include("redirect.php");
-//             }
-//             return false;
-//         }               
-//     }
-// }
-//CT adjusted small, just load what you need of current user
-class cMemberUser extends cMember {
-    public function cMemberUser($values=null) {
-        if(!empty($values)){
-            $this->ConstructMember();
-        }
+        return $this;
     }
-    public function LoadMember($member, $is_full=true, $redirect=false) {
-        global $cDB, $cErr;
-        //CT barebones
+    /**
+     * @return mixed
+     */
+    public function getDisplayLocation()
+    {
+        return $this->display_location;
+    }
+    /**
+     * @param mixed $all_first_names
+     *
+     * @return self
+     */
+    public function setDisplayLocation($display_location)
+    {
+        $this->display_location = $display_location;
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    public function getStats()
+    {
+        return $this->stats;
+    }    
+    /**
+     * @param mixed $stats
+     *
+     * @return self
+     */
+    public function setStats($stats)
+    {
+         $this->stats = $stats;
+    } 
 
-        if(!$is_full){
-            $extended_querystring = "";
-        }else{
-            $extended_querystring = "
-                p1.person_id as person_id, p2.person_id as p2_person_id,
-                p2.phone1_number as p2_phone1_number, 
-                p1.address_street1 as address_street1, 
-                p1.address_street2 as address_street2, 
-                p1.address_city as address_city, 
-                p1.address_state_code as address_state_code, 
-                p1.address_post_code as address_post_code, 
-                p1.address_country as address_country, 
-                m.password as password,
-                m.admin_note as admin_note, 
-                m.security_q as security_q, 
-                m.security_a as security_a, ";
-        }
+    //CT load member from db
+    public function Load($member_id) {
+        global $cDB, $cErr, $cQueries;
+        //clean it - needed?
+        $member_id = $cDB->EscTxt($member_id);
 
-        $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.member_role as member_role, 
-                m.status as status, 
-                m.join_date as join_date, 
-                m.expire_date as expire_date, 
-                m.email_updates as email_updates, 
-                m.restriction as restriction, 
-                concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
-                p1.first_name as first_name, 
-                p1.last_name as last_name, 
-                p1.email as email, 
-                p1.person_id as person_id, 
-                p2.person_id as p2_person_id, 
-                p2.email as p2_email, 
-                p2.first_name as p2_first_name, 
-                p2.mid_name as p2_mid_name, 
-                p2.last_name as p2_last_name, 
-                p1.phone1_number as phone1_number, 
-                p1.primary_member as primary_member, 
-                p2.primary_member as p2_primary_member, " . $extended_querystring . "p1.directory_list as directory_list, 
-                p2.directory_list as p2_directory_list, 
-                m.member_id as member_id, 
-                m.account_type as account_type, 
-                m.confirm_payments as confirm_payments, 
-                p1.age as age, 
-                p1.sex as sex, 
-                p1.about_me as about_me 
-                FROM member m 
-                left JOIN person p1 ON m.member_id=p1.member_id 
-                left JOIN (select * from person where person.primary_member = \"N\") p2 on p1.member_id=p2.member_id where p1.primary_member = \"Y\" and m.member_id=". $cDB->EscTxt($member));
-    /*
-    $query = $cDB->Query("SELECT 
-                m.balance as balance, 
-                m.status as status, 
-                m.member_role as member_role, 
-                m.expire_date as expire_date, 
-                m.member_id as member_id
-                FROM member m 
-                where m.member_id=". $cDB->EscTxt($member));
-    */
-        if($row = mysqli_fetch_array($query))
-        {       
-            $this->ConstructMember($row);
+        //CT composite all the summary/profile calls together for efficiency
+        //TODO - put stats in here
+        $condition = " p1.primary_member = 'Y' and m.member_id='{$member_id}' and m.status='A'";
+        
+        $query = $cDB->Query("SELECT {$cQueries->getMySqlMemberSummary()} WHERE {$condition} LIMIT 1");
+
+        //CT this is a loop but there should only be 1
+        while($values = $cDB->FetchArray($query)) // Each of our SQL results
+        {
+            //$cErr->Error(print_r($row, true));
+            $this->Build($values);
+            $this->setDisplayName($values['display_name']);          
             return true;
         }
-        else
+        return false;
+    }
+/*
+//        public function DisplayMember () {
+        
+//         /*[CDM] Added in image, placed all this in 2 column table, looks tidier */
+        
+//         global $cDB, $agesArr, $sexArr, $p;
+
+//         $stats = new cTradeStatsCT($this->getMemberId());
+//         $jointText = ($this->getAccountType() == "J") ? " (Joint account)" : "";
+        
+//         $statsText = (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->getMemberId() .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent;
+//        $locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " . $this->getPrimaryPerson()->getAddressCity() . ", " .$this->getPrimaryPerson()->getSafePostCode();
+// //$locationText = $this->getPrimaryPerson()->getAddressStreet2() . ", " . $this->getPrimaryPerson()->getAddressCity() . ", " .$this->getPrimaryPerson()->getSafePostCode();
+// //$locationText = "location placeholder";
+
+//         $feedbackgrp = new cFeedbackGroupCT;
+//         $feedbackgrp->LoadFeedbackGroup($this->getMemberId());
+//         $feedbackText = (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)";
+        
+//         $output .= $this->DisplayMemberImg($this->getMemberId());
+//         $block = $this->FormatLabelValue("Location", $locationText);
+        
+//         //activity;
+//         $block = $this->FormatLabelValue("Balance", "{$this->balance} " . strtolower(UNITS));
+//         $block .= $this->FormatLabelValue("Activity", "{$statsText}");
+//         $block .= $this->FormatLabelValue("Feedback", "{$feedbackText}");
+//         $output .= $p->Wrap($block, "div", "group activity");
+
+//         if (SOC_NETWORK_FIELDS==true) {
+//             $pAge = (empty($this->getPrimaryPerson()->getAge())) ? 'Unspecified' : $agesArr[$this->getPrimaryPerson()->getAge()];
+//             $pSex = (empty($this->getPrimaryPerson()->getSex())) ? 'Unspecified' : $sexArr[$this->getPrimaryPerson()->getSex()];
+//             $pAbout = (empty($this->getPrimaryPerson()->getAboutMe())) ? '<em>No description supplied.</em>' : stripslashes($this->getPrimaryPerson()->getAboutMe());
+//             $block = "";
+//             $block .= $this->FormatLabelValue("Age", $pAge);
+//             $block .= $this->FormatLabelValue("Gender", $pSex);
+//             $block .= $this->FormatLabelValue("About me", $pAbout);
+//             $output .= $p->Wrap($block, "div", "group social");
+            
+//      //       $output .= "<STRONG>Sex:</STRONG> ".$pSex."<p>";
+            
+//      //       $output .= "<STRONG>About Me:</STRONG><p> ".$pAbout."<br>";
+//         }
+//         //contact
+//         $block = "";
+//         if(!empty($this->getPrimaryPerson()->getEmail())){
+//             $block .= $this->FormatLabelValue("Email", $this->makeLinkEmailForm($this->getPrimaryPerson()->getEmail()));
+//         }
+//         if(!empty($this->getPrimaryPerson()->DisplayPhone("1"))){
+//             $block .= $this->FormatLabelValue("Phone", $this->getPrimaryPerson()->DisplayPhone("1"));
+//         }
+//         if(!empty($this->getPrimaryPerson()->DisplayPhone("2"))){
+//             $block .= $this->FormatLabelValue("Secondary Phone", $this->getPrimaryPerson()->DisplayPhone("2"));
+//         }
+//         if(!empty($this->getPrimaryPerson()->DisplayPhone("fax"))){
+//             $block .= $this->FormatLabelValue("Fax", $this->getPrimaryPerson()->DisplayPhone("fax"));
+//         }
+//         $output .= $p->Wrap($block, "div", "group contact");
+//         //secondary
+//         //TODO - directory list - is it really a choice?
+//         $block = "";
+//         //echo $this->getSecondaryPerson()->getDirectoryList();
+//         if(!empty($this->getSecondaryPerson())){
+//             $block .= $this->FormatLabelValue("Joint member", "{$this->getSecondaryPerson()->getFirstName()} {$this->getSecondaryPerson()->getLastName()}");
+
+//             if(!empty($this->getSecondaryPerson()->getEmail())){
+//                 $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s email", $this->makeLinkEmailForm($this->getSecondaryPerson()->getEmail()));
+//             }
+//             if(!empty($this->getSecondaryPerson()->DisplayPhone("1"))){
+//                 $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s phone", $this->getSecondaryPerson()->DisplayPhone("1"));
+//             }
+//             if(!empty($this->getSecondaryPerson()->DisplayPhone("2"))){
+//                 $block .= $this->getSecondaryPerson("{$this->getSecondaryPerson()->getFirstName()}'s secondary phone", $this->getSecondaryPerson()->DisplayPhone("2"));
+//             }
+//             if(!empty($this->getPrimaryPerson()->DisplayPhone("fax"))){
+//                 $block .= $this->FormatLabelValue("{$this->getSecondaryPerson()->getFirstName()}'s fax", $this->getPrimaryPerson()->DisplayPhone("fax"));
+//             }
+//             $output .= $p->Wrap($block, "div", "group joint");
+//         }
+//         //metadata
+//         //$join_date=new cDateTime($this->getJoinDate());
+//         //$expire_date=new cDateTime($this->getExpireDate());
+//         $block = "";
+//         //$block .= $this->FormatLabelValue("Joined", $p->FormatLongDate($this->getJoinDate()));
+//         //$block .= $this->FormatLabelValue("Renewal", $p->FormatLongDate($this->getExpireDate()));
+//         $output .= $p->Wrap($block, "div", "group metadata");
+
+//     return $output; 
+//     }
+    // public function DisplaySummaryMember () {
+        
+        
+    //     global $cDB, $agesArr, $sexArr, $p;
+        
+
+
+    //     $stats = new cTradeStatsCT($this->getMemberId());
+    //     $feedbackgrp = new cFeedbackGroupCT;
+    //     $feedbackgrp->LoadFeedbackGroup($this->member_id);
+    //     $variables = new stdClass();
+    //     $variables = (object) [
+    //         'member_id' => $this->getMemberId(),
+    //         'member_display_name' => $this->getDisplayName(),
+    //         'avatar_image' => $this->getMemberImage(),
+    //         'member_balance' => "{$this->getBalance()} " . strtolower(UNITS),
+    //         'member_since' => $this->getJoinDate(),
+    //         'member_activity' => (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent,
+    //         'member_location' => $this->getPrimaryPerson()->getAddressStreet2() . ", " .$this->getPrimaryPerson()->getSafePostCode(),
+    //         'member_feedback' => (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)",
+    //    ];
+    //     //CT strings for display, not meaning
+    //     $pName = "{$this->getPrimaryPerson()->getFirstName()} {$this->getPrimaryPerson()->getLastName()}";
+    //     $pAge = (empty($this->getPrimaryPerson()->getAge())) ? '-' : $agesArr[$this->getPrimaryPerson()->getAge()];
+    //     $pGender = (empty($this->getPrimaryPerson()->getSex())) ? '-' : $sexArr[$this->getPrimaryPerson()->getSex()];
+    //     $pAbout = (empty($this->getPrimaryPerson()->getAboutMe())) ? '<em>No description supplied.</em>' : stripslashes($this->getPrimaryPerson()->getAboutMe());
+
+    //     //member;
+    //     $string=file_get_contents(TEMPLATES_PATH . '/member_summary.php', TRUE);
+    //     $output = $p->ReplacePlaceholders($string, $variables);
+       
+    //     $variables = new stdClass();
+    //     $variables = (object) [
+    //         'person_name' => "{$pName}",
+    //         'person_age' => "{$pAge}",
+    //         'person_gender' => "{$pGender}",
+    //         'person_about_me' => "{$pAbout}", 
+    //         'person_email' => "{$this->getPrimaryPerson()->getEmail()}",
+    //         'person_phone' => "{$this->getPrimaryPerson()->getAllPhones()}"
+    //     ];
+    //     $string=file_get_contents(TEMPLATES_PATH . '/person_summary.php', TRUE);
+    //     $output .= $p->ReplacePlaceholders($string, $variables);
+
+    //     // append secondary member if exists
+    //     if ($this->getAccountType() == "J" && $this->getSecondaryPerson()->getDirectoryList() == "Y"){
+    //         //CT strings for display, not meaning
+    //         $pName = "{$this->getSecondaryPerson()->getFirstName()} {$this->getSecondaryPerson()->getLastName()}";
+    //         $pAge = (empty($this->getSecondaryPerson()->getAge())) ? 'Unspecified' : $agesArr[$this->getSecondaryPerson()->getAge()];
+    //         $pGender = (empty($this->getSecondaryPerson()->getSex())) ? 'Unspecified' : $sexArr[$this->getSecondaryPerson()->getSex()];
+    //         $pAbout = (empty($this->getSecondaryPerson()->getAboutMe())) ? '<em>No description supplied.</em>' : stripslashes($this->getSecondaryPerson()->getAboutMe());
+
+    //         $variables = new stdClass();
+    //         $variables = (object) [
+    //             'person_name' => "{$pName}",
+    //             'person_age' => "{$pAge}",
+    //             'person_gender' => "{$pGender}",
+    //             'person_about_me' => "{$pAbout}", 
+    //             'person_email' => "{$this->getSecondaryPerson()->getEmail()}",
+    //             'person_phone' => "{$this->getSecondaryPerson()->getAllPhones()}"
+    //         ];
+    //         $string=file_get_contents(TEMPLATES_PATH . '/person_summary.php', TRUE);
+    //         $output .= "<h3>Joint member</h3>";
+    //         $output .= $p->ReplacePlaceholders($string, $variables);
+    //     }
+
+    //     return $output; 
+    // }
+}
+
+
+//CT this is used for listings - where minimal of data needs to be loaded.
+class cMemberConcise extends cMember {
+    //extra properties
+    private $display_name; // ct = for display only
+    private $display_location; // ct or display only
+    private $display_phone; // ct or display only
+    private $display_email; // ct or display only
+    
+    // public function __construct($values=null) {
+    //     global $cErr;
+    //     if(!empty($values)){
+    //         //refers to parent. todo: fix
+    //         $this->Build($values);
+    //         $this->setDisplayName($values['display_name']);          
+    //         $this->setDisplayPhone($values['display_phone']);          
+    //         $this->setDisplayEmail($values['display_email']);          
+    //     }
+    // }
+    public function setDisplayName($display_name)
+    {
+        $this->display_name = $display_name;
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    public function getDisplayName()
+    {
+        return $this->display_name;
+    }    
+    /**
+     * @param mixed $display_phone
+     *
+     * @return self
+     */
+    public function setDisplayPhone($display_phone)
+    {
+        $this->display_phone = $display_phone;
+
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    public function getDisplayPhone()
+    {
+        return $this->display_phone;
+    }
+    /**
+     * @param mixed $display_email
+     *
+     * @return self
+     */
+    public function setDisplayEmail($display_email)
+    {
+        $this->display_email = $display_email;
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    public function getDisplayEmail()
+    {
+        return $this->display_email;
+    }
+
+    public function setDisplayLocation($display_location)
+    {
+        $this->display_location = $display_location;
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    public function getDisplayLocation()
+    {
+        return $this->display_location;
+    }
+
+
+    public function Load($member_id) {
+        global $cDB, $cErr, $cQueries;
+        //clean it - needed?
+        $member_id = $cDB->EscTxt($member_id);
+        //if(is_null($condition)){
+        $condition = "p1.primary_member = 'Y' and m.member_id='{$member_id}' and m.status = 'A'";
+        $query = $cDB->Query("SELECT {$cQueries->getMySqlMemberConcise()} WHERE {$condition}");
+
+
+        $i=0;
+        //CT TODO makes work
+        while($values = $cDB->FetchArray($query)) // Each of our SQL results
         {
-            $cErr->Error("There was an error accessing this member (".$member.").  Please try again later.");
+            //CT add a few extras after builds. TODO - improve
+            $this->Build($values);
+            $this->setDisplayName($values['display_name']);          
+            $this->setDisplayPhone($values['display_phone']);          
+            $this->setDisplayEmail($values['display_email']);          
+            $i++;
+        }
+
+        if (empty($i)){
+            $cErr->Error("Error accessing member (".$member.").");
+            if ($redirect) {
+                include("redirect.php");
+            }
             return false;
-        }               
+        }
+        return true;
+    }
+    public function DisplaySummaryMember () {
+        
+        
+        global $cDB, $agesArr, $sexArr, $p;
+        
+        $feedbackgrp = new cFeedbackGroupCT;
+        $feedbackgrp->LoadFeedbackGroup($this->member_id);
+        $variables = new stdClass();
+        $variables = (object) [
+            'member_id' => $this->getMemberId(),
+            'display_name' => $this->getDisplayName(),
+            'member_balance' => "{$this->getBalance()} " . strtolower(UNITS),
+            'member_age' => "{$this->getPrimaryPerson()->getAge()}",
+            'member_email' => $this->AllEmails(),
+            'member_phone' => $this->AllPhones(),
+            'member_since' => $this->getJoinDate(),
+            'member_type' => ($this->getAccountType() == "J") ? " (Joint account)" : "",
+            'member_activity' => (empty($stats->most_recent)) ? "No exchanges yet" : '<a href="trade_history.php?mode=other&member_id='. $this->member_id .'">'. $stats->total_trades ." exchanges total</a> for a sum of ". $stats->total_units . " ". strtolower(UNITS) . ", last traded on ". $stats->most_recent,
+            'member_location' => $this->getPrimaryPerson()->getAddressStreet2() . ", " .$this->getPrimaryPerson()->getSafePostCode(),
+            'member_location' => $this->getPrimaryPerson()->getAddressStreet2() . ", " .$this->getPrimaryPerson()->getSafePostCode(),
+            'member_feedback' => (empty($feedbackgrp->num_total)) ? "No feedback yet" : "<a href='feedback_all.php?mode=other&member_id={$this->member_id}'>{$feedbackgrp->PercentPositive()}% positive</a> ({$feedbackgrp->num_total} total, {$feedbackgrp->num_negative} negative &amp; {$feedbackgrp->num_neutral} neutral)",
+            'member_about' => "{$this->getPrimaryPerson()->getAboutMe()}"
+        ];
+
+        
+        //activity;
+        $string=file_get_contents(TEMPLATES_PATH . '/member_summary.php', TRUE);
+        $output = $p->ReplacePlaceholders($string, $variables);
+        return $output; 
     }
 }
 
 
-$cUser = new cMemberUser();
+//CT just load what you need of current user
+class cMemberSelf extends cMember {
+    private $display_name;
+    /**
+     * @return mixed
+     */
+    public function getDisplayName()
+    {
+        return $this->display_name;
+    }
+
+    /**
+     * @param mixed $display_name
+     *
+     * @return self
+     */
+    public function setDisplayName($display_name)
+    {
+        $this->display_name = $display_name;
+
+        return $this;
+    }
+
+
+
+    // public function __construct($values=null) {
+    //     if(!empty($values)){
+    //         //refers to parent
+    //         $this->Build($values);
+    //         $this->setDisplayName($values['display_name']);
+    //     }
+    // }
+    public function Load($member_id) {
+        global $cDB, $cErr, $cQueries;
+        //
+        if(empty($member_id)) return false;
+        //CT barebones
+        $member_id = $cDB->EscTxt($member_id);
+        $condition = "p1.primary_member = 'Y' and m.member_id='{$member_id}' and m.status = 'A'";
+        $query = $cDB->Query("SELECT {$cQueries->getMySqlMemberSelf()} WHERE {$condition} LIMIT 1");
+
+        $i=0;
+        while($row = $cDB->FetchArray($query))
+        {       
+            $this->Build($row);
+            $this->setDisplayName($row['display_name']);
+            $i++;
+        }
+        if(empty($i)){
+            $cErr->Error("There was a problem loading your member details (".$member_id.").");
+            return false;
+        }
+        return true;              
+    }
+    public function Login($member_id, $pass, $from_cookie=false) {
+        global $cDB,$cErr;
+        $login_history = new cLoginHistory();
+        /*        $query = $cDB->Query("SELECT member_id, member_role 
+        FROM ".DATABASE_USERS." WHERE member_id = " . $cDB->EscTxt($member_id) . " 
+        AND (password=sha('". $cDB->EscTxt($pass) ."') 
+        OR password='". $cDB->EscTxt($pass) ."') 
+        and status = 'A';");    */  
+        $query = $cDB->Query("SELECT member_id, status
+            FROM ".DATABASE_USERS." WHERE member_id = '{$cDB->EscTxt($member_id)}'
+            AND (password=sha('{$cDB->EscTxt($pass)}') OR password='{$cDB->EscTxt($pass)}');");
+        while($row = $cDB->FetchArray($query)) {
+            if($row['status'] == "L"){
+                $error = "Your account has been locked due to too many unsuccessful login attempts. Contact the administrator for help for help";
+            } else{
+                // successs!
+                $this->Load($member_id);
+                $_SESSION["user_login"] = $member_id;   
+                return true;
+            }
+        }
+        if(!isset($error)) $error = "Your details were incorrect or you don't have an account.";
+        $cErr->Error($error);
+
+
+        $login_history->RecordLoginFailure($member_id, $status);
+        return false;    
+    }
+    
+    public function ValidatePassword($pass) {
+        global $cDB;
+        $query = $cDB->Query("SELECT member_id, member_role 
+            FROM ".DATABASE_USERS." WHERE member_id = ". $cDB->EscTxt($this->member_id) ." 
+            AND (password=sha({$cDB->EscTxt($pass)}) OR password={$cDB->EscTxt($pass)});");  
+        
+        return (empty($cDB->FetchArray($query))) ? true : false;
+    }
+
+    public function ChangePassword($pass) { // TODO: Should use SaveMember and should reset $this->password
+        global $cDB, $cErr;
+        
+        $update = $cDB->Query("UPDATE ". DATABASE_MEMBERS ." SET password=sha(". $cDB->EscTxt($pass) .") WHERE member_id=". $cDB->EscTxt($this->member_id) .";");
+        
+        if($update) {
+            return true;
+        } else {
+            $cErr->Error("There was an error updating the password.");
+            include("redirect.php");
+        }
+    }
+    
+    public function GeneratePassword() {  
+        return Text_Password::create(8) . chr(rand(50,57));
+    }
+    /*
+        public function DoLoginStuff($member_id)
+        {
+            global $cDB;
+            //setcookie("login",$user,time()+60*60*24*1,"/");
+            //setcookie("pass",$pass,time()+60*60*24*1,"/");
+
+            $this->LoadMember($member_id);
+            $_SESSION["user_login"] = $member_id;
+        }
+    */
+    public function UserLoginPage() // A free-standing login page
+    {
+        global $p;
+        $string = file_get_contents(TEMPLATES_PATH . '/form_login.php', TRUE);
+        return $p->ReplacePlaceholders($string);
+    }
+
+
+
+    public function MustBeLoggedOn()
+    {
+        global $p, $cErr;
+        
+        if ($this->IsLoggedOn())
+            return true;
+        
+        // user isn't logged on, but is in a section of the site where they should be logged on.
+        $_SESSION['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
+        $cErr->SaveErrors();
+        header("location:" . HTTP_BASE . "/login_redirect.php");
+                
+        exit;
+    }
+
+
+    public function Logout() {
+        setcookie(session_name(), session_id(), time() - 42000, '/');
+        $_SESSION = array();
+        session_destroy();
+    }
+
+    public function MustBeLevel($level) {
+        global $p;
+        $this->MustBeLoggedOn(); // seems prudent to check first.
+
+        if ($this->getMemberRole()<$level)
+        {
+            $page = "<p class='AccessDenied'>You don't have permissions for this action.  <a href='mailto:".EMAIL_ADMIN."'>Contact the admin</a> to raise your permissions</p>";
+            $p->DisplayPage($page);
+            exit;
+
+        }
+
+    }
+
+}
+
+
+$cUser = new cMemberSelf();
 $cUser->RegisterWebUser();
 
 ?>

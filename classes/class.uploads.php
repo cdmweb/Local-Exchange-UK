@@ -8,7 +8,7 @@ class cUpload {
 	var $filename;
 	var $note;
 
-	function cUpload ($type=null, $title=null, $note=null, $filename=null) {
+	function __construct ($type=null, $title=null, $note=null, $filename=null) {
 		global $cUser;
 
 		if($type) {
@@ -108,8 +108,7 @@ class cUpload {
 	}
 
 	function DisplayURL ($text=null) {
-		if($text == null)
-			$text = $this->title;
+		if(empty($text)) $text = $this->title;
 		// RF: changed to open file in uploads in new window	
 		return "<a href='uploads/{$this->filename}' target='_blank'>{$text}</a>";
 	}
@@ -119,17 +118,17 @@ class cUploadGroup {
 	var $uploads; // will be object of class cUpload
 	var $type;
 	
-	function cUploadGroup($type) {
+	function __construct($type) {
 		$this->type = $type;
 	}
 	
 	function LoadUploadGroup () {
 		global $cDB, $cErr;
 	
-		$query = $cDB->Query("SELECT upload_id FROM ".DATABASE_UPLOADS." WHERE type=". $cDB->EscTxt($this->type) ." ORDER BY upload_date DESC;");
+		$query = $cDB->Query("SELECT upload_id FROM ".DATABASE_UPLOADS." WHERE type='". $cDB->EscTxt($this->type) ."' ORDER BY upload_date DESC;");
 		
 		$i = 0;				
-		while($row = mysqli_fetch_array($query)) {
+		while($row = $cDB->FetchArray($query)) {
 			$this->uploads[$i] = new cUpload;			
 			$this->uploads[$i]->LoadUpload($row[0]);
 			$i += 1;
@@ -145,7 +144,7 @@ class cUploadGroup {
 }
 class cUploadGroupCT extends cUploadGroup {
 	
-	function cUploadGroup($type="") {
+	function __construct($type="") {
 		$this->type = $type;
 		//$this->LoadUploadGroup();
 	}
@@ -170,7 +169,16 @@ class cUploadGroupCT extends cUploadGroup {
 			C=Calendar
 
 		*/
-		$query = $cDB->Query("SELECT upload_id, upload_date, title, type, (case WHEN type='N' THEN 'Newsletters' WHEN type='P' THEN 'Member Photos' WHEN type='I' THEN 'Images' WHEN type='L' THEN 'Legal documents' WHEN type='F' THEN 'Forms' WHEN type='C' THEN 'Calendars' WHEN type='A' THEN 'Account reports' ELSE 'Unknown' END) as type_text, filename, note FROM ".DATABASE_UPLOADS." {$typeText} ORDER BY type, upload_date DESC;");
+		$query = $cDB->Query("SELECT 
+			upload_id, 
+			upload_date, 
+			title, 
+			type, 
+			(case WHEN type='N' THEN 'Newsletters' WHEN type='P' THEN 'Member Photos' WHEN type='I' THEN 'Images' WHEN type='L' THEN 'Legal documents' WHEN type='F' THEN 'Forms' WHEN type='C' THEN 'Calendars' WHEN type='A' THEN 'Account reports' ELSE 'Unknown' END) as type_text, 
+			filename, 
+			note 
+			FROM ".DATABASE_UPLOADS." {$typeText} 
+			ORDER BY type, upload_date DESC;");
 		
 		
 		$i = 0;				

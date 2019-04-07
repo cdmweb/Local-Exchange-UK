@@ -234,6 +234,7 @@ div.group{
 	margin: 0 0 1em 0;
 }
 div.since{float:right; font-weight: normal;}
+.trade_id{float:right; font-weight: normal; opacity: 0.4; font-size: 0.8em; padding-left:1em;}
 
 /* div.listing{display: table; width:100%;}
 div.listing div{display: table-cell; padding: 0 10px 10px 0;}
@@ -368,3 +369,8 @@ form.layout1 label span{
 	display: table-cell ;
 	width: 10em;
 }
+
+.stars{color: #ffa900; font-size:0.9em;}
+.trade-feedback{font-size:0.9em; color: #666; margin-top: 0.5em;}
+.trade-feedback a{text-decoration: none; color:inherit;}
+.trade-feedback a:hover{text-decoration: underline; color:blue;}

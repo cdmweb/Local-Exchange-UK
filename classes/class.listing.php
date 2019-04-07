@@ -24,7 +24,7 @@ class cListing
 	var $type_code; 
 
 
-	function cListing($member=null, $values=null) {
+	function __construct($member=null, $values=null) {
 		if(!empty($member) && !empty($values)) {
 			$this->member = $member;
 			$this->title = $values['title'];
@@ -104,23 +104,30 @@ class cListing
 		l.status as status, 
 		l.expire_date as expire_date, 
 		l.reactivate_date as reactivate_date,
-		concat(p1.first_name, \" \", p1.last_name, if(p2.first_name is not null, concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")) as all_names,
+		concat(
+			p1.first_name, \" \", p1.last_name, 
+			if(p2.first_name is not null, 
+			concat(\" and \", p2.first_name, \" \", p2.last_name),\"\")
+		) as all_names,
 		p1.address_post_code as address_post_code,
 		p1.address_street2 as address_street2,
 		l.category_code as category_code,
 		c.description as category
 		FROM ".DATABASE_LISTINGS." l 
-		left JOIN person p1 ON l.member_id=p1.member_id
-		left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id
-		left JOIN member m ON l.member_id=m.member_id
-		LEFT JOIN categories c ON c.category_id=l.category_code 
+		left JOIN ".DATABASE_PERSONS." p1 ON l.member_id=p1.member_id
+		left JOIN (select * 
+			from ".DATABASE_PERSONS." 
+			where ".DATABASE_PERSONS.".primary_member = 'N') p2 
+			on p1.member_id=p2.member_id
+		left JOIN ".DATABASE_MEMBERS." m ON l.member_id=m.member_id
+		LEFT JOIN ".DATABASE_CATEGORIES." c ON c.category_id=l.category_code 
 		WHERE p1.primary_member = 'Y' and 
 		m.status = 'A' and title LIKE ". $cDB->EscTxt($title) ." AND l.type='". $this->TypeCode($type) ."' AND l.member_id LIKE ". $cDB->EscTxt($member_id);
 
 		$query = $cDB->Query($queryString . " ORDER BY l.type, c.description, l.title, l.member_id;");
 		// CT: todo - consolidate query with 
 	
-		if($values = mysqli_fetch_array($query))
+		if($values = $cDB->FetchArray($query))
 		{		
 
 			$this->ConstructListing($values);
@@ -162,9 +169,7 @@ class cListing
 				
 		
 		// load member associated with member_id
-		$this->member = new cMember;
-		$this->member->ConstructMember($values);
-		//$this->member->LoadMember($member_id);
+		$this->member = new cMemberPublic($values);
 		
 		//$this->DeactivateReactivate();
 	}
@@ -230,12 +235,9 @@ class cListing
 			var $type;
 			var $type_code;
 			
-			function cListingGroup($type) {
+			function __construct($type) {
 				$this->type = $type;
-				if($type == OFFER_LISTING)
-					$this->type_code = OFFER_LISTING_CODE;
-				else
-					$this->type_code = WANT_LISTING_CODE;		
+				$this->type_code = ($type == OFFER_LISTING) ? OFFER_LISTING_CODE : WANT_LISTING_CODE;		
 			}
 			
 			function InactivateAll($reactivate_date) {
@@ -328,13 +330,13 @@ class cListing
 		l.category_code as category_code,
 		c.description as category
 		FROM ".DATABASE_LISTINGS." l 
-		left JOIN person p1 ON l.member_id=p1.member_id
-		left JOIN (select * from person where person.primary_member = 'N') p2 on p1.member_id=p2.member_id
-		left JOIN member m ON l.member_id=m.member_id
-		LEFT JOIN categories c ON c.category_id=l.category_code 
+		left JOIN ".DATABASE_PERSONS." p1 ON l.member_id=p1.member_id
+		left JOIN (select * from ".DATABASE_PERSONS." where ".DATABASE_PERSONS.".primary_member = 'N') p2 on p1.member_id=p2.member_id
+		left JOIN ".DATABASE_MEMBERS." m ON l.member_id=m.member_id
+		LEFT JOIN ".DATABASE_CATEGORIES." c ON c.category_id=l.category_code 
 		WHERE p1.primary_member = 'Y' and 
 		m.status = 'A' and 
-		l.status LIKE ". $cDB->EscTxt($category). " and l.member_id LIKE ". $cDB->EscTxt($member_id). " and  title LIKE ". $cDB->EscTxt($this->title) ." AND l.category_code=c.category_id AND c.category_id LIKE ". $cDB->EscTxt($category) ." AND l.type='". $this->type_code ."' AND l.member_id LIKE ". $cDB->EscTxt($member_id) ." AND l.posting_date >= '". $since ."'". $expired;
+		l.status LIKE {$cDB->EscTxt($category)} and l.member_id LIKE \"{$cDB->EscTxt($member_id)}\" and  title LIKE \"{$cDB->EscTxt($this->title)}\" AND l.category_code=c.category_id AND c.category_id = {$category} AND l.type='{$this->type_code}'";
 
 		$queryList = $cDB->Query($queryString . " ORDER BY l.type, c.description, l.title, l.member_id;");
 
@@ -343,7 +345,7 @@ class cListing
 		$i = 0;
 		$this->num_listings = 0;
 				
-		while($row = mysqli_fetch_array($queryList))
+		while($row = $cDB->FetchArray($queryList))
 		{
 			$this->listing[$i] = new cListing;			
 			//$this->listing[$i]->LoadListing($row[1],$row[0],$this->type_code);
@@ -400,7 +402,7 @@ class cListing
 					//safe postdoce and address
 					$location="{$listing->member->getPrimaryPerson()->getAddressStreet2()}, {$listing->member->getPrimaryPerson()->getSafePostCode()}";
 					//CT show member and member link - hide on member page
-					if ($show_ids) $memInfo .= " (". $listing->member->getAllNames() . " " . $listing->member->MemberLink() .  ") " . $location . ".";
+					if ($show_ids) $memInfo .= " (". $listing->member->getDisplayName() . " " . $listing->member->MemberLink() .  ") " . $location . ".";
 				} else{
 					$details .= $listing->title;
 					$memInfo = "";
@@ -430,13 +432,12 @@ class cListing
 				
 				$i++;	
 			}
-			$output .= "</ul>"; // end the last unordered list
-			$output .= $p->Wrap($i . " listings found.", "p");
+			$output .= "</ul><br />"; // end the last unordered list
+			$output .= $p->Wrap($i . " items.", "p");
 	
 		} 
 		if($i==0)
-			$output = $p->Wrap("No listings found.", "p");
-	
+			$output = $p->Wrap("No items.", "p");
 								
 		return $output;		
 	}

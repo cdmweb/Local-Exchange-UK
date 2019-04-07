@@ -11,63 +11,76 @@ class cPage {
 	var $page_content; // Filename, no path
 	var $page_header;	// HTML
 	var $page_footer;	// HTML
+	var $page_sidebar; 	// An array of cMenuItem objects
 	var $keywords;		
 	var $site_section;
-	var $sidebar_buttons; 	// An array of cMenuItem objects
 	var $top_buttons;		// An array of cMenuItem objects    TODO: Implement top buttons...
 	var $errors;			// array. CT: added for debugging. todo - show for admin only? array.
 	var $page_msg;			// CT: todo - show actions completed and other messages?
 
 	function cPage() {
-		global $cUser, $SIDEBAR, $site_settings;
+		global $cUser, $site_settings;
 		
 		$this->keywords = SITE_KEYWORDS;
 		//print_r('page');
 		//print_r($site_settings);
 		//print_r($site_settings->getKey('SITE_SHORT_TITLE'));
+		$variables = $site_settings->getStrings();
+
+//		print_r($variables);
 		$string = file_get_contents(TEMPLATES_PATH . '/header.php', TRUE);
 		$this->page_header = $this->ReplacePlaceholders($string);
 
 		$string = file_get_contents(TEMPLATES_PATH . '/footer.php', TRUE);
 		$this->page_footer = $this->ReplacePlaceholders($string);
 		
-		if ($cUser->getMemberRole() > 0)
-			$this->AddSidebarButton("Administration", "admin_menu.php");
-
-		foreach ($SIDEBAR as $button) {
-			$this->AddSidebarButton($button[0], $button[1]);
+		//CT move to template
+		if($cUser->IsLoggedOn()){
+			$login_toggle_link = 'member_logout.php';
+			$login_toggle_text = 'Log out';
+		} else {
+			$login_toggle_link = 'login.php';
+			$login_toggle_text = 'Log in';
 		}
 
-	}		
+		$variables = new stdClass();
+		$variables = (object) [
+		    'login_toggle_link' => $login_toggle_link,
+		    'login_toggle_text' => $login_toggle_text
+		];
+
+		$string = file_get_contents(TEMPLATES_PATH . '/sidebar.php', TRUE);
+		$this->page_sidebar = $this->ReplacePlaceholders($string, $variables);
+			
+	}	
 	//CT replaces strings {LIKE-THIS} with either settings file strings
 	// this is a temporary mesasure til we get moustache or a proper template engine
-	function ReplacePlaceholders($string){
-		global $site_settings;
+	function ReplacePlaceholders($string, $variables=null){
+		global $site_settings, $cErr;
 		//CT first replace the bits that are from constants
-		$string = str_replace("{HTTP_BASE}",HTTP_BASE,$string);
-		$string = str_replace("{IMAGES_PATH}",IMAGES_PATH,$string);
-		$string = str_replace("{STYLES_PATH}",STYLES_PATH,$string);
-		$string = str_replace("{LOCALX_VERSION}",LOCALX_VERSION,$string);
-		$string = $this->ReplacePropertiesInString($string);
+		$settings = $site_settings->getStrings();
+					
+
+		foreach($settings as $key => $value){
+		    $string = str_replace("{{" . $key . "}}", $value, $string);
+		}
+		if(!empty($variables)) {
+			//$cErr->Error(print_r($variables, true));
+
+			foreach($variables as $key => $value){
+				//$cErr->Error($key . " " . $value);
+			    $string = str_replace("{{" . $key . "}}", $value, $string);
+			}
+		}
+
 		// CT then do properly
 		return $string;
 	}			
 	function ReplaceVarInString($string, $varname, $value){
-		return str_replace("{" . $varname . "}", $value, $string);
+		return str_replace("{{" . $varname . "}}", $value, $string);
 	}
 
-	function ReplacePropertiesInString($string){
-		global $site_settings;
-		$variables = $site_settings->getStrings();
-		foreach($variables as $key => $value){
-		    $string = str_replace("{" . $key . "}", $value, $string);
-		}
-		return $string;
-	}		
-	function AddSidebarButton ($button_text, $url) {
-		$this->sidebar_buttons[] = new cMenuItem($button_text, $url);
-	}
-	
+
 	function AddTopButton ($button_text, $url) { // Top buttons aren't integrated into header yet...
 		$this->top_buttons[] = new cMenuItem($button_text, $url);
 	}
@@ -87,19 +100,6 @@ class cPage {
 	//CT: simple adding of errors
 	function AddError($error){
 		$this->errors[] = $error;
-	}
-	function MakePageMenu() {
-		global $cUser, $cSite, $cErr;
-	
-		$output = "<div class=\"sidebar\"><ul class=\"menu\">";
-	
-		foreach ($this->sidebar_buttons as $menu_item) {
-			$output .= $menu_item->DisplayButton();
-		}
-	
-        $output .= "<li>" . $cUser->UserLoginLogout() . "</li>";
-		$output .= "</ul></div>";
-		return $output;
 	}
 
 	function MakePageTitle() {
@@ -122,6 +122,10 @@ class cPage {
 	function MakeDocFooter() {
 		return "</body></html>";
 	}	
+	function MakePageMenu() {
+		return $this->page_sidebar;
+	}	
+
 
 	function MakePageContent() {
 		//global $cUser;
@@ -185,7 +189,7 @@ class cPage {
 	}
 	//CT: new funtion for layout of text
 
-	function Wrap($string, $elementName, $cssClass=null, $link=null){
+    function Wrap($string, $elementName, $cssClass=null, $link=null){
 		if(!empty($link)){
 			$string = $this->Link($string, $link);
 		}
@@ -194,7 +198,7 @@ class cPage {
 		}
 		return "<{$elementName} {$cText}>{$string}</{$elementName}>";
 	}
-	public function WrapLabelValue($label, $value){
+    function WrapLabelValue($label, $value){
 		$separator=":";
 		$label=$this->Wrap($label . $separator . " ", "span", "label");
 		$value=$this->Wrap($value, "span", "value");
@@ -245,29 +249,6 @@ class cPage {
 
 	}
 	
-}
-
-class cMenuItem {
-	var $button_text;
-	var $url;
-	
-	function cMenuItem ($button_text, $url) {
-		$this->button_text = $button_text;
-		$this->url = $url;
-	}
-	
-	function DisplayButton() {
-		if ($this->url=="" || $this->button_text ==""){
-			$button = "<li><br /></li>";
-		} else{
-			$button = "<li><a href=\"". HTTP_BASE . "/" . $this->url ."\">". $this->button_text ."</a></li>";
-
-		}
-		return $button;
-
-        // The following is for url-based sessions.
-//		return "<li><div align=left><a href=\"" . $this->url ."\">". $this->button_text ."</a></div></li>";
-	}
 }
 
 $p = new cPage;
