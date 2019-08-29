@@ -37,6 +37,7 @@ p{
 	margin: 0.3em 0 0.6em 0
 
 }
+
 .page{
 	min-width:780px;
 	max-width:1180px;
@@ -217,6 +218,7 @@ table.tabulated th{
 }
 /* table - units - styles */
 .units{text-align: right}
+
 /* table.tabulated th.units, table.tabulated td.units{border-left: solid 1px #CCC} */
 table.tabulated tr.odd td.units{background-color: #efefef;}
 table.tabulated tr.even td.units{background-color: #e6e6e6;}
@@ -229,12 +231,15 @@ table.tabulated tr th.balance{background-color: #e4d0c8;}
 table.tabulated tr.debit td.units{color: red;}
 table.tabulated tr.credit td.units{color: green;}
 
+table.tabulated tr.reversal td, table.tabulated tr.expired td div.text{opacity: 0.5; text-decoration: line-through;}
+table.tabulated tr.reversal td span.note{text-decoration: none;}
+
+
 
 div.group{
 	margin: 0 0 1em 0;
 }
 div.since{float:right; font-weight: normal;}
-.trade_id{float:right; font-weight: normal; opacity: 0.4; font-size: 0.8em; padding-left:1em;}
 
 /* div.listing{display: table; width:100%;}
 div.listing div{display: table-cell; padding: 0 10px 10px 0;}
@@ -289,13 +294,16 @@ h3, div.listing {clear:both;}
  	font-size: 1.2em;
  }
 
+
  .summary{
 	padding:1em;
- 	background-color: #DDD;
- 	border: solid 1px #CCC;
+ 	background-color: #f5f5ec;
+ 	border: solid 1px #EEE;
  	margin: 1em 0;
  }
 
+.rate{
+}
  .listing{
  	list-style: none;
  	margin:0;
@@ -359,9 +367,59 @@ h3, div.listing {clear:both;}
     padding: 20px 10px;
     text-align: center;
  }
+
+
+input[type=text], input[type=password], textarea, select {
+    font-size: inherit;
+    padding: 0.5em;
+    border-radius: 0.3em;
+    border: solid 1px #CCC;
+
+}
+textarea {
+    width: 40em;
+    height: 10em;
+}
+select, select option {
+    padding: 0.5em;
+    height: 2.3em;
+    min-width: 12em;
+}
+
+select.dropdown_auto {
+    min-width: auto;
+    margin-right:0.5em;
+}
+
+input[type=text], input[type=password], textarea, select {
+    background-color: #fcfcfc;
+}
+input[type=text]:hover, input[type=password]:hover, textarea:hover, select:hover {
+    background-color: #f3f3f3;
+}
+
+input[type=text]:disabled, input[type=password]:disabled, textarea:disabled, select:disabled {
+    background-color: #ddd;
+    cursor:not-allowed;
+}
+input[type=submit]{
+    font-size: inherit;
+ 	border-radius: 0.5em;
+	border:none;
+	background-color: #ffd55b;
+	padding:0.5em 1em;
+	cursor: pointer;
+}
+input[type=submit]:hover{
+	background-color: #fdcc3c;
+}
+
+
 form.layout1{
 	display: table ;
 }
+
+
 form.layout1 label{
 	display: table-row ;
 }
@@ -369,8 +427,123 @@ form.layout1 label span{
 	display: table-cell ;
 	width: 10em;
 }
+form.layout1 input[type=text],form.layout1 input[type=password]{
+	width: 18em;
+}
+
+form.layout2 label {
+    display: block;
+    margin-bottom: 1.3em;
+}
+    
+form.layout2 input[type=text],form.layout2 input[type=password],form.layout2 select{
+	width:24em;
+}
+form.layout2 select{
+	width: 25.2em
+}
+
+form.layout2 label span {
+    display: block;
+    margin-bottom: 0.4em;
+}
+
+
+.columns2 {
+  -webkit-column-count: 2; /* Chrome, Safari, Opera */
+  -moz-column-count: 2; /* Firefox */
+  column-count: 2;
+}
+.columns3 {
+  -webkit-column-count: 3; /* Chrome, Safari, Opera */
+  -moz-column-count: 3; /* Firefox */
+  column-count: 3;
+}
+
+.columns3 ul {
+	  margin:0;
+}
+
+
+a.button{
+	white-space: nowrap;
+	display: inline-block;
+	border-radius: 0.5em;
+	border:none;
+	background-color: #DDD;
+	color:#333;
+	padding:0.5em;
+	cursor: pointer;
+	text-decoration: none;
+}
+a.button:hover{
+	background-color: #CCC;
+}
 
 .stars{color: #ffa900; font-size:0.9em;}
 .trade-feedback{font-size:0.9em; color: #666; margin-top: 0.5em;}
 .trade-feedback a{text-decoration: none; color:inherit;}
 .trade-feedback a:hover{text-decoration: underline; color:blue;}
+
+/* summary page */
+.profile-wrap{
+	width:100%;
+	box-sizing: border-box;
+	border: solid 1px #EEE;
+	background-color: #f5f5ec; 
+}
+.profile-inner{
+	display: table-row;
+}
+.profile-avatar{
+	width:20%;
+	vertical-align: top;
+	padding:1em 1em 1em 0;
+	display: table-cell;
+}
+.profile-text{
+	vertical-align: top;
+	padding:1em;	
+	display: table-cell;
+}
+.profile-about{
+	font-size: 1.2em;
+	padding:1em;	
+}
+.profile-avatar img{
+	width:100%;
+}
+
+
+.profile-wrap.detail .profile-avatar{
+	width:40%; 
+}
+
+.response{
+	background-color: #EEE;
+    padding: 1em;
+    margin-bottom: 1em;
+}
+.response.success{
+	background-color: #EEE;
+}
+.response.fail{
+	background-color: #fddfdf;
+}
+
+.metadata{float:right; font-weight: normal; opacity: 0.4; font-size: 0.8em; padding-left:1em;}
+.metadata.left{float:left;}
+
+.expiry{
+	display: inline-block;
+	padding:0 4px;
+	background-color: Darkgray;
+	color: white;
+	line-height: 1.3em;
+}
+.expiry.negative{
+	background-color: red;
+}
+
+table.tabulated tr.credit td.units{color: green;}
+

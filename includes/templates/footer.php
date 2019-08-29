@@ -1,7 +1,7 @@
 <!--START include footer -->
 
 <div class="footer">
-	<div><a href="{{HTTP_BASE}}/index.php">
+	<div><a href="/index.html">
 	{{SITE_LONG_TITLE}}
 	</a></div>
 	<div>

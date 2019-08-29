@@ -66,7 +66,9 @@ class cDatabase
 		}
 	}
 
-	function Query($thequery)
+
+
+	function Query($string_query)
 	{
 		//CT: 
 		global $cErr;
@@ -75,26 +77,44 @@ class cDatabase
 		if (!$this->isConnected)
 			$this->Connect();
 
-		$ret = mysqli_query($this->db_link, $thequery);
-
+		$result = mysqli_query($this->db_link, $string_query);
 		//CT: why is this not a resource?
 		//echo(gettype($ret));
-		$retmessage ="";
-		if(gettype($ret) == "resource") {
+		$result_message ="";
+		//if returning an mysql resource object
+		if(gettype($result) == "object") {
 			//ct debug
-			$retmessage = "| R: " . mysqli_num_rows($this->db_link);
+			$result_message = "| R: " . mysqli_num_rows($result);
+			
 		} 
+		 
 
 		$this->count_query++;
-		$cErr->Error("Q.{$this->count_query}: {$thequery} {$retmessage}");
+		//debug db call - uncomment out to get a print
+		$debug = true;
+		if(!empty($_REQUEST['debug'])){
+			if($_REQUEST['debug']) $debug = true;
+		}
+		if($debug) $cErr->Error("Q.{$this->count_query}: {$string_query} {$result_message}");
 
-		return $ret;
+		return $result;
 		//CT: uncomment when finishing demo
+	
 
 //		       or die ("Query failed: ".mysqli_errno() . ": " . mysqli_error()); // TODO: fix error messages
 		//$this->Disconnect();
 		//showMessage($this->NumRows($ret));
 		
+	}
+
+	function QueryReturnId($thequery)
+	{
+		//CT: returns the last used ID on an insert
+		global $cErr;
+		$ret = $this->Query($thequery);
+		$last_used_id = mysqli_insert_id($this->db_link);
+		$cErr->Error("Lat used id: " . $last_used_id);
+		return $last_used_id;
 	}
 
 	function FetchArray($thequery)
@@ -167,21 +187,86 @@ class cDatabase
 		}
 	}
 */
-   // CT make safe query - now that member object is only populated with the field that the function needs, opportunity to nullify data by accident 
+   // CT adjusted so that nulls dont overwrite. 
     function BuildUpdateQueryStringFromArray($array){
+        $i=0;
         $string = "";
         //name value pair in array creates a Update query set statement
-        foreach ($array as $name => $value) {
-            if(!is_null($value)) {
-                if(empty($string)) {
-                    $string .= "SET ";
-                }else{
-                    $string .= ", ";
-                }
-                $string .= "{$name}={$this->EscTxt($value)}";
+        foreach($array as $key=>$value){
+        	//not sure if this is possible
+        	if(!is_null($key)){
+	            if($i > 0) $string .= ", ";
+	            $string .= " `{$key}`=\"{$this->EscTxt($value)}\"";
+	        	$i++;
+	    	}
+            
+        }
+        return $string;
+    }
+    //returns array of the two parts needed for the insert statement - keys and values
+    function BuildInsertQueryStringsFromArray($array) {
+        $i=0;
+        $keys_as_string="";
+        $values_as_string="";
+        foreach($array as $key=>$value){
+            if($i > 0){
+                $keys_as_string .=", ";
+                $values_as_string .=", ";
             }
-         }
-        //print($string);
+            $keys_as_string .= "`{$key}`";
+            //set appropriate type for communication with mysql
+            if(is_int($value)){
+            	$values_as_string .= "{$value}";
+            }else{
+            	$values_as_string .= "\"{$this->EscTxt($value)}\"";
+            }
+            
+            $i++;
+        }
+
+        return array($keys_as_string, $values_as_string);
+    }
+
+       // CT arrays of fields wanted 
+    function BuildSelectQueryStringFromArray($array){
+        $i=0;
+        $string = "";
+        //name value pair in array creates a Update query set statement
+        foreach($array as $key=>$value){
+        	//make sure nulls arent set by accident in the db, now that the objects dont load all fields
+            if($i > 0) $string .= ", ";
+            //m.member_id as member_id to avoid collisions in namespace
+            $string .= " {$key} as $value";
+            $i++;
+        }
+        return $string;
+    }
+
+    //helper function to build update query
+    function BuildUpdateQuery($table_name, $array, $condition) {
+
+        $vars_as_string = $this->BuildUpdateQueryStringFromArray($array);
+        $string = "UPDATE `{$table_name}` SET {$vars_as_string} WHERE {$condition};";
+        return $string;
+    }
+    //helper function to build insert query
+    function BuildInsertQuery($table_name, $array) {
+        //this is for php7. php5 has these flipped
+        list($keys_as_string, $vars_as_string) = $this->BuildInsertQueryStringsFromArray($array);
+        $string = "INSERT INTO `{$table_name}` ({$keys_as_string}) VALUES ({$vars_as_string});";
+        return $string;
+    }    
+    //helper function to build select query
+    //will take in alias if needed -  $table_name_and_alias = member m
+    function BuildSelectQuery($table_name, $array, $joins, $condition, $order_by) {
+        $vars_as_string = $this->BuildSelectQueryStringFromArray($array);
+        $string = "SELECT {$vars_as_string} FROM {$table_name} {$joins} WHERE {$condition} ORDER BY {$order_by};";
+        return $string;
+    }
+        //helper function to build delete query
+    function BuildDeleteQuery($table_name, $condition) {
+        //$vars_as_string = $this->BuildUpdateQueryStringFromArray($array);
+        $string = "DELETE FROM `{$table_name}` WHERE {$condition};";
         return $string;
     }
 
@@ -195,7 +280,7 @@ class cDatabase
 		$purifier = new HTMLPurifier($config);
 		$clean_html = $purifier->purify($var);
 	
-		return $var;
+		return $clean_html;
 	}
 
 	

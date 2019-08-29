@@ -78,7 +78,8 @@ class cUpload {
 			
 		
 		$this->upload_id = $row['upload_id'];
-		$this->upload_date = new cDateTime($row['upload_date']);
+		//$this->upload_date = new cDateTime($row['upload_date']);
+		$this->upload_date = $row['upload_date'];
 		//$this->upload_date = $row['upload_date'];
 		$this->type = $row['type'];		
 		$this->type_text = $row['type_text'];		

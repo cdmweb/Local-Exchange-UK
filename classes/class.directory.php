@@ -5,7 +5,7 @@ if (!isset($global))
 	die(__FILE__." was included without inc.global.php being included first.  Include() that file first, then you can include ".__FILE__);
 }
 
-require_once ("class.listing.php");
+// require_once ("class.listing.php");
 require_once ("File/PDF.php");
 //require_once ("File_PDF/PDF.php");
 

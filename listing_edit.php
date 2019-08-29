@@ -3,187 +3,158 @@
 include_once("includes/inc.global.php");  
 
 $cUser->MustBeLoggedOn();
-$p->site_section = LISTINGS;
-$title = $cDB->UnEscTxt($_REQUEST['title']);
-$p->page_title = 'Edit '. $_REQUEST['type'] .': '.$title;
 
-include("classes/class.listing.php");
-include("includes/inc.forms.php");
+//listing with extras
+$listing = new clistingEdit();
 
-//
-// First we define the form
-//
-if($_REQUEST["mode"] == "admin") {  // Administrator is creating listing for another member
-	$cUser->MustBeLevel(1);
-	$form->addElement("hidden","mode","admin");
-	$form->addElement("hidden", "member_id", $_REQUEST["member_id"]);
-} else {  // Member is creating offer for his/her self
-	$cUser->MustBeLoggedOn();
-	$form->addElement("hidden","member_id", $cUser->member_id);
-	$form->addElement("hidden","mode","self");
-}
 
-$form->addRule('title','Enter a title','required');
-$form->registerRule('verify_not_duplicate','function','verify_not_duplicate');
-//$form->addRule('title','You already have a listing with this title','verify_not_duplicate');
-$category_list = new cCategoryList();
-$form->addElement('select', 'category', 'Category', $category_list->MakeCategoryArray());
 
-if(USE_RATES)
-	$form->addElement('text', 'rate', 'Rate', array('size' => 15, 'maxlength' => 30));
-else
-	$form->addElement('hidden', 'rate');
+//safely get values
+$is_loaded = false;
 
-$form->addElement('hidden', 'title', $title);
-$form->addElement('hidden','type',$_REQUEST['type']);
-$form->addElement('static', null, 'Description', null);
-$form->addElement('textarea', 'description', null, array('cols'=>45, 'rows'=>5, 'wrap'=>'soft'));
-$form->addElement('html', '<TR><TD></TD><TD><BR></TD></TR>');
-$form->addElement('advcheckbox', 'set_expire_date', 'Should this listing be set to automatically expire?');
-$today = getdate();
-$options = array('language'=> 'en', 'format' => 'dFY', 'minYear' => $today['year'],'maxYear' =>$today['year']+5, 'addEmptyOption'=>'Y', 'emptyOptionValue'=>'0');
-$form->addElement('date','expire_date', 'Expires', $options);
-$form->registerRule('verify_future_date','function','verify_future_date');
-$form->addRule('expire_date','Expiration must be for a future date','verify_future_date');
-$form->registerRule('verify_valid_date','function','verify_valid_date');
-$form->addRule('expire_date','Date is invalid','verify_valid_date');
-$form->addElement('advcheckbox', 'set_reactivate_date', 'Should this listing be made temporarily inactive?');
-$form->addElement('date','reactivate_date', 'Reactivates', $options);
-$form->addRule('reactivate_date','Must be a future date','verify_future_date');
-$form->addRule('reactivate_date','Date is invalid','verify_valid_date');
-$form->addElement('submit', 'btnSubmit', 'Update');
-
-//
-// Then check if we are processing a submission or just displaying the form
-//
-if ($form->validate()) { // Form is validated so processes the data
-   $form->freeze();
- $form->process('process_data', false);
-} else {  // Download existing values and display them
-	$listing = new cListing;
-	$listing->LoadListing($title,$_REQUEST['member_id'],substr($_REQUEST['type'],0,1));
-	if ($listing->expire_date) {
-		$temporary_listing = true;
-		$expire_date = array ('d'=>substr($listing->expire_date,8,2),'F'=>date('n',strtotime($listing->expire_date)),'Y'=>substr($listing->expire_date,0,4));  // Using 'n' due to a bug in Quickform
-	} else {
-		$temporary_listing = false;
-		$expire_date = array("d"=>0, "F"=>0, "Y"=>0);
+$form_action = "create";
+if(!empty($_REQUEST["listing_id"])){
+	$listing_id =  $cDB->EscTxt($_REQUEST['listing_id']);
+	$form_action = "update";
+	$condition = "p1.primary_member = 'Y' and m.status = 'A' AND listing_id={$listing_id}";
+	$is_loaded = $listing->Load($condition);
+	if(!$is_loaded){
+		$cErr->Error("Cannot load id '{$listing_id}'");
+		//$redir_url="index.php";
+		//include("redirect.php");
 	}
-	if ($listing->reactivate_date) {
-		$inactive_listing = true;
-		$reactivate_date = array ('d'=>substr($listing->reactivate_date,8,2),'F'=>date('n',strtotime($listing->reactivate_date)),'Y'=>substr($listing->reactivate_date,0,4));  // Using 'n' due to a bug in Quickform
-	} else {
-		$inactive_listing = false;
-		$reactivate_date = array("d"=>0, "F"=>0, "Y"=>0);
+	// only allow committee and above to edit other people's ads
+	if(($cUser->getMemberRole() == 0)&& ($listing->getMemberId() != $cUser->getMemberId())){
+		$cErr->Error("You don't have permission to edit this listing");
+		$redir_url="listing_detail.php?listing_id={$listing_id}";
+	  	include("redirect.php");
 	}
-		
-	$current_values = array ("title"=>$listing->title, "description"=>$listing->description, "rate"=>$listing->rate, "category"=>$listing->category->id, "set_expire_date"=>$temporary_listing, "expire_date"=>$expire_date, "set_reactivate_date"=>$inactive_listing, "reactivate_date"=>$reactivate_date);
+	$member_id = $listing->getMemberId();
+	$type = $listing->getType();
+	$typeDescription = $listing->getTypeDescription();
 
-	$form->setDefaults($current_values);
-    $p->DisplayPage($form->toHtml());  // just display the form
 }
 
-//
-// The form has been submitted with valid data, so process it   
-//
-function process_data ($values) {
-	global $p, $cUser,$cErr, $cDB, $title;
-	$list = "";
+
+
+// //admin action... only for committee and above
+// $form_mode = (!empty($_REQUEST["form_mode"]) && $cUser->getMemberRole()>0) ? $cDB->EscTxt($_REQUEST['form_mode']) : null;
+
+// //load from id
+// $is_loaded = false;
+// if(!empty($listing_id) ){
+// 	$condition = "p1.primary_member = 'Y' and 
+//         m.status = 'A' AND listing_id={$listing_id}";
+// 	$is_loaded = $listing->Load($condition);
+// }
+
+
+
+//allow extra controls
+if(!empty($form_mode)) $listing->setFormMode($form_mode);
+
+if(!empty($listing_id)){
+
+	// CT user must match
+	$page_title = "Edit '{$typeDescription}': {$listing->getTitle()}";
+	//CT doesnt go through build function - todo - should it?
+	$listing->setFormAction("update");
+}else{
+	//ct hack - just make sure only these 2 values possible
+	//if($type == "W") $typeDescription = "Want";
+	//else $type == "Offer";
+	$typeDescription = ($type == "W") ? "Want" : "Offer";
+	$page_title = "Create new '{$typeDescription}' listing";
+	//CT doesnt go through build function - todo - should it?
+	$listing->setFormAction("create");
+}
+	$p->page_title = $page_title;
+
+
+
+
+
+// if form submitted
+if ($_POST["submit"]){
+	//build object from inputs
+	$listing->Build($_POST);
+
+	// error catching without PEAR is a bit of a faff, but cant use PEAR anymore.
+	$error_message = "";
+	if(strlen($listing->getTitle()) < 1) $error_message .= "Title is missing. ";
+	if(empty($listing->getCategoryId())) $error_message .= "Category is missing. ";
+
+	//check if errors and save
+	$is_saved = 0;
+	if(empty($error_message)) $is_saved = $listing->Save();
+	else $cErr->Error($error_message);
 	
-	$listing = new cListing();
-	$listing->LoadListing($title,$_REQUEST['member_id'],substr($_REQUEST['type'],0,1));  
-	$date = $values['expire_date'];
-	$expire_date = $date['Y'] . '/' . $date['F'] . '/' . $date['d'];
-	$date = $values['reactivate_date'];
-	$reactivate_date = $date['Y'] . '/' . $date['F'] . '/' . $date['d'];
-	$today = getdate();
 
-	if($values['set_expire_date'] and $expire_date != "0/0/0") { 
-		// they checked the box and entered a date, so store the value
-		$listing->expire_date = htmlspecialchars($expire_date);
-	} elseif ($listing->expire_date==null and $expire_date != "0/0/0") {	
-		// they didn't check it but they changed the date, so store
-		$listing->expire_date = htmlspecialchars($expire_date);
-	} else { 
-		$listing->expire_date = null;
-		if($listing->status == 'E') // they must have unchecked the box or blanked the date
-			$listing->status = 'A';
-	}	
+	if($is_saved){
+		//redirect page if saved	
+		$redir_url="listing_detail.php?listing_id={$listing->getListingId()}&";
+  		include("redirect.php");
+	} 
+}
 
-	if($values['set_reactivate_date'] and $reactivate_date != "0/0/0") { 
-		// they checked the box and entered a date, so store the value
-		$listing->reactivate_date = htmlspecialchars($reactivate_date);
-		$listing->status = 'I';
-	} elseif ($listing->reactivate_date==null and $reactivate_date != "0/0/0") {	
-		// they didn't check it but they changed the date, so store
-		$listing->reactivate_date = htmlspecialchars($reactivate_date);
-		$listing->status = 'I';
-	} else { 
-		$listing->reactivate_date = null;
-		if($listing->status == 'I') // they must have unchecked the box or blanked the date
-			$listing->status = 'A';
-	}	
-	
-	$listing->title = htmlspecialchars($title);
-	$listing->description = htmlspecialchars($values['description']);
-	$listing->category->id = htmlspecialchars($values['category']);
-	$listing->rate = $values['rate'];
 
-	$created = $listing->SaveListing();
 
-	if($created) {
-		$list .= 'Listing changes saved.  Do you want to <A HREF="listing_to_edit.php?mode='. $_REQUEST['mode'] .'&member_id='. $_REQUEST["member_id"] .'&type='. $_REQUEST["type"] .'">edit</A> another listing?';	
-	} else {
-		$cErr->Error("There was an error saving the listing. Please try again later.");
+//show form
+$member_text ="";
+//show member dropdown if in create mode for admin
+if($listing->getFormMode()=="admin"){
+	$member_text ="<p>
+		<label for=\"title\">
+			Member<br />
+			{$listing->PrepareMemberDropdown()}
+		</label>
+	</p>";
+} else{
+	if(!empty($listing->getMemberId()) && $cUser->getMemberId() != $listing->getMemberId()){
+		//if done on behalf of someone
+		$member_text ="<p class=\"large\">For member {$listing->getMember()->getDisplayName()} (#{$listing->getMember()->getMemberId()})</p>";
+
 	}
-    $p->DisplayPage($list);
 }
+$output .= "
+	<form action=\"/members/listing_edit.php?listing_id={$listing->page_id}\" method=\"post\" name=\"\" id=\"\" class=\"layout2\">
+		<input type=\"hidden\" id=\"listing_id\" name=\"listing_id\" value=\"{$listing->getListingId()}\" />
+		<input type=\"hidden\" id=\"form_action\" name=\"form_action\" value=\"{$listing->getFormAction()}\" />
+		<input type=\"hidden\" id=\"form_mode\" name=\"form_mode\" value=\"{$listing->getFormMode()}\" />
+		<!-- <input type=\"hidden\" id=\"active\" name=\"active\" value=\"1\" /> -->
+		<input type=\"hidden\" id=\"active\" name=\"status\" value=\"{$listing->getStatus()}\" />
+		{$member_text}
+		<p>
+			<label for=\"title\">
+				Title *<br />
+				<input maxlength=\"200\" name=\"title\" id=\"title\" type=\"text\" value=\"{$listing->getTitle()}\">
+			</label>
+		</p>
 
-//
-// And finally, the following functions verify form data
-//
-function verify_future_date ($element_name,$element_value) {
-	global $form, $title;
+		<p>
+			<label for=\"body\">Description <br />
+				<textarea cols=\"80\" rows=\"20\" wrap=\"soft\" name=\"description\" id=\"description\">{$listing->getDescription()}</textarea>
+			</label>
+		</p>
+		<p>
+			<label for=\"rate\">
+				Rate (and any other variants)<br />
+				<input maxlength=\"50\" name=\"rate\" id=\"rate\" type=\"text\" value=\"{$listing->getRate()}\">
+			</label>
+		</p>		
+		<p>
+			<label for=\"body\">Category *<br />
+				{$listing->PrepareCategoryDropdown()}
+			</label>
+		</p>			
 
-	$listing = new cListing;
-	$listing->LoadListing($title,$_REQUEST['member_id'],substr($_REQUEST['type'],0,1));
-	if ($listing->status == 'E' and !$form->getElementValue("set_expire_date")) {
-		return true; // They must have unchecked the box to reactivate the listing
-	}
-	
-	$today = getdate();
-	$date = $element_value;
+		<p>
+			<input name=\"submit\" id=\"submit\" value=\"Submit\" type=\"submit\" />
+			* denotes a required field
+		</p>
+	</form>";
 
-	if($date['F'] == '0' and $date['d'] == '0' and $date['Y'] == '0')
-		return true;
-	
-	$date_str = $date['Y'] . '/' . $date['F'] . '/' . $date['d'];
 
-	if (strtotime($date_str) <= strtotime("now")) // date is a past date
-		return false;
-	else
-		return true;
-}
-
-function verify_valid_date ($element_name,$element_value) {
-	$date = $element_value;
-	
-	if($date['F'] == '0' and $date['d'] == '0' and $date['Y'] == '0')
-		return true;
-	return checkdate($date['F'],$date['d'],$date['Y']);
-}
-
-function verify_not_duplicate ($element_name,$element_value) {
-	global $cUser;
-	$title_list = new cTitleList();
-	
-	$titles = $title_list->MakeTitleArray($cUser->member_id);
-	
-	foreach ($titles as $title) {
-		if($element_value == $title)
-			return false;
-	}
-	return true;
-}
+$p->DisplayPage($output);
 
 ?>

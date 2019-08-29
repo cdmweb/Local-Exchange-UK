@@ -105,7 +105,7 @@ class cSettings {
 		//$this->theSettings = Array();
 		//$this->strings = Array();
 		
-		$q = "select name, current_value, default_value, typ from settings";
+		$q = "select name, current_value, default_value, typ from " . DATABASE_SETTINGS;
 		
 		$result = $cDB->Query($q);
 		
@@ -114,6 +114,7 @@ class cSettings {
 		
 		$num_results = mysqli_num_rows($result);
 		//foreach $row = mysqli_fetch_object($result)
+
 		if ($num_results>0) {
 			
 			for ($i=0;$i<$num_results;$i++) {
@@ -124,12 +125,14 @@ class cSettings {
 				//$this->theSettings[] = $row;
 			}
 		
-		}
-		//add other settings
-		$this->setString("HTTP_BASE", HTTP_BASE);
-		$this->setString("IMAGES_PATH", IMAGES_PATH);
-		$this->setString("STYLES_PATH", STYLES_PATH);
-		$this->setString("LOCALX_VERSION", LOCALX_VERSION);	
+		} 
+		
+			//add other settings
+			$this->setString("HTTP_BASE", HTTP_BASE);
+			$this->setString("IMAGES_PATH", IMAGES_PATH);
+			$this->setString("STYLES_PATH", STYLES_PATH);
+			$this->setString("LOCALX_VERSION", LOCALX_VERSION);	
+		
 	}
 	
 	public function split_options($wh) {
@@ -157,7 +160,7 @@ class cSettings {
 		
 		foreach ($sql_data as $column => $value) {
 			
-			$result = $cDB->Query("update settings set current_value=".$cDB->EscTxt($value)." where name=".$cDB->EscTxt($column)."");
+			$result = $cDB->Query("update ". DATABASE_SETTINGS . " set current_value=".$cDB->EscTxt($value)." where name=".$cDB->EscTxt($column)."");
 			
 			if (!$result)
 				$cErr->Error("Update failed ".mysqli_error());

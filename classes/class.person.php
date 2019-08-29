@@ -8,107 +8,112 @@ class cPerson
 	private $directory_list;
 	private $first_name;
 	private $last_name;
-	private $mid_name;
-	private $dob;
-	private $mother_mn;
 	private $email;
-	private $phone1_area;
 	private $phone1_number;
-	private $phone1_ext;
-	private $phone2_area;
 	private $phone2_number;
-	private $phone2_ext;
-	private $fax_area;
-	private $fax_number;
-	private $fax_ext;
+
 	private $address_street1;
 	private $address_street2;
 	private $address_city;
 	private $address_state_code;
     private $address_post_code;
-    private $safe_post_code;
 	private $address_country;
 	private $about_me;
     private $age;
     private $sex;
+    //CT this is a helper for UK
+    private $safe_post_code;
+    //remove these?
+    private $phone1_ext;
+    private $phone2_area;
+    private $phone1_area;
+    private $mid_name;
+    private $dob;
+    private $mother_mn;
+    private $phone2_ext;
+    private $fax_area;
+    private $fax_number;
+    private $fax_ext;
 
     public function cPerson($values=null) {
         if ($values) {
-            $this->ConstructPerson($values);
+            $this->Build($values);
         }
     }
-	public function SaveNewPerson() {
-		global $cDB, $cErr;
-
-		$duplicate_exists = $cDB->Query("SELECT NULL FROM ".DATABASE_PERSONS." WHERE member_id=". $cDB->EscTxt($this->member_id) ." AND first_name". $cDB->EscTxt2($this->first_name) ." AND last_name". $cDB->EscTxt2($this->last_name) ." AND mother_mn". $cDB->EscTxt2($this->mother_mn) ." AND mid_name". $cDB->EscTxt2($this->mid_name) ." AND dob". $cDB->EscTxt2($this->dob) .";");
-		
-		if($row = mysqli_fetch_array($duplicate_exists)) {
-			$cErr->Error("Could not save new person. There is already a person in your account with the same name, date of birth, and mother's maiden name. If you received this error after pressing the Back button, try going back to the menu and starting again.");
-			include("redirect.php");
-		}
-	
-		$insert = $cDB->Query("INSERT INTO ".DATABASE_PERSONS." (member_id, primary_member, directory_list, first_name, last_name, mid_name, dob, mother_mn, email, phone1_area, phone1_number, phone1_ext, phone2_area, phone2_number, phone2_ext, fax_area, fax_number, fax_ext, address_street1, address_street2, address_city, address_state_code, address_post_code, address_country) VALUES (". $cDB->EscTxt($this->member_id) .",". $cDB->EscTxt($this->primary_member) .",". $cDB->EscTxt($this->directory_list) .",". $cDB->EscTxt($this->first_name) .",". $cDB->EscTxt($this->last_name) .",". $cDB->EscTxt($this->mid_name) .",". $cDB->EscTxt($this->dob) .",". $cDB->EscTxt($this->mother_mn) .",". $cDB->EscTxt($this->email) .",". $cDB->EscTxt($this->phone1_area) .",". $cDB->EscTxt($this->phone1_number) .",". $cDB->EscTxt($this->phone1_ext) .",". $cDB->EscTxt($this->phone2_area) .",". $cDB->EscTxt($this->phone2_number) .",". $cDB->EscTxt($this->phone2_ext) .",". $cDB->EscTxt($this->fax_area) .",". $cDB->EscTxt($this->fax_number) .",". $cDB->EscTxt($this->fax_ext) .",". $cDB->EscTxt($this->address_street1) .",". $cDB->EscTxt($this->address_street2) .",". $cDB->EscTxt($this->address_city) .",". $cDB->EscTxt($this->address_state_code) .",". $cDB->EscTxt($this->address_post_code) .",". $cDB->EscTxt($this->address_country).");");
-		
-		return $insert;
-	}
+    
 			
-	public function SavePerson() {
+	public function Save($formAction='update') {
+        //update or create
 		global $cDB, $cErr;
-		
 		/*[chris]*/ // Added store personal profile data
-        //print("stuff" .$this->getPersonId());
         //CT - converted to array so we dont have to set fiedls that are not present
-        $fieldArray = Array();
-        $fieldArray["member_id"] = $this->getMemberId();
-        $fieldArray["primary_member"]=$this->getPrimaryMember(); 
-        $fieldArray["directory_list"]=$this->getDirectoryList(); 
-        $fieldArray["first_name"]=$this->getFirstName(); 
-        $fieldArray["last_name"]=$this->getLastName(); 
-        $fieldArray["mid_name"]=$this->getMidName(); 
-        $fieldArray["dob"]=$this->getDob(); 
-        $fieldArray["mother_mn"]=$this->getMotherMn(); 
-        $fieldArray["email"]=$this->getEmail(); 
-        $fieldArray["phone1_area"]=$this->getPhone1Area(); 
-        $fieldArray["phone1_number"]=$this->getPhone1Number(); 
-        $fieldArray["phone1_ext"]=$this->getPhone1Ext(); 
-        $fieldArray["phone2_area"]=$this->getPhone2Area(); 
-        $fieldArray["phone2_number"]=$this->getPhone2Number(); 
-        $fieldArray["phone2_ext"]=$this->getPhone2Ext(); 
-        $fieldArray["fax_area"]=$this->getFaxArea(); 
-        $fieldArray["fax_number"]=$this->getFaxNumber(); 
-        $fieldArray["fax_ext"]=$this->getFaxExt; 
-        $fieldArray["address_street1"]=$this->getAddressStreet1; 
-        $fieldArray["address_street2"]=$this->getAddressStreet2; 
-        $fieldArray["address_city"]=$this-> getAddressCity(); 
-        $fieldArray["address_state_code"]=$this->getAddressStateCode(); 
-        $fieldArray["address_post_code"]=$this->getAddressPostcode();
-        $fieldArray["address_country"]=$this->getAddressCountry(); 
-        $fieldArray["about_me"]=$this->getAboutMe();
-        $fieldArray["age"]=$this->getAge();
-        $fieldArray["sex"]=$this->getSex();
+        $field_array = Array();
+        /* $field_array["person_id"] = $this->getPersonId(); */
+        //dont think you should change this in a save?
+        //$field_array["primary_member"]=$this->getPrimaryMember(); 
+        $field_array["directory_list"]=$this->getDirectoryList(); 
+        $field_array["first_name"]=$this->getFirstName(); 
+        $field_array["last_name"]=$this->getLastName(); 
+        //$field_array["mid_name"]=$this->getMidName(); 
+        //$field_array["dob"]=$this->getDob(); 
+        //$field_array["mother_mn"]=$this->getMotherMn(); 
+        $field_array["email"]=$this->getEmail(); 
+        //$field_array["phone1_area"]=$this->getPhone1Area(); 
+        $field_array["phone1_number"]=$this->getPhone1Number(); 
+        //$field_array["phone1_ext"]=$this->getPhone1Ext(); 
+        //$field_array["phone2_area"]=$this->getPhone2Area(); 
+        $field_array["phone2_number"]=$this->getPhone2Number(); 
+        //$field_array["phone2_ext"]=$this->getPhone2Ext(); 
+        //$field_array["fax_area"]=$this->getFaxArea(); 
+        //$field_array["fax_number"]=$this->getFaxNumber(); 
+        //$field_array["fax_ext"]=$this->getFaxExt(); 
+        $field_array["address_street1"]=$this->getAddressStreet1(); 
+        $field_array["address_street2"]=$this->getAddressStreet2(); 
+        $field_array["address_city"]=$this-> getAddressCity(); 
+        $field_array["address_state_code"]=$this->getAddressStateCode(); 
+        $field_array["address_post_code"]=$this->getAddressPostcode();
+        $field_array["address_country"]=$this->getAddressCountry(); 
+        $field_array["about_me"]=$this->getAboutMe();
+        $field_array["age"]=$this->getAge();
+        $field_array["sex"]=$this->getSex();
 
-        
-        $string = $cDB->BuildUpdateQueryStringFromArray($fieldArray);
+        $is_success = 0;
+        if($formAction == 'update'){
+            $condition = "`person_id`=\"{$this->getPersonId()}\""; 
+            $string_query = $cDB->BuildUpdateQuery(DATABASE_PERSONS, $field_array, $condition);  
+            $error_message = "Could not save changes to person {$this->getPersonId()} associated with member {$this->getMemberId()}.";
+        } else{
+           // create new member
+            //TODO: must pass in 
+           //$this->setMemberId();
+          $field_array["member_id"] = $this->getMemberId();
+           print_r($field_array);
+           $string_query = $cDB->BuildInsertQuery(DATABASE_PERSONS, $field_array);
+           $is_success = $cDB->Query($string_query);
+           $error_message = "Could not create person associated with member {$this->getMemberId()}.";
+        }
+        // do query
+        $is_success = $cDB->Query($string_query);
+        if(!$is_success){
+            $cErr->Error($error_message);    
+        }
 
-        $update = $cDB->Query("UPDATE ".DATABASE_PERSONS. " {$string} WHERE person_id=". $cDB->EscTxt($this->getPersonId()) .";");  
+        //$cErr->Error("STRING:" . $string);
 
-		if(!empty($update))
-			$cErr->Error("Could not save changes to '". $this->first_name ." ". $this->last_name ."'. Please try again later.");	
-			
-		return $update;
+		return $is_success;
 	}
 
-	public function LoadPerson($who)
+	public function Load($who)
 	{
-		global $cDB, $cErr;
+		global $cDB, $cErr, $cQueries;
 		
 		/*[chris]*/ // Added fetch personal profile data
-		$query = $cDB->Query("SELECT person_id, member_id, primary_member, directory_list, first_name, last_name, mid_name, dob, mother_mn, email, phone1_area, phone1_number, phone1_ext, phone2_area, phone2_number, phone2_ext, fax_area, fax_number, fax_ext, address_street1, address_street2, address_city, address_state_code, address_post_code, address_country, about_me, age, sex FROM ".DATABASE_PERSONS." WHERE person_id=". $cDB->EscTxt($who));
+		$query = $cDB->Query("");
 		
 		if($row = mysqli_fetch_array($query))
 		{
 			//pass it on
-			$this->ConstructPerson($row);		
+			$this->Build($row);		
 		}
 		else 
 		{
@@ -117,41 +122,46 @@ class cPerson
 		}		
 	}
 	//CT: todo - fixit! should be __Construct
-	public function ConstructPerson($array=null) 
+	public function Build($field_array) 
     {
-        if (!empty($array['person_id']))  $this->setPersonId($array['person_id']);
-        if (!empty($array['member_id']))  $this->setMemberId($array['member_id']);
-        if (!empty($array['primary_member']))  $this->setPrimaryMember($array['primary_member']);
-        if (!empty($array['directory_list']))  $this->setDirectoryList($array['directory_list']);
-        if (!empty($array['first_name']))  $this->setFirstName($array['first_name']);
-        if (!empty($array['last_name']))  $this->setLastName($array['last_name']);
-        if (!empty($array['mid_name']))  $this->setMidName($array['mid_name']);
-        if (!empty($array['dob']))  $this->setDob($array['dob']);
-        if (!empty($array['email']))  $this->setEmail($array['email']);
-        if (!empty($array['mother_mn']))  $this->setMotherMn($array['mother_mn']);
-        if (!empty($array['phone1_area']))  $this->setPhone1Area($array['phone1_area']);
-        if (!empty($array['phone1_number']))  $this->setPhone1Number($array['phone1_number']);
-        if (!empty($array['phone1_ext']))  $this->setPhone1Ext($array['phone1_ext']);
-        if (!empty($array['phone2_area']))  $this->setPhone2Area($array['phone2_area']);
-        if (!empty($array['phone2_number']))  $this->setPhone2Number($array['phone2_number']);
-        if (!empty($array['phone1_ext']))  $this->setPhone2Ext($array['phone2_ext']);
-        if (!empty($array['fax_area']))  $this->setFaxArea($array['fax_area']);
-        if (!empty($array['fax_number']))  $this->setFaxNumber($array['fax_number']);
-        if (!empty($array['fax_ext']))  $this->setFaxExt($array['fax_ext']);
-        if (!empty($array['address_street1']))  $this->setAddressStreet1($array['address_street1']);
-        if (!empty($array['address_street2']))  $this->setAddressStreet2($array['address_street2']);
-        if (!empty($array['address_city']))  $this->setAddressCity($array['address_city']);
-        if (!empty($array['address_state_code']))  $this->setAddressStateCode($array['address_state_code']);
-        if (!empty($array['address_post_code'])){
-            $this->setAddressPostCode($array['address_post_code']);
+        if (isset($field_array['person_id']))  $this->setPersonId($field_array['person_id']);
+        if (isset($field_array['member_id']))  $this->setMemberId($field_array['member_id']);
+        //overwritten for secondary person
+        $this->setPrimaryMember('Y');        
+        $this->setDirectoryList('Y');
+        if (isset($field_array['primary_member']))  $this->setPrimaryMember($field_array['primary_member']);
+        if (isset($field_array['directory_list']))  $this->setDirectoryList($field_array['directory_list']);
+        if (isset($field_array['first_name']))  $this->setFirstName($field_array['first_name']);
+        if (isset($field_array['last_name']))  $this->setLastName($field_array['last_name']);
+        if (isset($field_array['mid_name']))  $this->setMidName($field_array['mid_name']);
+        if (isset($field_array['dob']))  $this->setDob($field_array['dob']);
+        if (isset($field_array['email']))  $this->setEmail($field_array['email']);
+        if (isset($field_array['mother_mn']))  $this->setMotherMn($field_array['mother_mn']);
+        if (isset($field_array['phone1_area']))  $this->setPhone1Area($field_array['phone1_area']);
+        if (isset($field_array['phone1_number']))  $this->setPhone1Number($field_array['phone1_number']);
+        if (isset($field_array['phone1_ext']))  $this->setPhone1Ext($field_array['phone1_ext']);
+        if (isset($field_array['phone2_area']))  $this->setPhone2Area($field_array['phone2_area']);
+        if (isset($field_array['phone2_number']))  $this->setPhone2Number($field_array['phone2_number']);
+        if (isset($field_array['phone1_ext']))  $this->setPhone2Ext($field_array['phone2_ext']);
+        if (isset($field_array['fax_area']))  $this->setFaxArea($field_array['fax_area']);
+        if (isset($field_array['fax_number']))  $this->setFaxNumber($field_array['fax_number']);
+        if (isset($field_array['fax_ext']))  $this->setFaxExt($field_array['fax_ext']);
+        if (isset($field_array['address_street1']))  $this->setAddressStreet1($field_array['address_street1']);
+        if (isset($field_array['address_street2']))  $this->setAddressStreet2($field_array['address_street2']);
+        if (isset($field_array['address_city']))  $this->setAddressCity($field_array['address_city']);
+        if (isset($field_array['address_state_code']))  $this->setAddressStateCode($field_array['address_state_code']);
+        if (isset($field_array['address_post_code'])){
+            $this->setAddressPostCode($field_array['address_post_code']);
             //CT pulbic version of postcode - less revealing
-            $this->setSafePostCode($array['address_post_code']);
+            $this->setSafePostCode($field_array['address_post_code']);
         }
-        if (!empty($array['address_country']))  $this->setAddressCountry($array['address_country']);
+        if (isset($field_array['address_country']))  $this->setAddressCountry($field_array['address_country']);
         // CT Chris's social vars
-        if (!empty($array['age']))  $this->setAge($array['age']);
-        if (!empty($array['sex']))  $this->setSex($array['sex']);
-        if (!empty($array['about_me']))  $this->setAboutMe($array['about_me']);
+        if (isset($field_array['age']))  {
+            $this->setAge($field_array['age']);
+        }
+        if (isset($field_array['sex'])) $this->setSex($field_array['sex']);
+        if (isset($field_array['about_me']))  $this->setAboutMe($field_array['about_me']);
 
     }
 
@@ -160,7 +170,7 @@ class cPerson
      */
     public function getPersonId()
     {
-        print('getPersonId' . $this->person_id);
+        //print('getPersonId: ' . $this->person_id);
         return $this->person_id;
     }
 
@@ -171,7 +181,7 @@ class cPerson
      */
     public function setPersonId($person_id)
     {
-        //print($person_id);
+        //print('setPersonId: ' . $person_id);
         $this->person_id = $person_id;
 
         return $this;
@@ -213,7 +223,7 @@ class cPerson
     public function setPrimaryMember($primary_member)
     {
         $this->primary_member = $primary_member;
-
+        //print($this->getPrimaryMember());
         return $this;
     }
 
@@ -300,6 +310,7 @@ class cPerson
     /**
      * @return mixed
      */
+    // CT we should not hold this info...
     public function getDob()
     {
         return $this->dob;
@@ -320,6 +331,7 @@ class cPerson
     /**
      * @return mixed
      */
+
     public function getMotherMn()
     {
         return $this->mother_mn;
@@ -719,7 +731,6 @@ class cPerson
     public function setSex($sex)
     {
         $this->sex = $sex;
-
         return $this;
     }
    /**
@@ -760,13 +771,14 @@ class cPerson
 		}
 		
 	}
-							
+	/*					
 	function ShowPerson()
 	{
 		$output = $this->getPersonId() . ", " . $this->getMemberId() . ", " . $this->getPrimaryMember() . ", " . $this->getDirectoryList() . ", " . $this->getFirstName() . ", " . $this->getLastName() . ", " . $this->getPersonId() . ", " . $this->dob . ", " . $this->mother_mn . ", " . $this->email . ", " . $this->phone1_area . ", " . $this->phone1_number . ", " . $this->phone1_ext . ", " . $this->phone2_area . ", " . $this->phone2_number . ", " . $this->phone2_ext . ", " . $this->fax_area . ", " . $this->fax_number . ", " . $this->fax_ext . ", " . $this->address_street1 . ", " . $this->address_street2 . ", " . $this->address_city . ", " . $this->address_state_code . ", " . $this->address_post_code . ", " . $this->address_country;
 		
 		return $output;
 	}
+    */
 
 	function Name() {
 		return $this->first_name . " " .$this->last_name;	
@@ -819,146 +831,110 @@ class cPerson
         return $string;
     }
 }
-
-// TODO: cPerson should use this class instead of a text field
-class cPhone {
-	var $area;
-	var $prefix;
-	var $suffix;
-	var $ext;
+//CT - removing - easier to trust people to put usable info in the phone fields than catch them on elaborate validation...its for their own benefit not ours
+// // TODO: cPerson should use this class instead of a text field
+// class cPhone {
+// 	var $area;
+// 	var $prefix;
+// 	var $suffix;
+// 	var $ext;
 	
-	function cPhone($phone_str=null) { // this constructor attempts to break down free-form phone #s
-		if($phone_str) {						// TODO: Use reg expressions to shorten this thing
-			$ext = "";
-			$phone_str = strtolower($phone_str);
-			if ($loc = strpos($phone_str, "x")) {
-				$ext = substr($phone_str, $loc+1, 10);
-				$phone_str = substr($phone_str, 0, $loc); // strip extension off the main string
-				$ext = ereg_replace("t","",$ext);
-				$ext = ereg_replace("\.","",$ext);
-				$ext = ereg_replace(" ","",$ext);
-				if(!is_numeric($ext))
-					$ext = "";
-			}
-			$phone_str = ereg_replace("\(","",$phone_str);
-			$phone_str = ereg_replace("\)","",$phone_str);
-			$phone_str = ereg_replace("-","",$phone_str);
-			$phone_str = ereg_replace("\.","",$phone_str);
-			$phone_str = ereg_replace(" ","",$phone_str);
-			$phone_str = ereg_replace("e","",$phone_str);
+// 	function cPhone($phone_str=null) { // this constructor attempts to break down free-form phone #s
+// 		if($phone_str) {						// TODO: Use reg expressions to shorten this thing
+// 			$ext = "";
+// 			$phone_str = strtolower($phone_str);
+// 			if ($loc = strpos($phone_str, "x")) {
+// 				$ext = substr($phone_str, $loc+1, 10);
+// 				$phone_str = substr($phone_str, 0, $loc); // strip extension off the main string
+// 				$ext = ereg_replace("t","",$ext);
+// 				$ext = ereg_replace("\.","",$ext);
+// 				$ext = ereg_replace(" ","",$ext);
+// 				if(!is_numeric($ext))
+// 					$ext = "";
+// 			}
+// 			$phone_str = ereg_replace("\(","",$phone_str);
+// 			$phone_str = ereg_replace("\)","",$phone_str);
+// 			$phone_str = ereg_replace("-","",$phone_str);
+// 			$phone_str = ereg_replace("\.","",$phone_str);
+// 			$phone_str = ereg_replace(" ","",$phone_str);
+// 			$phone_str = ereg_replace("e","",$phone_str);
 
 
-			if(strlen($phone_str) == 7) {
-				$this->area = DEFAULT_PHONE_AREA;
-				$this->prefix = substr($phone_str,0,3);
-				$this->suffix = substr($phone_str,3,4);
-				$this->ext = $ext;
-			} elseif (strlen($phone_str) == 10) {
-				$this->area = substr($phone_str,0,3);
-				$this->prefix = substr($phone_str,3,3);
-				$this->suffix = substr($phone_str,6,4);
-				$this->ext = $ext;				
-			} else {
-				return false;			
-			}
-		}
-	}
+// 			if(strlen($phone_str) == 7) {
+// 				$this->area = DEFAULT_PHONE_AREA;
+// 				$this->prefix = substr($phone_str,0,3);
+// 				$this->suffix = substr($phone_str,3,4);
+// 				$this->ext = $ext;
+// 			} elseif (strlen($phone_str) == 10) {
+// 				$this->area = substr($phone_str,0,3);
+// 				$this->prefix = substr($phone_str,3,3);
+// 				$this->suffix = substr($phone_str,6,4);
+// 				$this->ext = $ext;				
+// 			} else {
+// 				return false;			
+// 			}
+// 		}
+// 	}
 	
-	function TenDigits() {
-		return $this->area . $this->prefix . $this->suffix;
-	}
+// 	function TenDigits() {
+// 		return $this->area . $this->prefix . $this->suffix;
+// 	}
 	
-	function SevenDigits() {
-		return $this->prefix . $this->suffix;
-	}
+// 	function SevenDigits() {
+// 		return $this->prefix . $this->suffix;
+// 	}
 	
-}
+// }
 
 
-/**
- * Temporary phone class for UK.  This is to be used in place of all instances
- * of "cPhone".
- */
-class cPhone_uk {
-	var $area;
-	var $prefix;
-	var $suffix;
-	var $ext;
-    var $number;
+// /**
+//  * Temporary phone class for UK.  This is to be used in place of all instances
+//  * of "cPhone".
+//  */
+// class cPhone_uk {
+// 	var $area;
+// 	var $prefix;
+// 	var $suffix;
+// 	var $ext;
+//     var $number;
 
-	// this constructor attempts to break down free-form phone #s
-	function cPhone_uk($phone_str=null) { 
-        // TODO: Use reg expressions to shorten this thing
-		if( !empty($phone_str)) {						
-            $tmp = preg_replace("/[^\d]/", "", $phone_str);
+// 	// this constructor attempts to break down free-form phone #s
+// 	function cPhone_uk($phone_str=null) { 
+//         // TODO: Use reg expressions to shorten this thing
+// 		if( !empty($phone_str)) {						
+//             $tmp = preg_replace("/[^\d]/", "", $phone_str);
 
-            // Most UK phone numbers when written without the areacode are 8
-            // digits.
-            if(strlen($tmp) >= 8) { 
-                $this->number = $phone_str;
-                $this->ext = "";
-                $this->area = DEFAULT_PHONE_AREA;
+//             // Most UK phone numbers when written without the areacode are 8
+//             // digits.
+//             if(strlen($tmp) >= 8) { 
+//                 $this->number = $phone_str;
+//                 $this->ext = "";
+//                 $this->area = DEFAULT_PHONE_AREA;
 
-                // We are not using them.  But they are checked in
-                // verify_phone_number()
-                $this->prefix = $this->suffix = true;
-            }
-            else {
-                return false;
-            }
-        }
-	}
+//                 // We are not using them.  But they are checked in
+//                 // verify_phone_number()
+//                 $this->prefix = $this->suffix = true;
+//             }
+//             else {
+//                 return false;
+//             }
+//         }
+// 	}
 	
-	function TenDigits() {
-		return $this->number;
-	}
+// 	function TenDigits() {
+// 		return $this->number;
+// 	}
 	
-	function SevenDigits() {
-		return $this->number;
-	}
+// 	function SevenDigits() {
+// 		return $this->number;
+// 	}
 
     
 
     
-}
+// }
 
-class cSecondPerson extends cPerson {
-    public function cSecondPerson($values=null) {
-        if ($values) {
-            $this->ConstructSecondPerson($values);
-        }
-    }
-  
-    private function ConstructSecondPerson($array=null) 
-    {
-        //CT grabs values directly out of full result array passed to it. you can pass a partial set
-        if(!empty($array['member_id'])) $this->setMemberId($array['member_id']);
-        $this->setPrimaryMember('N');
-        if(!empty($array['p2_directory_list']))$this->setDirectoryList($array['p2_directory_list']);
-        if(!empty($array['p2_person_id']))$this->setPersonId($array['p2_person_id']);
-        if(!empty($array['p2_first_name']))$this->setFirstName($array['p2_first_name']);
-        if(!empty($array['p2_last_name']))$this->setLastName($array['p2_last_name']);
-        if(!empty($array['p2_mid_name']))$this->setMidName($array['p2_mid_name']);
-        if(!empty($array['p2_dob']))$this->setDob($array['p2_dob']);
-        if(!empty($array['p2_email']))$this->setEmail($array['p2_email']);
-        if(!empty($array['p2_mother_mn']))$this->setMotherMn($array['p2_mother_mn']);
-        if(!empty($array['p2_phone1_area']))$this->setPhone1Area($array['p2_phone1_area']);
-        if(!empty($array['p2_phone1_number']))$this->setPhone1Number($array['p2_phone1_number']);
-        if(!empty($array['p2_phone1_ext']))$this->setPhone1Ext($array['p2_phone1_ext']);
-        if(!empty($array['p2_phone2_area']))$this->setPhone2Area($array['p2_phone2_area']);
-        if(!empty($array['p2_phone2_number']))$this->setPhone2Number($array['p2_phone2_number']);
-        if(!empty($array['p2_phone2_ext']))$this->setPhone2Ext($array['p2_phone2_ext']);
-        if(!empty($array['p2_fax_area']))$this->setFaxArea($array['p2_fax_area']);
-        if(!empty($array['p2_fax_number']))$this->setFaxNumber($array['p2_fax_number']);
-        if(!empty($array['p2_fax_ext']))$this->setPhone2Ext($array['p2_fax_ext']);
-        if(!empty($array['p2_directory_list']))$this->setDirectoryList($array['p2_directory_list']);
-        // CT Chris's social vars
-        if(!empty($array['p2_age']))$this->setAge($array['p2_age']);
-        if(!empty($array['p2_sex']))$this->setSex($array['p2_sex']);
-        if(!empty($array['p2_about_me']))$this->setAboutMe($array['p2_about_me']);
 
-    }
-}
 
 
 ?>

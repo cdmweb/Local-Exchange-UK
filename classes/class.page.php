@@ -43,11 +43,19 @@ class cPage {
 			$login_toggle_text = 'Log in';
 		}
 
+		$admin_menu_item = "";
+		//show adminmenu if committee
+		if($cUser->getMemberRole()>0){
+			$admin_menu_item = "<li><a href=\"" . HTTP_BASE . "/admin_menu.php\">Admin menu</a></li>";
+		}
 		$variables = new stdClass();
 		$variables = (object) [
 		    'login_toggle_link' => $login_toggle_link,
-		    'login_toggle_text' => $login_toggle_text
+		    'login_toggle_text' => $login_toggle_text,
+		    'admin_menu_item' => $admin_menu_item
 		];
+
+
 
 		$string = file_get_contents(TEMPLATES_PATH . '/sidebar.php', TRUE);
 		$this->page_sidebar = $this->ReplacePlaceholders($string, $variables);
@@ -60,13 +68,13 @@ class cPage {
 		//CT first replace the bits that are from constants
 		$settings = $site_settings->getStrings();
 					
-
+		//print_r($GLOBALS);
+		
 		foreach($settings as $key => $value){
 		    $string = str_replace("{{" . $key . "}}", $value, $string);
 		}
 		if(!empty($variables)) {
 			//$cErr->Error(print_r($variables, true));
-
 			foreach($variables as $key => $value){
 				//$cErr->Error($key . " " . $value);
 			    $string = str_replace("{{" . $key . "}}", $value, $string);
@@ -102,19 +110,6 @@ class cPage {
 		$this->errors[] = $error;
 	}
 
-	function MakePageTitle() {
-		global $SECTIONS;
-		
-		if (!isset($this->page_title) or !isset($this->site_section)) {
-			return "";
-		} else {
-			if (!isset($this->page_title_image))
-				$this->page_title_image = $SECTIONS[$this->site_section][2];
-			return "<h2>$this->page_title</h2>";
-			//CT: style choice - removing the image mucks with alignment of text/titles	
-			//return '<H2><IMG SRC=" . IMAGES_PATH . $this->page_title_image .'" align=middle>'. $this->page_title .'</H2><P>';
-		}		
-	}
 									
 	function MakePageFooter() {
 		return $this->Wrap($this->page_footer, "div", "footer");
@@ -134,8 +129,8 @@ class cPage {
 			$this->AddError('No page content set');
 			$this->page_content = "Nothing to show.";
 		}
-
-		$content = $this->MakePageTitle() . $this->MakeErrorContent() . $this->page_content;
+		$title = "<h1>{$this->page_title}</h1>";
+		$content = $title . $this->MakeErrorContent() . $this->page_content;
 		return $this->Wrap($content, "div", "content");
 	}
 	function MakeErrorContent() {
@@ -147,12 +142,10 @@ class cPage {
 		//$this->AddError("test");
 		if(count($cErr->arrErrors)<1) return "";
 		//$output = "<div class=\"errors\"><p>Messages:</p><ul>";
-		$output = "<div class=\"errors\"><ul>";
 		//var_dump
-		foreach ($cErr->arrErrors as $error) {
-			$output .= '<li>'. $error[1] . "</li>";
-		}
-		$output .= "</ul></div>";
+		$output ="";
+		foreach ($cErr->arrErrors as $error) $output .= "<li>{$error[1]}</li>";
+		$output = "<div class=\"response fail\">{$output}<ul></ul></div>";
 		return $output;
 	}	
 	//CT: transitional functin - should be backwards compativle.		
@@ -198,11 +191,13 @@ class cPage {
 		}
 		return "<{$elementName} {$cText}>{$string}</{$elementName}>";
 	}
+	//CT todo - make better. bit of a hack
     function WrapLabelValue($label, $value){
-		$separator=":";
-		$label=$this->Wrap($label . $separator . " ", "span", "label");
-		$value=$this->Wrap($value, "span", "value");
-		return $this->Wrap($label.$value, "p", "line");
+    	$string = "<p class=\"line\">
+			<span class=\"label\">{$label}</span>
+			<span class=\"value\">{$value}</span>
+			</p>";
+		return $string;
 	}
 	function Link($string, $link){
 		return "<a href='{$link}'>{$string}</a>";
@@ -211,6 +206,75 @@ class cPage {
 		//default method as get, and cssclass
 		return "<form action='{$action}' method='{$method}' class='{$cssClass}'>{$string}</form>";
 	}
+	//CT removed forms from PEAR...so this is a faff, but I dont have alternative library
+	//create a form element
+	function PrepareFormSelector($selector_id, $array, $label_none=null, $selected_id=null, $css_class=null) {
+		//the value for nothing selected as first element.
+		$output = "";
+		// first option of select - none selected
+		if (!empty($label_none)) $output .= "<option value=\"\">{$label_none}</option>";
+		foreach($array as $key=>$item){
+			$selected_attribute = ($key == $selected_id) ? " selected=\"selected\"" : "";
+			$output .= "<option value=\"{$key}\" {$selected_attribute}>{$item}</option>";
+		}
+		//wrap option list in select element
+		$class_attribute="";
+		if (!empty($css_class)) $class_attribute = " class=\"{$css_class}\"";
+		$output = "<select name=\"{$selector_id}\" id=\"{$selector_id}\"{$class_attribute}>{$output}</select>";
+		return $output;		
+	}
+	//CT date selector - a bit hacked to avoid PEAR
+	//sorry this is English only
+	// WIP - decided to use date in input field instead, as its easier to input. 
+	function PrepareDateSelector($selector_prefix, $selected_date=null, $custom_options=null){
+	    $options = array(
+	        'start_year' => 2001,
+	        'end_year' => 2040
+	    );
+	    if(!empty($custom_options)){
+		    //set the _options with the ones past in
+		    foreach($custom_options as $$key => $value) $options[$key]=$value;    	
+	    }
+	    
+	    //$selected_date;
+	    $array_months = array (
+	    	'1' => 'January', 
+	    	'2' => 'February', 
+	    	'3' => 'March', 
+	    	'4' => 'April', 
+	    	'5' => 'May', 
+	    	'6' => 'June', 
+	    	'7' => 'July', 
+	    	'8' => 'August', 
+	    	'9' => 'September', 
+	    	'10' => 'October', 
+	    	'11' => 'November', 
+	    	'12' => 'December'
+	    );
+
+
+	    $array_years = array();
+	    for($i=$options['start_year']; $i<=$options['end_year']; $i++){
+	    	$array_years["{$i}"] = $i;
+	    }
+
+	    $array_days = array();
+	    for($i=1; $i<=31; $i++){
+	    	$array_days["{$i}"] = $i;
+	    }
+	    $selector_id = $selector_prefix . "_years";
+	    $dropdown_years = $this->PrepareFormSelector($selector_id, $array_years, null, null, "dropdown_years");
+	    $selector_id = $selector_prefix . "_months";
+	    $dropdown_months = $this->PrepareFormSelector($selector_id, $array_months, null, null, "dropdown_months");
+	    $selector_id = $selector_prefix . "_days";
+
+	    $dropdown_days = $this->PrepareFormSelector($selector_id, $array_days, null, null, "dropdown_days");
+		
+	    return "{$dropdown_days} {$dropdown_months} {$dropdown_years}";
+
+	}
+
+	//CT good for simple form elements
 	function WrapFormElement($type, $name, $label='', $value='', $cssClass=''){
 		switch ($type){
 			case 'text':

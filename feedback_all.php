@@ -2,7 +2,7 @@
 
 include_once("includes/inc.global.php");
 	
-include("classes/class.feedback.php");
+include_once("classes/class.feedback.php");
 	
 $cUser->MustBeLoggedOn();
 $member_id = (!empty($_REQUEST["member_id"])) ? $_REQUEST["member_id"] : $cUser->getMemberId();

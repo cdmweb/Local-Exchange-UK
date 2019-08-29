@@ -1,0 +1,96 @@
+[14-Jun-2019 05:46:32 America/Chicago] PHP Fatal error:  Class 'HTMLPurifier_URIFilter' not found in /home/camlets2/www/dev.camlets.org.uk/members/vendor/htmlpurifier/library/HTMLPurifier/URIFilter/HostBlacklist.php on line 7
+[14-Jun-2019 06:03:48 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:03:48 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:03:48 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:00 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:00 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:00 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:09 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:09 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:09 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:14 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:14 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:14 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:43 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:43 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:43 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:48 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:04:57 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:57 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:04:57 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:05:01 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:07:22 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:07:22 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:07:22 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:07:25 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:09:05 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:09:08 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:09:26 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:09:28 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:09:40 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:10:01 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:10:07 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:10:07 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:10:07 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 06:10:11 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:10:16 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 06:11:16 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 08:00:41 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 08:00:41 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 08:00:41 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 08:00:43 America/Chicago] PHP Fatal error:  Uncaught Error: Call to a member function getMemberId() on null in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php:2
+Stack trace:
+#0 /home/camlets2/www/dev.camlets.org.uk/members/member_detail.php(85): include_once()
+#1 {main}
+  thrown in /home/camlets2/www/dev.camlets.org.uk/members/includes/templates/menu_quick_edit.php on line 2
+[14-Jun-2019 08:00:46 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 08:00:46 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49
+[14-Jun-2019 08:00:46 America/Chicago] PHP Warning:  Missing argument 1 for cMemberGroup::Load(), called in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 79 and defined in /home/camlets2/www/dev.camlets.org.uk/members/classes/class.memberGroup.php on line 49

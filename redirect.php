@@ -1,50 +1,46 @@
 <?php
 include_once("includes/inc.global.php");
 
-global $cErr;
+global $cErr, $cDB;
 
 $cErr->SaveErrors();
 
 if (!isset($redir_url))
 {
-	if (isset($_GET['location']))
-		$redir_url = $_GET['location'];
-	if (isset($_POST['location']))
-		$redir_url = $_POST['location'];
+	$redir_url = (isset($_REQUEST['location'])) ? $cDB->EscTxt($_REQUEST['location']) : null;
 }
-
+/*
 if (!isset($redir_type))
 {
-	if (isset($_GET['type']))
-		$redir_type = $_GET['type'];
+	$redir_type = (isset($_GET['type']))? $_GET['type'] : null;
 }
 
 if (!isset($redir_item))
 {
-	if (isset($_GET['item']))
-		$redir_item = $_GET['item'];
+	$redir_item = (isset($_GET['item'])) $_GET['item'] : null;
 }
-
-if (isset($redir_url))	// a specific URL was requested.  Go there regardless of other variables.
+*/
+if (!empty($redir_url))	// a specific URL was requested.  Go there regardless of other variables.
 {
 	header("location:".$redir_url);
 	exit;
 }
-
-if (isset($redir_type) && isset($redir_item))
+/*
+if (!empty($redir_type) && !empty($redir_item))
 {
-	header("location:" . SERVER_PATH_URL . $GLOBALS['SITE_SECTION_URL'][$redir_type]."?item=".$redir_item);
+	header("location:" . HTTP_BASE[$redir_type]."?item=".$redir_item);
 	exit;
 }
 
-if (isset($redir_type))	// $item not specified
+if (!empty($redir_type))	// $item not specified
 {
-	header("location:" . SERVER_PATH_URL .$GLOBALS['SITE_SECTION_URL'][$redir_type]);
+	header("location:" . HTTP_BASE[$redir_type]);
 	exit;
 }
+*/
 
 // dunno where to go.  Go home.
-header("location:" . SERVER_PATH_URL . "/member_profile_all_in_one.php");
+header("location:" . HTTP_BASE . "/member_dashboard.php");
 exit;
 
 

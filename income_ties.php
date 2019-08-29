@@ -8,7 +8,7 @@ $cUser->MustBeLoggedOn();
 if (ALLOW_INCOME_SHARES!=true) // Provision for allowing income ties has been turned off, return to homepage
 	header("location:".HTTP_BASE."/index.php");
 	
-$ties = new cIncomeTies;
+$ties = new cMemberIncomeTies;
 
 $p->page_title = "Income Sharing";
 

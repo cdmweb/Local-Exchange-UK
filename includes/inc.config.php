@@ -14,27 +14,26 @@ if (file_exists("upgrade.php") && $running_upgrade_script!=true) {
 
 /**********************************************************/
 /******************* SITE LOCATIONS ***********************/
- 
+ //CT - using $GLOBALS['foo']='bar' instead of define ("FOO","bar");
+ $GLOBALS["SERVER_DOMAIN"] = "http://localhost:8888";
 // What is the domain name of the site?  
-define ("SERVER_DOMAIN","http://localhost:8888");	// no http://
+//define ("SERVER_DOMAIN","http://localhost:8888");	// no trailing slash
 
 // What is the path to the site? This is null for many sites.
-define ("SERVER_PATH_URL","/members");	// no ending slash
+//define ("SERVER_PATH_URL","/members");	// no ending slash
 
 // The following only needs to be set if Pear has been
 // installed manually by downloading the files
-define ("PEAR_PATH", "/Applications/MAMP/PEAR"); // no ending slash
+$GLOBALS["PEAR_PATH"] = "/Applications/MAMP/PEAR"; // no trailing slash
 
 // Ok, then lets define some paths (no need to edit these)
-define ("HTTP_BASE",SERVER_DOMAIN.SERVER_PATH_URL);
-define ("CLASSES_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/classes/");
-define ("IMAGES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/images/");
-define ("STYLES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/styles/");
-define ("INCLUDES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/includes/");
-define ("TEMPLATES_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/includes/templates/");
-//define ("UPLOADS_PATH",$_SERVER["DOCUMENT_ROOT"].SERVER_PATH_URL."/uploads/");
-define ("UPLOADS_PATH",SERVER_DOMAIN.SERVER_PATH_URL."/uploads/");
-
+//define ("HTTP_BASE", $GLOBALS["SERVER_DOMAIN"] .SERVER_PATH_URL);
+$GLOBALS["CLASSES_PATH"] = $_SERVER["DOCUMENT_ROOT"] . $GLOBALS["SERVER_PATH_URL"] ."/classes/";
+$GLOBALS["IMAGES_PATH"] = $GLOBALS["SERVER_DOMAIN"] . $GLOBALS["SERVER_PATH_URL"] . "/images/";
+$GLOBALS["STYLES_PATH"] = $GLOBALS["SERVER_DOMAIN"] . $GLOBALS["SERVER_PATH_URL"] . "/styles/";
+$GLOBALS["INCLUDES_PATH"] = $GLOBALS["SERVER_DOMAIN"] . $GLOBALS["SERVER_PATH_URL"] . "/includes/";
+TEMPLATES_PATH = $GLOBALS["SERVER_DOMAIN"] . $GLOBALS["SERVER_PATH_URL"] . "/includes/templates/";
+$GLOBALS["UPLOADS_PATH"] = $GLOBALS["SERVER_DOMAIN"] . $GLOBALS["SERVER_PATH_URL"] . "/uploads/";
 
 /**********************************************************/
 /***************** DATABASE LOGIN  ************************/
@@ -46,7 +45,16 @@ define ("DATABASE_PASSWORD","05dbI?uWkWBy");
 define ("DATABASE_NAME","localexchange-1.02");
 define ("DATABASE_SERVER","localhost"); // often "localhost"
 define ("DATABASE_PORT","8889"); 
-
+/*
+// for dev remote
+define ("DATABASE_USERNAME","camlets2");
+define ("DATABASE_PASSWORD","HMn1C1h2k-Mc");
+//define ("DATABASE_NAME","clarat2_localexchange");
+// local localexchange-1.02;
+define ("DATABASE_NAME","camlets2");
+define ("DATABASE_SERVER","mysql-55.int.mythic-beasts.com"); // often "localhost"
+define ("DATABASE_PORT",""); 
+*/
 /**********************************************************/
 /********************* SITE NAMES *************************/
 
@@ -92,11 +100,18 @@ define("MEMBER_PHOTO_WIDTH",200); // in pixels
 // Do we want to UP-scale images that are smaller than MEMBER_PHOTO_WIDTH (may look a bit ugly and pixelated)?
 define("UPSCALE_SMALL_MEMBER_PHOTO",false);
 
-// The options available in the 'How old is you?' dropdown (trying to be as innocuous as possible here with the defaults (e.g. 40's)- but feel free to provide more specific options)
-$agesArr = array('---','Under 18', '18-30','30\'s','40\'s','50\'s','60\'s','70\'s','Over 80','n/a',);
+// The options available in the 'How old is you?' dropdown (trying to be as innocuous as possible here with the defaults (e.g. 40's)- but feel free to provide more specific options) 
+
+//key is just the number key...
+define("AGE_ARRAY", array('','18-30','30\'s','40\'s','50\'s','60\'s','70\'s','Over 80'));
 
 // The options available in the 'What Sex are you?' dropdown. At the time of writing (01-12-2008) the defaults should be fine
-$sexArr = array("---", "Male","Female","n/a");
+// key is just the number key...
+define("SEX_ARRAY", array("I would rather not say", "Male","Female"));
+
+
+define("ACCOUNT_TYPE_ARRAY", array("S" => "Single",  "J" => "Joint", "H"=>"Household", "O"=>"Organization", "B"=>"Business", "F"=>"Fund"));
+
 
 // Enable JavaScript bits on the Dropdown Member Select Box?
 // This applies to the Transfer form; the idea is that it makes it simpler to find the member we're after if the dropdown list is lengthy
@@ -210,6 +225,7 @@ define ("EXPIRED_LISTINGS_MESSAGE", "Hello,\n\nDue to inactivity, your ".SITE_SH
 define ("JOIN_YEAR_MINIMUM", "2005");  
 
 define ("DEFAULT_COUNTRY", "United Kingdom");
+//set up appropriate for the location of your LETS scheme
 define ("DEFAULT_ZIP_CODE", "CB1"); // This is the postcode.
 define ("DEFAULT_CITY", "Cambridge");
 define ("DEFAULT_STATE", "Cambridgeshire");
@@ -288,7 +304,7 @@ if (DEFAULT_COUNTRY == "United States") {
 	define ("STATE_TEXT", "State");
 }
 // These are for other countries.  Change it according to your requirements.
-else if (DEFAULT_COUNTRY == "United Kingdom") {
+if (DEFAULT_COUNTRY == "United Kingdom") {
     define ("ADDRESS_LINE_1", "Street address");
     define ("ADDRESS_LINE_2", "Neighbourhood");
     define ("ADDRESS_LINE_3", "Town or City");
