@@ -1,3 +1,0 @@
-arm-cambs-child ak_1MDE1ZTk0ZTIyNjRhMDI0MjBhMDE1YzBiMDAwMDAwMDA016adee2673ff66de02d6f7000000000hpYMeV6CnQiiN7gQvefNy54m6SyhwNMW
-
-curl -X GET https://lab-api.mbedcloudintegration.net/v3/identity-providers -H 'authorization: Bearer ak_1MDE1ZTk0ZTIyNjRhMDI0MjBhMDE1YzBiMDAwMDAwMDA016adee2673ff66de02d6f7000000000hpYMeV6CnQiiN7gQvefNy54m6SyhwNMW'
